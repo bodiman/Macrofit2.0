@@ -14,13 +14,10 @@ export default function RootLayout() {
           screenOptions={{
             headerShown: false, 
             contentStyle: {
-                backgroundColor: Colors.gray, 
-                height: "100%", 
-                width: "100%"
+                backgroundColor: Colors.white, 
               }
           }}
         />
-
     </ClerkProvider>
   )
 }

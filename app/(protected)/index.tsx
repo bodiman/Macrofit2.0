@@ -2,6 +2,8 @@ import { SignedIn, SignedOut, useUser } from '@clerk/clerk-expo'
 import { Link } from 'expo-router'
 import { Text, View } from 'react-native'
 import { SignOutButton } from '@/components/SignOutButton'
+import { meals } from '@/tempdata'
+import MealDisplay from '@/components/MealDisplay'
 
 export default function Page() {
   const { user } = useUser()
@@ -9,8 +11,11 @@ export default function Page() {
   return (
     <View>
       <SignedIn>
-        <Text>Hello {user?.emailAddresses[0].emailAddress}</Text>
-        <SignOutButton />
+        { 
+          meals.map(meal => (
+            <MealDisplay meal={meal} />
+          ))
+        }
       </SignedIn>
     </View>
   )

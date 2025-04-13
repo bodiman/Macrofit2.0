@@ -2,15 +2,14 @@ import { Text, View, StyleSheet, Button, Pressable } from "react-native"
 import { SignedOut, SignedIn } from "@/lib/clerk"
 import { Link, Redirect } from "expo-router"
 import Colors from "@/styles/colors"
+import Logo from "@/components/Logo"
 
 export default function Landing() {
     return (
         <>
         <SignedOut>
             <View style={styles.container}>
-                <Text style={styles.title}>
-                    <Text style={styles.black}>Macro</Text><Text style={styles.orange}>Fit</Text>
-                </Text>
+                <Logo size1={60} size2={60} theme={"dark"} />
                 <Text style={styles.subtitle}>Lock The Fuck In</Text>
             </View>
             
@@ -50,7 +49,7 @@ const styles = StyleSheet.create({
         // backgroundColor: "red"
     },
     subtitle: {
-        color: Colors.lightgray,
+        color: Colors.black,
         alignItems: "center",
         fontSize: 19,
         padding: 15,
@@ -82,15 +81,4 @@ const styles = StyleSheet.create({
         fontWeight: 500,
         color: Colors.black
     },
-    title: {
-        fontSize: 50,
-        fontWeight: 800,
-    },
-    orange: {
-        color: Colors.orange,
-        fontSize: 70
-    },
-    black: {
-        color: Colors.lightgray
-    }
 })
