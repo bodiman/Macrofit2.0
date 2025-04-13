@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
         elevation: 5, // this is ignored on iOS
     },
     mealHeader: {
-        backgroundColor: Colors.lightgray,
+        backgroundColor: Colors.coolgray,
         padding: 15,
         paddingHorizontal: 20,
         display: "flex",

@@ -13,6 +13,7 @@ export default function Layout() {
   <>
     <SignedIn>
         <AppHeader />
+        
         <Tabs screenOptions={{headerShown: false}}>
           <Tabs.Screen name='menus' options={{
             title: "Menus",

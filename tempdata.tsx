@@ -30,6 +30,23 @@ export type Meal = {
     foods: Food[],
 }
 
+export type Range = {
+    min?: number,
+    max?: number
+}
+
+export const unitMap = {
+    calories: "",
+    protein: "g",
+    carbs: "g",
+    fat: "g",
+    fiber: "g",
+    sugar: "g",
+    sodium: "mg"
+}
+
+export type MacroKey = keyof typeof myMacroPreferences;
+
 const gram: Unit = {
     name: "grams",
     grams: 1
@@ -53,6 +70,7 @@ const bacon: Food = {
     portion: portion
 } 
 
+
 export const meals = [
     {
         id: 0,
@@ -73,3 +91,41 @@ export const meals = [
         foods: [bacon, bacon, bacon, bacon, bacon, bacon,],
     }
 ]
+
+export const myMacros = {
+    calories: 864,
+    protein: 120,
+    carbs: 127,
+    fat: 27,
+    fiber: 15.6,
+    sugar: 5,
+    sodium: 10,
+}
+
+export const myMacroPreferences = {
+    calories: {
+        min: 1800,
+        max: 2000
+    },
+    protein: {
+        min: 160,
+        max: 180
+    },
+    carbs: {
+        min: 225,
+        max: 275
+    },
+    fat: {
+        max: 15
+    },
+    // fiber: {
+    //     max: 15
+    // },
+    // sugar: {
+    //     max: 15
+    // },
+    // sodium: {
+    //     max: 15
+    // },
+    // fiber: 30,
+}
