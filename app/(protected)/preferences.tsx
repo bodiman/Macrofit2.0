@@ -8,6 +8,7 @@ export default function Page() {
     <View>
       <SignedIn>
         <Text>This are the preferences</Text>
+        <SignOutButton></SignOutButton>
       </SignedIn>
     </View>
   )

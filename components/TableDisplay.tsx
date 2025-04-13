@@ -32,8 +32,9 @@ const styles = StyleSheet.create({
         alignItems: "center",
         display: "flex",
         flexDirection: "row",
-        borderBottomColor: Colors.darkgray,
-        borderBottomWidth: 1
+        borderTopColor: Colors.darkgray,
+        borderTopWidth: 1,
+        backgroundColor: Colors.white,
     },
     tableName: {
         flex: 1,

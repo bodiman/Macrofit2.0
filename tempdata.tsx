@@ -64,12 +64,12 @@ export const meals = [
         id: 1,
         name: "Lunch",
         hour: 13,
-        foods: [bacon, bacon, bacon],
+        foods: [bacon, bacon, bacon, bacon, bacon],
     },
     {
         id: 2,
         name: "Dinner",
         hour: 18,
-        foods: [bacon],
+        foods: [bacon, bacon, bacon, bacon, bacon, bacon,],
     }
 ]

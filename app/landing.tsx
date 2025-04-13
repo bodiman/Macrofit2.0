@@ -1,4 +1,6 @@
 import { Text, View, StyleSheet, Button, Pressable } from "react-native"
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { SignedOut, SignedIn } from "@/lib/clerk"
 import { Link, Redirect } from "expo-router"
 import Colors from "@/styles/colors"
@@ -6,39 +8,47 @@ import Logo from "@/components/Logo"
 
 export default function Landing() {
     return (
-        <>
-        <SignedOut>
-            <View style={styles.container}>
-                <Logo size1={60} size2={60} theme={"dark"} />
-                <Text style={styles.subtitle}>Lock The Fuck In</Text>
-            </View>
-            
-            <View style={styles.buttonContainer}>
-                <Pressable style={styles.button}>
-                    <Link href="../(auth)/sign-in" style={styles.buttonText}>
-                        Log In
-                    </Link>
-                </Pressable>
+        <LinearGradient 
+            colors={[Colors.coolgray, Colors.lightgray]} 
+            style={styles.container}   
+            locations={[0, 0.8, 1]}
+        >
+            <SignedOut>
+                <View style={styles.logoContainer}>
+                    <Logo size1={60} size2={60} theme={"dark"} />
+                    <Text style={styles.subtitle}>Lock The Fuck In</Text>
+                </View>
+                
+                <View style={styles.buttonContainer}>
+                    <Pressable style={styles.button}>
+                        <Link href="../(auth)/sign-in" style={styles.buttonText}>
+                            Log In
+                        </Link>
+                    </Pressable>
 
-                <Pressable style={styles.button}>
-                    <Link href="../(auth)/sign-up" style={styles.buttonText}>
-                        Sign Up
-                    </Link>
-                </Pressable>
-            </View>
+                    <Pressable style={styles.button}>
+                        <Link href="../(auth)/sign-up" style={styles.buttonText}>
+                            Sign Up
+                        </Link>
+                    </Pressable>
+                </View>
 
-            
+                
 
-        </SignedOut>
+            </SignedOut>
 
-        <SignedIn>
-            <Redirect href={"/"} />
-        </SignedIn>
-        </>)
+            <SignedIn>
+                <Redirect href={"/"} />
+            </SignedIn>
+        </LinearGradient>
+        )
 }
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1
+    },
+    logoContainer: {
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
@@ -46,7 +56,6 @@ const styles = StyleSheet.create({
         width: "100%",
         padding: 40,
         flexGrow: 2,
-        // backgroundColor: "red"
     },
     subtitle: {
         color: Colors.black,

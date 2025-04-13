@@ -15,6 +15,10 @@ const styles = StyleSheet.create({
     header: {
         width: "100%",
         backgroundColor: Colors.white,
-        padding: 20
+        padding: 20,
+        borderBottomColor: 'rgba(0, 0, 0, 0.25)',
+        borderBottomWidth: 2,
+        borderBottomLeftRadius: 5,
+        borderBottomRightRadius: 5,
     }
 })
