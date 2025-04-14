@@ -30,7 +30,7 @@ export default function GlobalMacrosDisplay() {
     }, []);
 
     const renderItem = ({ item }: { item: MacroKey[] }) => (
-        <View style={[styles.macroContainer, { width: windowWidth - 40 }]}>
+        <View style={[styles.macroContainer, { width: windowWidth - 40, gap: (windowWidth - 340) / 2 }]}>
             {item.map((macro) => (
             <MacroIndicator
                 key={macro}
@@ -70,7 +70,7 @@ export default function GlobalMacrosDisplay() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.flatListContainer, {gap: (windowWidth - 300) / 3}]}
+            contentContainerStyle={[styles.flatListContainer, { gap: (windowWidth - 340) / 2 }]}
         />
     )
 }
@@ -79,13 +79,11 @@ const styles = StyleSheet.create({
     macroContainer: {
         display: "flex",
         flexDirection: "row",
-        justifyContent: "space-between",
-        gap: 20,
+        // justifyContent: "space-between"
     },
     flatListContainer: {
         // gap: 20,
-        backgroundColor: "red",
-        // width: "100%",
+        // width: "20%",
         // justifyContent: "space-evenly",
         // backgroundColor: "red",
     }
