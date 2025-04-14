@@ -118,14 +118,13 @@ export const myMacroPreferences = {
     fat: {
         max: 15
     },
-    // fiber: {
-    //     max: 15
-    // },
-    // sugar: {
-    //     max: 15
-    // },
-    // sodium: {
-    //     max: 15
-    // },
-    // fiber: 30,
+    fiber: {
+        max: 15
+    },
+    sugar: {
+        max: 15
+    },
+    sodium: {
+        max: 15
+    },
 }
