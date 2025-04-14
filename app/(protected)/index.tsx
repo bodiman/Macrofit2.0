@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'; // ✅ this one
 import { SignOutButton } from '@/components/SignOutButton'
 import { Meal, meals } from '@/tempdata'
 import MealDisplay from '@/components/MealDisplay'
+import { Platform } from 'react-native';
 
 export default function Page() {
   const { user } = useUser()

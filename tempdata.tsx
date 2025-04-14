@@ -42,7 +42,8 @@ export const unitMap = {
     fat: "g",
     fiber: "g",
     sugar: "g",
-    sodium: "mg"
+    sodium: "mg",
+    potassium: "mg"
 }
 
 export type MacroKey = keyof typeof myMacroPreferences;
@@ -100,6 +101,7 @@ export const myMacros = {
     fiber: 15.6,
     sugar: 5,
     sodium: 10,
+    potassium: 2000,
 }
 
 export const myMacroPreferences = {
@@ -127,4 +129,7 @@ export const myMacroPreferences = {
     sodium: {
         max: 15
     },
+    potassium: {
+        min: 5000,
+    }
 }

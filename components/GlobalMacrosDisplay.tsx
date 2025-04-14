@@ -1,14 +1,24 @@
-import { Text, View, StyleSheet, LayoutChangeEvent, FlatList, Dimensions } from "react-native"
+import { Text, View, StyleSheet, LayoutChangeEvent, FlatList, Dimensions, Platform, ScaledSize } from "react-native"
 import { myMacros } from "@/tempdata"
 import { myMacroPreferences } from "@/tempdata"
 import MacroIndicator from "./MacroIndicator"
 import { MacroKey } from "@/tempdata"
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { ScrollView } from "react-native-gesture-handler"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function GlobalMacrosDisplay() {
-    const windowWidth = Dimensions.get('window').width;
+    const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width);
+
+    useEffect(() => {
+        const onChange = ({ window }: { window: ScaledSize }) => {
+        setWindowWidth(window.width);
+        };
+
+        const subscription = Dimensions.addEventListener("change", onChange);
+
+        return () => subscription.remove(); // Clean up on unmount
+    }, []);
 
     const groupedMacros = (Object.keys(myMacroPreferences) as MacroKey[]).reduce<MacroKey[][]>((acc, item, index) => {
         const groupIndex = Math.floor(index / 3);
@@ -20,7 +30,7 @@ export default function GlobalMacrosDisplay() {
     }, []);
 
     const renderItem = ({ item }: { item: MacroKey[] }) => (
-        <View style={[styles.macroContainer, { width: windowWidth * 0.9 }]}>
+        <View style={[styles.macroContainer, { width: windowWidth - 40 }]}>
             {item.map((macro) => (
             <MacroIndicator
                 key={macro}
@@ -32,6 +42,26 @@ export default function GlobalMacrosDisplay() {
         </View>
     );
 
+    const renderItemWeb = ({ item }: { item: MacroKey }) => (
+            <MacroIndicator
+                key={item}
+                unit={item}
+                value={myMacros[item]}
+                range={myMacroPreferences[item]}
+            />
+    );
+
+    // return (
+    //     <FlatList
+    //         data={(Object.keys(myMacroPreferences) as MacroKey[])}
+    //         keyExtractor={(_, i) => i.toString()}
+    //         renderItem={renderItemWeb}
+    //         horizontal
+    //         showsHorizontalScrollIndicator={false}
+    //         contentContainerStyle={styles.flatListContainer}
+    //     />
+    // )
+
     return (
         <FlatList
             data={groupedMacros}
@@ -40,7 +70,7 @@ export default function GlobalMacrosDisplay() {
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.flatListContainer}
+            contentContainerStyle={[styles.flatListContainer, {gap: (windowWidth - 300) / 3}]}
         />
     )
 }
@@ -49,11 +79,14 @@ const styles = StyleSheet.create({
     macroContainer: {
         display: "flex",
         flexDirection: "row",
-        width: 351,
-        justifyContent: "space-between"
+        justifyContent: "space-between",
+        gap: 20,
     },
     flatListContainer: {
-        width: "100%",
-        gap: 40
+        // gap: 20,
+        backgroundColor: "red",
+        // width: "100%",
+        // justifyContent: "space-evenly",
+        // backgroundColor: "red",
     }
 })

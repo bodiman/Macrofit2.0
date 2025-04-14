@@ -16,7 +16,7 @@ export default function MacroIndicator({ value, range, unit }: { value: number, 
     return (
         <View style={{pointerEvents: "none"}}>
             <CircularProgressBar 
-                radius={40}
+                radius={50}
                 value={ value }
                 titleColor={Colors.black}
                 title={unit}
