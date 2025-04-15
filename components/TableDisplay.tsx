@@ -2,6 +2,26 @@ import { Food, Macros, Portion } from "@/tempdata";
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import Colors from "@/styles/colors";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { Svg, Circle, Text as SVGText } from 'react-native-svg';
+import React from 'react'
+
+const MyIcon = React.memo(() => (
+    <Svg width="24" height="24" viewBox="0 0 100 100">
+      <Circle cx="50" cy="50" r="40" fill={Colors.orange} />
+      <SVGText
+        x="29"
+        y="52"
+        fontSize="90"
+        fontWeight="bold"
+        fill={Colors.white}
+        textAnchor="middle"
+        alignmentBaseline="middle"
+        transform="scale(1.75, 1)"
+      >
+        -
+      </SVGText>
+    </Svg>
+  ));
 
 export default function TableRow({ name, portion, macros }: { name: string, portion: Portion, macros: Macros}) {
     const handleDeleteFood = ()=> {
@@ -18,7 +38,9 @@ export default function TableRow({ name, portion, macros }: { name: string, port
                 { macros.calories }
             </Text>
             <Pressable style={styles.deleteIcon} onPress={handleDeleteFood}>
-                <FontAwesome name="minus-circle" size={24} color={Colors.orange} />
+                <MyIcon></MyIcon>
+                {/* <FontAwesome name="minus-circle" size={24} color={Colors.orange} /> */}
+                {/* <Text>-</Text> */}
             </Pressable>
         </View>
     )

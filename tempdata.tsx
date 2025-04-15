@@ -104,6 +104,51 @@ export const myMacros = {
     potassium: 2000,
 }
 
+const foodDataBase = {
+    hotdog: {
+        id: 0,
+        name: "hotdog",
+        macros: {
+            calories: 5,
+            protein: 0.37,
+            carbs: 0.01,
+            fat: 0.42,
+            fiber: 0,
+            sugar: 0.1,
+            sodium: 10,
+            potassium: 2,
+        },
+    },
+    burrito: {
+        id: 1,
+        name: "burrito",
+        macros: {
+            calories: 100,
+            protein: 0.237,
+            carbs: 0.41,
+            fat: 0.2,
+            fiber: 2,
+            sugar: 1,
+            sodium: 100,
+            potassium: 2,
+        },
+    },
+    sandwich: {
+        id: 2,
+        name: "sandwich",
+        macros: {
+            calories: 40,
+            protein: 0.37,
+            carbs: 1,
+            fat: 0.1,
+            fiber: 1,
+            sugar: 2,
+            sodium: 32,
+            potassium: 200,
+        },
+    }
+}
+
 export const myMacroPreferences = {
     calories: {
         min: 1800,

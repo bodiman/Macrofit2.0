@@ -1,20 +1,41 @@
 import { Meal } from '@/tempdata'
 import { Text, View, StyleSheet, Pressable } from 'react-native'
+import { Svg, Circle, Text as SVGText } from 'react-native-svg';
 import Colors from '@/styles/colors'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import TableDisplay from './TableDisplay';
+import React, { useEffect } from 'react';
 
-export default function MealDisplay({ meal }: { meal: Meal }) {
-    const handleAddFood = ()=> {
-        alert(`Adding food to ${meal.name}`);
-    }
+const MyIcon = React.memo(() => (
+    <Svg width="24" height="24" viewBox="0 0 100 100">
+      <Circle cx="50" cy="50" r="45" fill={Colors.black} />
+      <SVGText
+        x="50"
+        y="53"
+        fontSize="90"
+        fontWeight="bold"
+        fill={Colors.white}
+        textAnchor="middle"
+        alignmentBaseline="middle"
+      >
+        +
+      </SVGText>
+    </Svg>
+  ));
+
+
+export default function MealDisplay({ meal, modalLauncher }: { meal: Meal, modalLauncher: ()=> void }) {
+
+    useEffect(()=> {
+        console.log("rerendering meal display")
+    }, [])
 
     return (
         <View style={styles.mealContainer}>
             <View style={styles.mealHeader}>
                 <Text key={meal.id} style={styles.mealTitle}>{meal.name}</Text>
-                <Pressable onPress={handleAddFood}>
-                    <FontAwesome name="plus-circle" size={24} color={Colors.black} />
+                <Pressable onPress={modalLauncher}>
+                    <MyIcon />
                 </Pressable>
             </View>
             <View style={styles.foodContainer}>
@@ -41,7 +62,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 }, // no z-axis, only x/y
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
-        elevation: 5, // this is ignored on iOS
+        // elevation: 5, // this is ignored on iOS
     },
     mealHeader: {
         backgroundColor: Colors.coolgray,
