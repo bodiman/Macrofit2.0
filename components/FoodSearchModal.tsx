@@ -4,6 +4,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Meal } from '@/tempdata';
 import Colors from '@/styles/colors';
 import { useEffect } from 'react';
+import AddFood from './AddFood';
 
 type Props = PropsWithChildren<{
     // isVisible: boolean;
@@ -12,9 +13,6 @@ type Props = PropsWithChildren<{
   }>;
 
 export default function FoodSearchModal({ onClose, activeMeal }: Props) {
-    useEffect(()=> {
-      console.log("rerendering modal")
-    }, [])
 
     if (activeMeal === null) return;
 
@@ -27,7 +25,7 @@ export default function FoodSearchModal({ onClose, activeMeal }: Props) {
                 <MaterialIcons name="close" color="#fff" size={22} />
               </Pressable>
             </View>
-            {/* {children} */}
+            <AddFood />
           </View>
         </Modal>
       );

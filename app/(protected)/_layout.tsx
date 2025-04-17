@@ -5,14 +5,12 @@ import { Slot, Stack, Tabs } from 'expo-router'
 import { Text } from 'react-native'
 import AppHeader from '@/components/AppHeader'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+console.log("loading fontawesome")
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useState, useEffect } from 'react'
 import FoodSelector from '@/components/FoodSearchModal'
 
 export default function Layout() {
-  useEffect(()=> {
-    console.log("rerendering layout")
-  }, [])
 
   return (
   <>

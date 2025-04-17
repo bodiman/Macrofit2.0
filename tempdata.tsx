@@ -23,6 +23,12 @@ export type Food = {
     portion: Portion
 }
 
+export type FoodPreview = {
+    id: number,
+    name: string,
+    macros: Macros,
+}
+
 export type Meal = {
     id: number,
     name: string,
@@ -51,6 +57,11 @@ export type MacroKey = keyof typeof myMacroPreferences;
 const gram: Unit = {
     name: "grams",
     grams: 1
+}
+
+const ounce: Unit = {
+    name: "ounces",
+    grams: 28.35
 }
 
 const portion: Portion = {
@@ -104,7 +115,7 @@ export const myMacros = {
     potassium: 2000,
 }
 
-const foodDataBase = {
+export const foodDataBase = {
     hotdog: {
         id: 0,
         name: "hotdog",
@@ -118,6 +129,10 @@ const foodDataBase = {
             sodium: 10,
             potassium: 2,
         },
+        portion: {
+            unit: gram,
+            quantity: 10
+        }
     },
     burrito: {
         id: 1,
@@ -132,6 +147,10 @@ const foodDataBase = {
             sodium: 100,
             potassium: 2,
         },
+        portion: {
+            unit: ounce,
+            quantity: 5
+        }
     },
     sandwich: {
         id: 2,
@@ -146,6 +165,10 @@ const foodDataBase = {
             sodium: 32,
             potassium: 200,
         },
+        portion: {
+            unit: ounce,
+            quantity: 8
+        }
     }
 }
 

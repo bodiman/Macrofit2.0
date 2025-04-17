@@ -17,10 +17,6 @@ export default function Page() {
     setSearchMeal(meal);
   }
 
-  useEffect(()=> {
-    console.log("rerendering index")
-  }, [])
-
   return (
       <View style={styles.parentReference}>
         <SignedIn>

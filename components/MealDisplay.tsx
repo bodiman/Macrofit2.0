@@ -26,10 +26,6 @@ const MyIcon = React.memo(() => (
 
 export default function MealDisplay({ meal, modalLauncher }: { meal: Meal, modalLauncher: ()=> void }) {
 
-    useEffect(()=> {
-        console.log("rerendering meal display")
-    }, [])
-
     return (
         <View style={styles.mealContainer}>
             <View style={styles.mealHeader}>
