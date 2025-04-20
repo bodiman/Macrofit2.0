@@ -62,7 +62,8 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 18,
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        textTransform: "capitalize"
     },
     tableDatum: {
         fontSize: 18,

@@ -17,6 +17,7 @@ export const MenuOption = ({
 
 const styles = StyleSheet.create({
     menuOption: {
-        // backgroundColor: "red"
+        // backgroundColor: "red",
+        padding: 10,
     }
 });

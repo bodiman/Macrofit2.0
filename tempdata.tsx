@@ -1,3 +1,5 @@
+//types
+
 export type Unit = {
     name: string,
     grams: number
@@ -14,13 +16,17 @@ export type Macros = {
     carbs?: number,
     fat?: number,
     fiber?: number,
+    sodium?: number,
+    sugar?: number,
+    potassium?: number
 }
 
 export type Food = {
     id: number,
     name: string,
     macros: Macros,
-    portion: Portion
+    portion: Portion,
+    servingUnits: Unit[],
 }
 
 export type FoodPreview = {
@@ -41,6 +47,8 @@ export type Range = {
     max?: number
 }
 
+export type MacroKey = keyof typeof myMacroPreferences;
+
 export const unitMap = {
     calories: "",
     protein: "g",
@@ -52,26 +60,31 @@ export const unitMap = {
     potassium: "mg"
 }
 
-export type MacroKey = keyof typeof myMacroPreferences;
-
+// Units
 const gram: Unit = {
-    name: "grams",
+    name: "g",
     grams: 1
 }
 
 const ounce: Unit = {
-    name: "ounces",
+    name: "oz",
     grams: 28.35
 }
 
-const portion: Portion = {
-    unit: gram,
-    quantity: 10
+const cup: Unit = {
+    name: "cups",
+    grams: 20
 }
+
+const servingUnits: Unit[] = [
+    gram, ounce, cup
+]
+
+// Foods
 
 const bacon: Food = {
     id: 0,
-    name: "Bacon",
+    name: "bacon",
     macros: {
         calories: 5,
         protein: 0.37,
@@ -79,9 +92,95 @@ const bacon: Food = {
         fat: 0.42,
         fiber: 0,
     },
-    portion: portion
+    portion: {
+        unit: gram,
+        quantity: 10
+    },
+    servingUnits: servingUnits
 } 
 
+const hotdog: Food = {
+    id: 0,
+    name: "hotdog",
+    macros: {
+        calories: 5,
+        protein: 0.37,
+        carbs: 0.01,
+        fat: 0.42,
+        fiber: 0,
+        sugar: 0.1,
+        sodium: 10,
+        potassium: 2,
+    },
+    servingUnits: servingUnits,
+    portion: {
+        unit: gram,
+        quantity: 10
+    }
+}
+
+const burrito: Food = {
+    id: 1,
+    name: "burrito",
+    macros: {
+        calories: 100,
+        protein: 0.237,
+        carbs: 0.41,
+        fat: 0.2,
+        fiber: 2,
+        sugar: 1,
+        sodium: 100,
+        potassium: 2,
+    },
+    servingUnits: servingUnits,
+    portion: {
+        unit: ounce,
+        quantity: 5
+    }
+}
+
+const sandwich: Food = {
+    id: 2,
+    name: "sandwich",
+    macros: {
+        calories: 40,
+        protein: 0.37,
+        carbs: 1,
+        fat: 0.1,
+        fiber: 1,
+        sugar: 2,
+        sodium: 32,
+        potassium: 200,
+    },
+    servingUnits: servingUnits,
+    portion: {
+        unit: ounce,
+        quantity: 8
+    }
+}
+
+const fried: Food = {
+    id: 2,
+    name: "fried chicken with gravy and tartar sauce",
+    macros: {
+        calories: 200,
+        protein: 0.0,
+        carbs: 0,
+        fat: 22,
+        fiber: 0,
+        sugar: 0,
+        sodium: 500,
+        potassium: 20,
+    },
+    servingUnits: servingUnits,
+    portion: {
+        unit: ounce,
+        quantity: 8
+    }
+}
+
+
+// meals
 
 export const meals = [
     {
@@ -94,13 +193,13 @@ export const meals = [
         id: 1,
         name: "Lunch",
         hour: 13,
-        foods: [bacon, bacon, bacon, bacon, bacon],
+        foods: [bacon, hotdog, bacon, hotdog, bacon],
     },
     {
         id: 2,
         name: "Dinner",
         hour: 18,
-        foods: [bacon, bacon, bacon, bacon, bacon, bacon,],
+        foods: [burrito, sandwich, fried, bacon, burrito,],
     }
 ]
 
@@ -116,61 +215,13 @@ export const myMacros = {
 }
 
 export const foodDataBase = {
-    hotdog: {
-        id: 0,
-        name: "hotdog",
-        macros: {
-            calories: 5,
-            protein: 0.37,
-            carbs: 0.01,
-            fat: 0.42,
-            fiber: 0,
-            sugar: 0.1,
-            sodium: 10,
-            potassium: 2,
-        },
-        portion: {
-            unit: gram,
-            quantity: 10
-        }
-    },
-    burrito: {
-        id: 1,
-        name: "burrito",
-        macros: {
-            calories: 100,
-            protein: 0.237,
-            carbs: 0.41,
-            fat: 0.2,
-            fiber: 2,
-            sugar: 1,
-            sodium: 100,
-            potassium: 2,
-        },
-        portion: {
-            unit: ounce,
-            quantity: 5
-        }
-    },
-    sandwich: {
-        id: 2,
-        name: "sandwich",
-        macros: {
-            calories: 40,
-            protein: 0.37,
-            carbs: 1,
-            fat: 0.1,
-            fiber: 1,
-            sugar: 2,
-            sodium: 32,
-            potassium: 200,
-        },
-        portion: {
-            unit: ounce,
-            quantity: 8
-        }
-    }
+    sandwich: sandwich,
+    hotdog: hotdog,
+    burrito: burrito,
+    fried: fried
 }
+
+// Macro preferences
 
 export const myMacroPreferences = {
     calories: {
