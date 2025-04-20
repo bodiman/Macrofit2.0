@@ -5,10 +5,10 @@ import { FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // ✅ this one
 import { SignOutButton } from '@/components/SignOutButton'
 import { Meal, meals } from '@/tempdata'
-import MealDisplay from '@/components/MealDisplay'
+import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
-import FoodSelector from '@/components/FoodSearchModal';
+import FoodSelector from '@/components/AddFood/FoodSearchModal';
 
 export default function Page() {
   const [searchMeal, setSearchMeal] = useState<Meal | null>(null);

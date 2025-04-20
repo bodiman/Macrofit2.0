@@ -8,7 +8,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 console.log("loading fontawesome")
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useState, useEffect } from 'react'
-import FoodSelector from '@/components/FoodSearchModal'
+import FoodSelector from '@/components/AddFood/FoodSearchModal'
 
 export default function Layout() {
 

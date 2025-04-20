@@ -1,7 +1,7 @@
 import Colors from "@/styles/colors"
 import { Text, View, StyleSheet } from "react-native"
 import Logo from "./Logo"
-import GlobalMacrosDisplay from "./GlobalMacrosDisplay"
+import GlobalMacrosDisplay from "./MacroDisplay/GlobalMacrosDisplay"
 
 
 

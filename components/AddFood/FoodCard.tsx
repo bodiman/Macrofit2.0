@@ -4,7 +4,7 @@ import { Text, View, StyleSheet } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TextInput } from 'react-native-gesture-handler';
 import { useState, useRef } from 'react';
-import UnitSpinner from './UnitSpinner';
+import UnitSpinner from '../Spinner/UnitSpinner';
 
 type Props = {
     food: Food
@@ -82,17 +82,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        // marginLeft: "auto"
-        // marginLeft: 20
-        // marginLeft: 25,
-        // marginTop: 10
-        // paddingHorizontal: 20,
-        // backgroundColor: "red",
     },
     portionBox: {
         backgroundColor: "white",
         flexGrow: 0,
         width: 50,
+        paddingHorizontal: 2,
         // paddingHorizontal: 10,
         height: 30,
         borderRadius: 5,
