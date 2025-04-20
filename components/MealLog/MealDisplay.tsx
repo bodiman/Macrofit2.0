@@ -38,7 +38,7 @@ export default function MealDisplay({ meal, modalLauncher }: { meal: Meal, modal
                 {
                 meal.foods.map((food, idx)=> {
                     return (
-                        <TableDisplay key={idx} name={food.name} macros={food.macros} portion={ food.portion } />
+                        <TableDisplay key={idx} name={food.food.name} macros={food.food.macros} portion={ food.portion } />
                     )
                 })
                 }

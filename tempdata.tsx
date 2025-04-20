@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 //types
 
 export type Unit = {
@@ -22,24 +24,29 @@ export type Macros = {
 }
 
 export type Food = {
-    id: number,
+    id: string,
     name: string,
     macros: Macros,
+}
+
+export type FoodServing = {
+    id: string
+    food: Food
     portion: Portion,
     servingUnits: Unit[],
 }
 
-export type FoodPreview = {
-    id: number,
-    name: string,
-    macros: Macros,
-}
+// export type FoodPreview = {
+//     id: number,
+//     name: string,
+//     macros: Macros,
+// }
 
 export type Meal = {
-    id: number,
+    id: string,
     name: string,
     hour: number,
-    foods: Food[],
+    foods: FoodServing[],
 }
 
 export type Range = {
@@ -82,8 +89,8 @@ const servingUnits: Unit[] = [
 
 // Foods
 
-const bacon: Food = {
-    id: 0,
+export const bacon: Food = {
+    id: uuidv4(),
     name: "bacon",
     macros: {
         calories: 5,
@@ -92,15 +99,15 @@ const bacon: Food = {
         fat: 0.42,
         fiber: 0,
     },
-    portion: {
-        unit: gram,
-        quantity: 10
-    },
-    servingUnits: servingUnits
+    // portion: {
+    //     unit: gram,
+    //     quantity: 10
+    // },
+    // servingUnits: servingUnits
 } 
 
-const hotdog: Food = {
-    id: 0,
+export const hotdog: Food = {
+    id: uuidv4(),
     name: "hotdog",
     macros: {
         calories: 5,
@@ -112,15 +119,15 @@ const hotdog: Food = {
         sodium: 10,
         potassium: 2,
     },
-    servingUnits: servingUnits,
-    portion: {
-        unit: gram,
-        quantity: 10
-    }
+    // servingUnits: servingUnits,
+    // portion: {
+    //     unit: gram,
+    //     quantity: 10
+    // }
 }
 
-const burrito: Food = {
-    id: 1,
+export const burrito: Food = {
+    id: uuidv4(),
     name: "burrito",
     macros: {
         calories: 100,
@@ -132,15 +139,15 @@ const burrito: Food = {
         sodium: 100,
         potassium: 2,
     },
-    servingUnits: servingUnits,
-    portion: {
-        unit: ounce,
-        quantity: 5
-    }
+    // servingUnits: servingUnits,
+    // portion: {
+    //     unit: ounce,
+    //     quantity: 5
+    // }
 }
 
-const sandwich: Food = {
-    id: 2,
+export const sandwich: Food = {
+    id: "",
     name: "sandwich",
     macros: {
         calories: 40,
@@ -152,15 +159,15 @@ const sandwich: Food = {
         sodium: 32,
         potassium: 200,
     },
-    servingUnits: servingUnits,
-    portion: {
-        unit: ounce,
-        quantity: 8
-    }
+    // servingUnits: servingUnits,
+    // portion: {
+    //     unit: ounce,
+    //     quantity: 8
+    // }
 }
 
-const fried: Food = {
-    id: 2,
+export const fried: Food = {
+    id: "",
     name: "fried chicken with gravy and tartar sauce",
     macros: {
         calories: 200,
@@ -172,36 +179,29 @@ const fried: Food = {
         sodium: 500,
         potassium: 20,
     },
-    servingUnits: servingUnits,
-    portion: {
-        unit: ounce,
-        quantity: 8
+    // servingUnits: servingUnits,
+    // portion: {
+    //     unit: ounce,
+    //     quantity: 8
+    // }
+}
+
+// temporary for testing
+export function createInstance(food: Food) {
+    const instance: FoodServing = {
+        id: uuidv4(),
+        food: {...food},
+        portion: {
+            unit: gram,
+            quantity: 10
+        },
+        servingUnits: servingUnits
     }
+    return instance
 }
 
 
 // meals
-
-export const meals = [
-    {
-        id: 0,
-        name: "Breakfast",
-        hour: 8,
-        foods: [bacon, bacon],
-    },
-    {
-        id: 1,
-        name: "Lunch",
-        hour: 13,
-        foods: [bacon, hotdog, bacon, hotdog, bacon],
-    },
-    {
-        id: 2,
-        name: "Dinner",
-        hour: 18,
-        foods: [burrito, sandwich, fried, bacon, burrito,],
-    }
-]
 
 export const myMacros = {
     calories: 864,

@@ -1,5 +1,5 @@
 import Colors from '@/styles/colors'
-import { Food, Unit } from '@/tempdata'
+import { FoodServing, Unit } from '@/tempdata'
 import { Text, View, StyleSheet } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TextInput } from 'react-native-gesture-handler';
@@ -7,7 +7,7 @@ import { useState, useRef } from 'react';
 import UnitSpinner from '../Spinner/UnitSpinner';
 
 type Props = {
-    food: Food
+    food: FoodServing
 }
 
 export default function FoodCard({ food }: Props) {
@@ -20,7 +20,7 @@ export default function FoodCard({ food }: Props) {
             <View style={styles.foodTitleSection} >
                 <Ionicons name="close" size={24} color="black" />
                 <Text style={styles.foodTitle}>
-                    {food.name}
+                    {food.food.name}
                 </Text>
             </View>
             <View style={styles.foodStatsContainer}>

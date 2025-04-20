@@ -2,12 +2,20 @@ import Colors from "@/styles/colors";
 import { View, Text, TextInput, StyleSheet } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { foodDataBase, Food } from "@/tempdata";
+import { foodDataBase, Food, FoodServing, createInstance } from "@/tempdata";
 import { FlatList } from "react-native-gesture-handler";
 import FoodCard from "./FoodCard";
+import { useEffect } from "react";
 
 export default function AddFood() {
-    const displayData: Food[] = Object.values(foodDataBase);
+    const foodDB: Food[] = Object.values(foodDataBase);
+    const displayData: FoodServing[] = [];
+
+    useEffect(()=> {
+        for (let food of foodDB) {
+            displayData.push(createInstance(food));
+        }
+    }, []);
 
     return (
         <>
@@ -25,8 +33,10 @@ export default function AddFood() {
             <View style={styles.shoppingCart}>
                 <FlatList 
                     data={displayData}
-                    renderItem={ ({item}) =>{ 
+                    keyExtractor={(item) => (item.id)}
+                    renderItem={ ({ item }) =>{ 
                         return (
+                            // <View />
                             <FoodCard food={item}></FoodCard>
                         )}
                     }

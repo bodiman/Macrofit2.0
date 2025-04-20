@@ -4,10 +4,11 @@ import { StyleSheet, View, Text } from 'react-native';
 import { useState } from 'react';
 import Colors from '@/styles/colors';
 import { FlatList } from 'react-native-gesture-handler';
-import { Food, Unit } from '@/tempdata';
+import { FoodServing, Unit } from '@/tempdata';
+import { v4 as uuidv4 } from 'uuid';
 
 type Props = {
-    foodItem: Food
+    foodItem: FoodServing
     unit: Unit,
     setUnit: (str: Unit)=> void
 }
@@ -29,7 +30,7 @@ export default function UnitSpinner({ foodItem , unit, setUnit}: Props) {
             >
                 <FlatList
                     data={foodItem.servingUnits}
-                    keyExtractor={(item)=> item.name}
+                    keyExtractor={(item)=> uuidv4()}
                     renderItem={({ item }: { item: Unit }) => (
                         <MenuOption onSelect={() => {
                             setVisible(false)

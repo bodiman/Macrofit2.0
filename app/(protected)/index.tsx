@@ -4,14 +4,20 @@ import { Text, View, ScrollView, StyleSheet, Button } from 'react-native'
 import { FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // ✅ this one
 import { SignOutButton } from '@/components/SignOutButton'
-import { Meal, meals } from '@/tempdata'
+import { Meal } from '@/tempdata'
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import FoodSelector from '@/components/AddFood/FoodSearchModal';
+import { storage, meals as defaultMeals } from '../storage/storage';
 
 export default function Page() {
   const [searchMeal, setSearchMeal] = useState<Meal | null>(null);
+  const [ meals, setMeals ] = useState(defaultMeals);
+
+  useEffect(() => {
+    storage.set('meals', JSON.stringify(defaultMeals));
+  }, []);
 
   const launchModal = (meal: Meal)=> {
     setSearchMeal(meal);
@@ -23,7 +29,7 @@ export default function Page() {
           <FlatList
             style={styles.mealContent}
             data={meals}
-            keyExtractor={(meal: Meal) => meal.name}
+            keyExtractor={(meal: Meal) => meal.id}
             renderItem={({ item }: { item: Meal }) => <MealDisplay meal={ item } modalLauncher={()=>launchModal(item)} />}
             ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
             showsVerticalScrollIndicator={false}
