@@ -1,10 +1,12 @@
-import { Meal } from '@/tempdata'
+import { FoodServing, Meal } from '@/tempdata'
 import { Text, View, StyleSheet, Pressable } from 'react-native'
 import { Svg, Circle, Text as SVGText } from 'react-native-svg';
 import Colors from '@/styles/colors'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import TableDisplay from './TableDisplay';
+import { storage } from '@/app/storage/storage';
 import React, { useEffect } from 'react';
+import { eventBus } from '@/app/storage/eventEmitter';
 
 const MyIcon = React.memo(() => (
     <Svg width="24" height="24" viewBox="0 0 100 100">
@@ -24,7 +26,26 @@ const MyIcon = React.memo(() => (
   ));
 
 
-export default function MealDisplay({ meal, modalLauncher }: { meal: Meal, modalLauncher: ()=> void }) {
+type Props = { 
+    meal: Meal, 
+    modalLauncher: ()=> void,
+}
+
+export default function MealDisplay({ meal, modalLauncher }: Props) {
+
+    const handleDeleteFood = (food: FoodServing) => {
+        const mealLog = storage.getString('meals')
+        if (mealLog != null) {
+            const allMeals = JSON.parse(mealLog) as Meal[];
+            const selectedMeal = allMeals.find(item => item.id == meal.id)
+
+            if (selectedMeal) {
+                selectedMeal.foods = selectedMeal.foods.filter((item)=> (item.id != food.id));
+                storage.set('meals', JSON.stringify(allMeals));
+                eventBus.emit('mealsUpdated')
+            }
+        }
+    }
 
     return (
         <View style={styles.mealContainer}>
@@ -38,7 +59,7 @@ export default function MealDisplay({ meal, modalLauncher }: { meal: Meal, modal
                 {
                 meal.foods.map((food, idx)=> {
                     return (
-                        <TableDisplay key={idx} name={food.food.name} macros={food.food.macros} portion={ food.portion } />
+                        <TableDisplay key={idx} foodServing={food} handleDeleteFood={()=>handleDeleteFood(food)}/>
                     )
                 })
                 }

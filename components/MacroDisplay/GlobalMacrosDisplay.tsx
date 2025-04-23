@@ -1,5 +1,5 @@
 import { Text, View, StyleSheet, LayoutChangeEvent, FlatList, Dimensions, Platform, ScaledSize } from "react-native"
-import { myMacros } from "@/tempdata"
+import { Macros, myMacros, MacroPreferences } from "@/tempdata"
 import { myMacroPreferences } from "@/tempdata"
 import MacroIndicator from "./MacroIndicator"
 import { MacroKey } from "@/tempdata"
@@ -7,12 +7,16 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { ScrollView } from "react-native-gesture-handler"
 import { useState, useEffect } from "react"
 
-export default function GlobalMacrosDisplay() {
+type Props = {
+    macroPreferences: MacroPreferences
+}
+
+export default function GlobalMacrosDisplay({ macroPreferences }: Props) {
     const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width);
 
     useEffect(() => {
         const onChange = ({ window }: { window: ScaledSize }) => {
-        setWindowWidth(window.width);
+            setWindowWidth(window.width);
         };
 
         const subscription = Dimensions.addEventListener("change", onChange);
@@ -20,11 +24,14 @@ export default function GlobalMacrosDisplay() {
         return () => subscription.remove(); // Clean up on unmount
     }, []);
 
-    const groupedMacros = (Object.keys(myMacroPreferences) as MacroKey[]).reduce<MacroKey[][]>((acc, item, index) => {
+    const groupedMacros = (Object.keys(macroPreferences) as MacroKey[]).reduce<MacroKey[][]>((acc, item, index) => {
+        if(!macroPreferences[item]) return acc;
+
         const groupIndex = Math.floor(index / 3);
         if (!acc[groupIndex]) {
             acc[groupIndex] = [];
         }
+
         acc[groupIndex].push(item);
         return acc;
     }, []);
@@ -32,22 +39,24 @@ export default function GlobalMacrosDisplay() {
     const renderItem = ({ item }: { item: MacroKey[] }) => (
         <View style={[styles.macroContainer, { width: windowWidth - 40, gap: (windowWidth - 340) / 2 }]}>
             {item.map((macro) => (
-            <MacroIndicator
-                key={macro}
-                unit={macro}
-                value={myMacros[macro]}
-                range={myMacroPreferences[macro]}
-            />
+                macroPreferences[macro] &&
+                <MacroIndicator
+                    key={macro}
+                    unit={macro}
+                    value={myMacros[macro]}
+                    range={macroPreferences[macro]}
+                />
             ))}
         </View>
     );
 
-    const renderItemWeb = ({ item }: { item: MacroKey }) => (
+    const renderItemWeb = ({ macro }: { macro: MacroKey }) => (
+             macroPreferences[macro] &&
             <MacroIndicator
-                key={item}
-                unit={item}
-                value={myMacros[item]}
-                range={myMacroPreferences[item]}
+                key={macro}
+                unit={macro}
+                value={myMacros[macro]}
+                range={macroPreferences[macro]}
             />
     );
 

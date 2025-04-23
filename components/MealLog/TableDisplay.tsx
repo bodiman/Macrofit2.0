@@ -1,4 +1,4 @@
-import { Food, Macros, Portion } from "@/tempdata";
+import { Food, FoodServing, Macros, Portion } from "@/tempdata";
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import Colors from "@/styles/colors";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -23,19 +23,20 @@ const MyIcon = React.memo(() => (
     </Svg>
   ));
 
-export default function TableRow({ name, portion, macros }: { name: string, portion: Portion, macros: Macros}) {
-    const handleDeleteFood = ()=> {
-        alert("Shut the fuck up")
-    }
+type Props = {
+    foodServing: FoodServing,
+    handleDeleteFood: ()=> void
+}
 
+export default function TableRow({ foodServing, handleDeleteFood }: Props) {
     return (
         <View style={styles.container}>
             <Text style={styles.tableName}>
-                { name } 
-                <View><Text style={styles.portion}>{ portion.quantity } { portion.unit.name }</Text></View>
+                { foodServing.food.name } 
+                <View><Text style={styles.portion}>{ foodServing.portion.quantity } { foodServing.portion.unit.name }</Text></View>
             </Text>
             <Text style={styles.tableDatum}>
-                { macros.calories }
+                { foodServing.food.macros.calories }
             </Text>
             <Pressable style={styles.deleteIcon} onPress={handleDeleteFood}>
                 <MyIcon></MyIcon>

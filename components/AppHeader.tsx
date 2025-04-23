@@ -2,6 +2,7 @@ import Colors from "@/styles/colors"
 import { Text, View, StyleSheet } from "react-native"
 import Logo from "./Logo"
 import GlobalMacrosDisplay from "./MacroDisplay/GlobalMacrosDisplay"
+import { myMacroPreferences } from "@/tempdata"
 
 
 
@@ -11,7 +12,7 @@ export default function AppHeader() {
             <View style={styles.header}>
                 <Logo size1={25} size2={25} theme={"dark"} />
                 <View style={styles.globalMacroContainer}>
-                    <GlobalMacrosDisplay />
+                    <GlobalMacrosDisplay macroPreferences={myMacroPreferences} />
                 </View>  
             </View>        
     )

@@ -8,8 +8,9 @@ import { Meal } from '@/tempdata'
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
-import FoodSelector from '@/components/AddFood/FoodSearchModal';
 import { storage, meals as defaultMeals } from '../storage/storage';
+import { eventBus } from '../storage/eventEmitter';
+import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 
 export default function Page() {
   const [searchMeal, setSearchMeal] = useState<Meal | null>(null);
@@ -17,10 +18,21 @@ export default function Page() {
 
   useEffect(() => {
     storage.set('meals', JSON.stringify(defaultMeals));
+
+    eventBus.on('mealsUpdated', ()=> {
+      const updatedMeals = storage.getString('meals');
+      if (updatedMeals) {
+        setMeals(JSON.parse(updatedMeals))
+      }
+    })
   }, []);
 
   const launchModal = (meal: Meal)=> {
     setSearchMeal(meal);
+  }
+
+  const closeModal = ()=> {
+    setSearchMeal(null);
   }
 
   return (
@@ -34,7 +46,7 @@ export default function Page() {
             ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
             showsVerticalScrollIndicator={false}
           />
-          <FoodSelector activeMeal={searchMeal} onClose={()=>setSearchMeal(null)}></FoodSelector>
+          <FoodSearchModal activeMeal={searchMeal} modalCloser={closeModal} onClose={()=>setSearchMeal(null)} />
         </SignedIn>
       </View>
   )

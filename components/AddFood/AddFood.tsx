@@ -1,21 +1,28 @@
 import Colors from "@/styles/colors";
-import { View, Text, TextInput, StyleSheet } from "react-native"
+import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { foodDataBase, Food, FoodServing, createInstance } from "@/tempdata";
+import { foodDataBase, Food, FoodServing, createInstance, myMacroPreferences } from "@/tempdata";
 import { FlatList } from "react-native-gesture-handler";
 import FoodCard from "./FoodCard";
-import { useEffect } from "react";
+import { useEffect, useState, } from "react";
+import { storage } from "@/app/storage/storage";
+import GlobalMacrosDisplay from "../MacroDisplay/GlobalMacrosDisplay";
 
 export default function AddFood() {
     const foodDB: Food[] = Object.values(foodDataBase);
-    const displayData: FoodServing[] = [];
+    const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
 
     useEffect(()=> {
-        for (let food of foodDB) {
-            displayData.push(createInstance(food));
+        const cachedShoppingCart = storage.getString('shoppingCart');
+        if (cachedShoppingCart) {
+            setShoppingCart(JSON.parse(cachedShoppingCart));
         }
     }, []);
+
+    const handleLog = ()=> {
+
+    }
 
     return (
         <>
@@ -30,13 +37,16 @@ export default function AddFood() {
                 </View>   
             </View>
 
+            <View>
+                <GlobalMacrosDisplay macroPreferences={myMacroPreferences} />
+            </View>
+
             <View style={styles.shoppingCart}>
                 <FlatList 
-                    data={displayData}
+                    data={shoppingCart}
                     keyExtractor={(item) => (item.id)}
                     renderItem={ ({ item }) =>{ 
                         return (
-                            // <View />
                             <FoodCard food={item}></FoodCard>
                         )}
                     }
@@ -53,7 +63,6 @@ export default function AddFood() {
 
 const styles = StyleSheet.create({
     iconContainer: {
-        // backgroundColor: Colors.coolgray
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
@@ -96,7 +105,6 @@ const styles = StyleSheet.create({
         marginHorizontal: "auto",
         bottom: 0,
         flexGrow: 1,
-        borderTopRightRadius: 10,
-        borderTopLeftRadius: 10,
+        borderRadius: 20,
     },
 });

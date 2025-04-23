@@ -87,6 +87,17 @@ const servingUnits: Unit[] = [
     gram, ounce, cup
 ]
 
+export type MacroPreferences = {
+    calories?: Range,
+    protein?: Range,
+    carbs?: Range,
+    fat?: Range,
+    fiber?: Range,
+    sugar?: Range,
+    sodium?: Range,
+    potassium?: Range
+}
+
 // Foods
 
 export const bacon: Food = {
@@ -223,7 +234,7 @@ export const foodDataBase = {
 
 // Macro preferences
 
-export const myMacroPreferences = {
+export const myMacroPreferences: MacroPreferences = {
     calories: {
         min: 1800,
         max: 2000
