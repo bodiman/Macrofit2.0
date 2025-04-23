@@ -8,6 +8,7 @@ import FoodCard from "./FoodCard";
 import { useEffect, useState, } from "react";
 import { storage } from "@/app/storage/storage";
 import GlobalMacrosDisplay from "../MacroDisplay/GlobalMacrosDisplay";
+import ResultContent from "./ResultContent";
 
 export default function AddFood() {
     const foodDB: Food[] = Object.values(foodDataBase);
@@ -28,13 +29,19 @@ export default function AddFood() {
         <>
             <View style={styles.searchContainer}>
                 {/* <Text style={styles.searchText}>Search</Text> */}
-                <View style={styles.searchBarContainer}>
+                <View style={styles.headerContainer}>
                     {/* <View style={{paddingHorizontal: 10}}>
                         <Text>Search</Text>
                     </View> */}
-                    <TextInput style={styles.searchBar} placeholder={"Search Foods to Add"} />
+                    <View style={styles.searchBarContainer}>
+                        <TextInput style={styles.searchBar} placeholder={"Search Foods to Add"} />
+                    </View>
+                    <View style={{position: "absolute", top: "103%", width: "100%"}}>
+                        <ResultContent />
+                    </View>
+                    {/* <TextInput style={styles.searchBar} placeholder={"Search Foods to Add"} /> */}
                     <View style={styles.iconContainer}>
-                        <Ionicons name="filter-sharp" size={24} color="black"  /> 
+                        {/* <Ionicons name="filter-sharp" size={24} color="black"  />  */}
                         <MaterialCommunityIcons name="barcode-scan" size={24} color="black" style={styles.iconContainer} />
                     </View>
                 </View>   
@@ -69,7 +76,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 6,
-        paddingLeft: 12,
+        paddingLeft: 6,
         paddingRight: 6,
         backgroundColor: Colors.lightgray,
         height: "100%",
@@ -87,7 +94,7 @@ const styles = StyleSheet.create({
         marginBottom: 5,
         // marginLeft: "20%"
     },
-    searchBarContainer: {
+    headerContainer: {
         display: "flex",
         width: "100%",
         flexDirection: "row",
@@ -97,7 +104,8 @@ const styles = StyleSheet.create({
         borderTopColor: Colors.black,
         borderTopWidth: 1,
         borderBottomWidth: 1,
-        alignItems: "center"
+        alignItems: "center",
+        zIndex: 5
         // borderRadius: 5,
         // marginTop: 20,
     },
@@ -111,7 +119,7 @@ const styles = StyleSheet.create({
         borderRightWidth: 1,
         // borderTopWidth: 0,
         // borderBottomWidth: 0,
-        marginHorizontal: "auto",
+        // marginHorizontal: "auto",
     },
     shoppingCart: {
         display: "flex",
@@ -128,7 +136,8 @@ const styles = StyleSheet.create({
             width: 2,
             height: 2
         },
-        overflow: "hidden"
+        overflow: "hidden",
+        zIndex: -5
     },
     macroContainer: {
         // paddingTop: 20,
@@ -146,5 +155,10 @@ const styles = StyleSheet.create({
             width: 0,
             height: 1
         }
-    }
+    },
+    searchBarContainer: {
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+    },
 });
