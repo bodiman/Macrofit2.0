@@ -8,15 +8,21 @@ import { ScrollView } from "react-native-gesture-handler"
 import { useState, useEffect } from "react"
 
 type Props = {
-    macroPreferences: MacroPreferences
+    macroPreferences: MacroPreferences,
+    radius: number,
+    indicators: number
 }
 
-export default function GlobalMacrosDisplay({ macroPreferences }: Props) {
+export default function GlobalMacrosDisplay({ macroPreferences, radius, indicators }: Props) {
+
+    // total width = 2 * radius * indicators + gap * (indicators - 1)
     const [containerWidth, setContainerWidth] = useState(Dimensions.get("window").width - 40);
+    const [gap, setGap] = useState((containerWidth - 2 * radius * indicators) / (indicators - 1))
 
     const onLayout = (event: LayoutChangeEvent) => {
         const { width } = event.nativeEvent.layout;
         setContainerWidth(width);
+        setGap(Math.max((width - 2 * radius * indicators) / (indicators - 1), 0))
     };
 
     // useEffect(() => {
@@ -31,7 +37,7 @@ export default function GlobalMacrosDisplay({ macroPreferences }: Props) {
 
     const groupedMacros = (Object.keys(macroPreferences) as MacroKey[]).reduce<MacroKey[][]>((acc, item, index) => {
         if (!macroPreferences[item]) return acc;
-        const groupIndex = Math.floor(index / 3);
+        const groupIndex = Math.floor(index / indicators);
         if (!acc[groupIndex]) {
             acc[groupIndex] = [];
         }
@@ -40,13 +46,14 @@ export default function GlobalMacrosDisplay({ macroPreferences }: Props) {
     }, []);
 
     const renderItem = ({ item }: { item: MacroKey[] }) => (
-        <View style={[styles.macroContainer, { width: containerWidth, gap: (containerWidth - 300) / 2 }]}>
+        <View style={[styles.macroContainer, { width: containerWidth, gap: gap }]}>
             {item.map((macro) => (
             macroPreferences[macro] &&
             <MacroIndicator
                 key={macro}
                 unit={macro}
                 value={myMacros[macro]}
+                radius={radius}
                 range={macroPreferences[macro]}
             />
             ))}
@@ -54,10 +61,7 @@ export default function GlobalMacrosDisplay({ macroPreferences }: Props) {
     );
 
     return (
-        <View style={{width: "100%"}} onLayout={(event)=>{
-            const { width } = event.nativeEvent.layout;
-            setContainerWidth(width);
-        }}>
+        <View style={{width: "100%"}} onLayout={onLayout}>
             <FlatList
                 data={groupedMacros}
                 keyExtractor={(_, i) => i.toString()}
@@ -65,7 +69,7 @@ export default function GlobalMacrosDisplay({ macroPreferences }: Props) {
                 horizontal
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={[styles.flatListContainer, { gap: 20 }]}
+                contentContainerStyle={[styles.flatListContainer, { gap: gap }]}
             />
         </View>
     )

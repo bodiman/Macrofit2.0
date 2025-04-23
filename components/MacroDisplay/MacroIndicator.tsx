@@ -5,7 +5,13 @@ import { Range, unitMap } from "@/tempdata";
 // import { useState } from "react"
 import { MacroKey } from "@/tempdata";
 
-export default function MacroIndicator({ value, range, unit }: { value: number, range: Range, unit: MacroKey}) {
+type Props = { 
+    value: number, 
+    range: Range, 
+    radius: number,
+    unit: MacroKey}
+
+export default function MacroIndicator({ value, range, unit, radius }: Props) {
 
     function clip(value: number, range: Range): number {
         if (range.min && value < range.min) return range.min;
@@ -16,14 +22,15 @@ export default function MacroIndicator({ value, range, unit }: { value: number, 
     return (
         <View style={{pointerEvents: "none"}}>
             <CircularProgressBar 
-                radius={50}
+                radius={radius}
                 value={ value }
                 titleColor={Colors.black}
+                circleBackgroundColor={Colors.white}
                 title={unit}
                 activeStrokeWidth={10}
                 inActiveStrokeWidth={10}
                 maxValue={clip(value, range)}
-                progressValueStyle={{ fontSize: 20 }}
+                progressValueStyle={{ fontSize: 3 * radius / (3 + Math.max(String(value.toFixed() + unitMap[unit]).length, 4)) }}
                 progressFormatter={(value: number) => {                    
                     return value.toFixed() + unitMap[unit]; // 2 decimal places
                 }}

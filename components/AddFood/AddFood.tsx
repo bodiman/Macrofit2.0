@@ -29,7 +29,10 @@ export default function AddFood() {
             <View style={styles.searchContainer}>
                 {/* <Text style={styles.searchText}>Search</Text> */}
                 <View style={styles.searchBarContainer}>
-                    <TextInput style={styles.searchBar} />
+                    {/* <View style={{paddingHorizontal: 10}}>
+                        <Text>Search</Text>
+                    </View> */}
+                    <TextInput style={styles.searchBar} placeholder={"Search Foods to Add"} />
                     <View style={styles.iconContainer}>
                         <Ionicons name="filter-sharp" size={24} color="black"  /> 
                         <MaterialCommunityIcons name="barcode-scan" size={24} color="black" style={styles.iconContainer} />
@@ -37,11 +40,10 @@ export default function AddFood() {
                 </View>   
             </View>
 
-            <View>
-                <GlobalMacrosDisplay macroPreferences={myMacroPreferences} />
-            </View>
-
             <View style={styles.shoppingCart}>
+                <View style={styles.macroContainer}>
+                    <GlobalMacrosDisplay macroPreferences={myMacroPreferences} radius={30} indicators={4} />
+                </View>
                 <FlatList 
                     data={shoppingCart}
                     keyExtractor={(item) => (item.id)}
@@ -66,11 +68,17 @@ const styles = StyleSheet.create({
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        gap: 12,
-        paddingRight: 5,
+        gap: 6,
+        paddingLeft: 12,
+        paddingRight: 6,
+        backgroundColor: Colors.lightgray,
+        height: "100%",
+        // flexGrow: 1,
+        // borderTopColor: Colors.black,
+        // borderTopWidth: 1,
     },
     searchContainer: {
-        paddingVertical: 20,
+        // paddingVertical: 20,
         alignContent: "center"
     },
     searchText: {
@@ -81,30 +89,62 @@ const styles = StyleSheet.create({
     },
     searchBarContainer: {
         display: "flex",
-        width: "80%",
+        width: "100%",
         flexDirection: "row",
-        gap: 10,
+        // gap: 10,
         marginHorizontal: "auto",
-        backgroundColor: Colors.lightgray,
-        borderRadius: 5,
+        backgroundColor: Colors.white,
+        borderTopColor: Colors.black,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        alignItems: "center"
+        // borderRadius: 5,
+        // marginTop: 20,
     },
     searchBar: {
         backgroundColor: Colors.white,
-        borderTopLeftRadius: 5,
-        borderBottomLeftRadius: 5,
+        // borderTopLeftRadius: 5,
+        // borderBottomLeftRadius: 5,
         flexGrow: 1,
-        padding: 5,
+        padding: 10,
         borderColor: Colors.black,
-        borderWidth: 1,
-        marginHorizontal: "auto"
+        borderRightWidth: 1,
+        // borderTopWidth: 0,
+        // borderBottomWidth: 0,
+        marginHorizontal: "auto",
     },
     shoppingCart: {
         display: "flex",
         width: "80%",
         backgroundColor: Colors.white,
         marginHorizontal: "auto",
+        marginTop: 20,
         bottom: 0,
         flexGrow: 1,
         borderRadius: 20,
+        shadowColor: Colors.black,
+        shadowOpacity: 0.25,
+        shadowOffset: {
+            width: 2,
+            height: 2
+        },
+        overflow: "hidden"
     },
+    macroContainer: {
+        // paddingTop: 20,
+        // paddingHorizontal: 10,
+        padding: 5,
+        paddingHorizontal: 20,
+        width: "100%",
+        margin: "auto",
+        backgroundColor: Colors.white,
+        borderBottomLeftRadius: 5,
+        borderBottomRightRadius: 5,
+        shadowColor: Colors.black,
+        shadowOpacity: 0.25,
+        shadowOffset: {
+            width: 0,
+            height: 1
+        }
+    }
 });

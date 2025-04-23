@@ -12,7 +12,7 @@ export default function AppHeader() {
             <View style={styles.header}>
                 <Logo size1={25} size2={25} theme={"dark"} />
                 <View style={styles.globalMacroContainer}>
-                    <GlobalMacrosDisplay macroPreferences={myMacroPreferences} />
+                    <GlobalMacrosDisplay macroPreferences={myMacroPreferences} indicators={3} radius={50} />
                 </View>  
             </View>        
     )
