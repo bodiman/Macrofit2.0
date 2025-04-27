@@ -13,6 +13,7 @@ import ResultContent from "./ResultContent";
 export default function AddFood() {
     const foodDB: Food[] = Object.values(foodDataBase);
     const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
+    const [displayResults, setDisplayResults] = useState(false);
 
     useEffect(()=> {
         const cachedShoppingCart = storage.getString('shoppingCart');
@@ -34,10 +35,14 @@ export default function AddFood() {
                         <Text>Search</Text>
                     </View> */}
                     <View style={styles.searchBarContainer}>
-                        <TextInput style={styles.searchBar} placeholder={"Search Foods to Add"} />
+                        <TextInput 
+                            style={styles.searchBar} placeholder={"Search Foods to Add"} 
+                            onFocus={() => setDisplayResults(true)}
+                            onBlur={() => setDisplayResults(false)}
+                        />
                     </View>
                     <View style={{position: "absolute", top: "103%", width: "100%"}}>
-                        <ResultContent />
+                        <ResultContent visible={displayResults} />
                     </View>
                     {/* <TextInput style={styles.searchBar} placeholder={"Search Foods to Add"} /> */}
                     <View style={styles.iconContainer}>
@@ -86,7 +91,11 @@ const styles = StyleSheet.create({
     },
     searchContainer: {
         // paddingVertical: 20,
-        alignContent: "center"
+        alignContent: "center",
+        marginLeft: "auto",
+        marginRight: "auto",
+        marginTop: 20,
+        width: "80%"
     },
     searchText: {
         fontSize: 18,
@@ -104,6 +113,7 @@ const styles = StyleSheet.create({
         borderTopColor: Colors.black,
         borderTopWidth: 1,
         borderBottomWidth: 1,
+        borderLeftWidth: 1,
         alignItems: "center",
         zIndex: 5
         // borderRadius: 5,

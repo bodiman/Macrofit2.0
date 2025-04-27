@@ -1,74 +1,50 @@
-import { View, Text, ScrollView, StyleSheet } from "react-native"
+import { View, Text, ScrollView, StyleSheet, Animated } from "react-native"
+import { useEffect, useRef } from "react"
 import Colors from "@/styles/colors"
 
-export default function ResultContent() {
+type Props = {
+    visible: boolean
+}
+
+export default function ResultContent({visible}: Props) {
+    const fadeAnim = useRef(new Animated.Value(0)).current; // Start fully transparent
+
+    useEffect(() => {
+        fadeAnim.setValue(0);
+
+        if (visible) {
+            Animated.timing(fadeAnim, {
+                toValue: 1,              // Fade to fully opaque
+                duration: 200,           // Over 500ms
+                useNativeDriver: true,   // Always use native driver for opacity
+            }).start();
+        }
+    }, [fadeAnim, visible]);
+
     return (
-        <View style={styles.resultContent}>
-            <View style={{paddingTop: 0, /*borderBottomColor: Colors.black, borderBottomWidth: 1,*/}}>
-                <ScrollView 
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={{backgroundColor: Colors.coolgray,}}
-                    contentContainerStyle={styles.tabContainer}
-                >
-                    <View style={[styles.tab, styles.selectedTab]}><Text style={styles.tabText}>All</Text></View>
-                    <View style={styles.tab}><Text style={styles.tabText}>Common</Text></View>
-                    <View style={styles.tab}><Text style={styles.tabText}>Clark Kerr Campus</Text></View>
-                    <View style={styles.addTab}><Text style={styles.tabText}>+ Add</Text></View>
-                </ScrollView>
+        <Animated.View style={[styles.resultContent, {display: visible ? "flex": "none", opacity: fadeAnim}]}>
+            <Text>Showing Results for All Foods</Text>
+
                 
-                {/* <Text>Search Results for All Foods</Text> */}
-            </View>
-            <Text>This is the result content</Text>
-        </View>
+            {/* <Text>This is the result content</Text> */}
+        </Animated.View>
     )
 }
 
 const styles = StyleSheet.create({
     resultContent: {
-        backgroundColor: "white",
+        backgroundColor: "#F0FFF7",
         width: "100%",
         height: 200,
         zIndex: 0,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
+        shadowColor: Colors.black,
+        shadowOpacity: 0.5,
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        }
         // padding: 20,
     },
-    tabContainer: {
-        gap: 1,
-        // borderRadius: 20,
-        paddingHorizontal: 5,
-        paddingTop: 5,
-        width: "100%",
-        borderColor: Colors.gray,
-        borderBottomWidth: 1,
-    },
-    tab: {
-        // backgroundColor: Colors.coolgray,
-        padding: 15,
-        paddingHorizontal: 20,
-        paddingVertical: 2,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
-        borderColor: Colors.gray,
-        borderWidth: 1,
-        borderBottomWidth: 0,
-        alignContent: "center",
-        justifyContent: "center",
-        borderBottomLeftRadius: -5,
-    },
-    selectedTab: {
-        backgroundColor: "white",
-        borderBottomWidth: 0
-    },
-    addTab: {
-        // backgroundColor: Colors.coolgray,
-        padding: 10,
-        paddingVertical: 5,
-        borderRadius: 10
-    },
-    tabText: {
-        fontSize: 14,
-        fontWeight: 500,
-    }
 });
