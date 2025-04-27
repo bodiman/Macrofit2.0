@@ -29,25 +29,23 @@ export default function AddFood() {
     return (
         <>
             <View style={styles.searchContainer}>
-                {/* <Text style={styles.searchText}>Search</Text> */}
                 <View style={styles.headerContainer}>
-                    {/* <View style={{paddingHorizontal: 10}}>
-                        <Text>Search</Text>
-                    </View> */}
                     <View style={styles.searchBarContainer}>
                         <TextInput 
                             style={styles.searchBar} placeholder={"Search Foods to Add"} 
                             onFocus={() => setDisplayResults(true)}
-                            onBlur={() => setDisplayResults(false)}
                         />
+                        <View style={styles.iconContainer}>
+                            <MaterialCommunityIcons name="barcode-scan" size={24} color="black" style={styles.iconContainer} />
+                        </View>
                     </View>
-                    <View style={{position: "absolute", top: "103%", width: "100%"}}>
-                        <ResultContent visible={displayResults} />
-                    </View>
-                    {/* <TextInput style={styles.searchBar} placeholder={"Search Foods to Add"} /> */}
-                    <View style={styles.iconContainer}>
-                        {/* <Ionicons name="filter-sharp" size={24} color="black"  />  */}
-                        <MaterialCommunityIcons name="barcode-scan" size={24} color="black" style={styles.iconContainer} />
+                    
+
+                    <Pressable style={{ zIndex: -5, display: displayResults? "flex": "none" }} onPress={()=>setDisplayResults(false)}>
+                        <View style={{position: "fixed", top: 0, left: 0, width: "100%", height: "100%"}} />
+                    </Pressable>
+                    <View style={{position: "absolute", top: "100%", width: "100%"}}>
+                        <ResultContent visible={displayResults} closeModal={()=>{}} />
                     </View>
                 </View>   
             </View>
@@ -84,10 +82,6 @@ const styles = StyleSheet.create({
         paddingLeft: 6,
         paddingRight: 6,
         backgroundColor: Colors.lightgray,
-        height: "100%",
-        // flexGrow: 1,
-        // borderTopColor: Colors.black,
-        // borderTopWidth: 1,
     },
     searchContainer: {
         // paddingVertical: 20,
@@ -95,7 +89,7 @@ const styles = StyleSheet.create({
         marginLeft: "auto",
         marginRight: "auto",
         marginTop: 20,
-        width: "80%"
+        width: "80%",
     },
     searchText: {
         fontSize: 18,
@@ -109,11 +103,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         // gap: 10,
         marginHorizontal: "auto",
-        backgroundColor: Colors.white,
-        borderTopColor: Colors.black,
-        borderTopWidth: 1,
-        borderBottomWidth: 1,
-        borderLeftWidth: 1,
         alignItems: "center",
         zIndex: 5
         // borderRadius: 5,
@@ -167,8 +156,13 @@ const styles = StyleSheet.create({
         }
     },
     searchBarContainer: {
+        borderTopColor: Colors.black,
+        borderWidth: 1,
+        borderRadius: 5,
+        overflow: "hidden",
         display: "flex",
-        flexDirection: "column",
+        // flexDirection: "column",
+        flexDirection: "row",
         flexGrow: 1,
     },
 });

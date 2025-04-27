@@ -27,7 +27,7 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser }: Pr
                 <MaterialIcons name="close" color="#fff" size={22} />
               </Pressable>
             </View>
-            <AddFood />
+              <AddFood />
             <View style={styles.buttonContainer}>
                 <TouchableOpacity style={styles.button} onPress={modalCloser}>
                     <Text style={styles.buttonText}>Log</Text>
