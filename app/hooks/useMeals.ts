@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Meal } from '@/tempdata';
+import { Meal, FoodServing, Portion } from '@/tempdata';
 import storage, { meals as defaultMeals } from '../storage/storage';
 import { eventBus } from '../storage/eventEmitter';
 
 export function useMeals() {
     const [meals, setMeals] = useState<Meal[]>(defaultMeals);
     const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
+    const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
 
     // Initialize meals from storage
     useEffect(() => {
@@ -55,6 +56,28 @@ export function useMeals() {
         updateMeal(updatedMeal);
     };
 
+    // Update a food's portion in a meal
+    const updateFoodPortion = (foodId: string, newPortion: Portion) => {
+        const updatedMeals = meals.map(meal => {
+            const updatedFoods = meal.foods.map(food => {
+                if (food.id === foodId) {
+                    return {
+                        ...food,
+                        portion: newPortion
+                    };
+                }
+                return food;
+            });
+            return {
+                ...meal,
+                foods: updatedFoods
+            };
+        });
+        setMeals(updatedMeals);
+        storage.set('meals', JSON.stringify(updatedMeals));
+        eventBus.emit('mealsUpdated');
+    };
+
     // Open the food search modal for a specific meal
     const openFoodSearch = (meal: Meal) => {
         setActiveMeal(meal);
@@ -68,8 +91,11 @@ export function useMeals() {
     return {
         meals,
         activeMeal,
+        editingFood,
+        setEditingFood,
         updateMeal,
         addFoodsToMeal,
+        updateFoodPortion,
         openFoodSearch,
         closeFoodSearch
     };

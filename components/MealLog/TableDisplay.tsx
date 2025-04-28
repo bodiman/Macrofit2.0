@@ -32,27 +32,28 @@ const calculateAdjustedCalories = (foodServing: FoodServing): number => {
 
 type Props = {
     foodServing: FoodServing,
-    handleDeleteFood: ()=> void
+    handleDeleteFood: ()=> void,
+    onPress?: () => void
 }
 
-export default function TableRow({ foodServing, handleDeleteFood }: Props) {
+export default function TableRow({ foodServing, handleDeleteFood, onPress }: Props) {
     const adjustedCalories = calculateAdjustedCalories(foodServing);
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.tableName}>
-                { foodServing.food.name } 
-                <View><Text style={styles.portion}>{ foodServing.portion.quantity } { foodServing.portion.unit.name }</Text></View>
-            </Text>
-            <Text style={styles.tableDatum}>
-                { adjustedCalories }
-            </Text>
-            <Pressable style={styles.deleteIcon} onPress={handleDeleteFood}>
-                <MyIcon></MyIcon>
-                {/* <FontAwesome name="minus-circle" size={24} color={Colors.orange} /> */}
-                {/* <Text>-</Text> */}
-            </Pressable>
-        </View>
+        <Pressable onPress={onPress}>
+            <View style={styles.container}>
+                <Text style={styles.tableName}>
+                    { foodServing.food.name } 
+                    <View><Text style={styles.portion}>{ foodServing.portion.quantity } { foodServing.portion.unit.name }</Text></View>
+                </Text>
+                <Text style={styles.tableDatum}>
+                    { adjustedCalories }
+                </Text>
+                <Pressable style={styles.deleteIcon} onPress={handleDeleteFood}>
+                    <MyIcon></MyIcon>
+                </Pressable>
+            </View>
+        </Pressable>
     )
 }
 

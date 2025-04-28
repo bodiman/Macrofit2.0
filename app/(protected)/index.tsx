@@ -4,11 +4,12 @@ import { Text, View, ScrollView, StyleSheet, Button } from 'react-native'
 import { FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SignOutButton } from '@/components/SignOutButton'
-import { Meal } from '@/tempdata'
+import { Meal, FoodServing } from '@/tempdata'
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
+import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import { useMeals } from '../hooks/useMeals';
 
 export default function Page() {
@@ -17,7 +18,10 @@ export default function Page() {
     activeMeal, 
     updateMeal, 
     openFoodSearch, 
-    closeFoodSearch 
+    closeFoodSearch,
+    editingFood,
+    setEditingFood,
+    updateFoodPortion
   } = useMeals();
 
   return (
@@ -30,7 +34,8 @@ export default function Page() {
             renderItem={({ item }: { item: Meal }) => (
               <MealDisplay 
                 meal={item} 
-                modalLauncher={() => openFoodSearch(item)} 
+                modalLauncher={() => openFoodSearch(item)}
+                onFoodPress={(food) => setEditingFood(food)}
               />
             )}
             ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
@@ -42,6 +47,17 @@ export default function Page() {
             onClose={closeFoodSearch}
             onUpdateMeal={updateMeal}
           />
+          {editingFood && (
+            <EditFoodModal
+              food={editingFood}
+              onClose={() => setEditingFood(null)}
+              onUpdatePortion={(portion) => {
+                if (editingFood) {
+                  updateFoodPortion(editingFood.id, portion);
+                }
+              }}
+            />
+          )}
         </SignedIn>
       </View>
   )

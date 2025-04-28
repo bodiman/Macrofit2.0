@@ -25,14 +25,13 @@ const MyIcon = React.memo(() => (
     </Svg>
   ));
 
-
 type Props = { 
     meal: Meal, 
     modalLauncher: ()=> void,
+    onFoodPress: (food: FoodServing) => void,
 }
 
-export default function MealDisplay({ meal, modalLauncher }: Props) {
-
+export default function MealDisplay({ meal, modalLauncher, onFoodPress }: Props) {
     const handleDeleteFood = (food: FoodServing) => {
         const mealLog = storage.getString('meals')
         if (mealLog != null) {
@@ -59,14 +58,17 @@ export default function MealDisplay({ meal, modalLauncher }: Props) {
                 {
                 meal.foods.map((food, idx)=> {
                     return (
-                        <TableDisplay key={idx} foodServing={food} handleDeleteFood={()=>handleDeleteFood(food)}/>
+                        <TableDisplay 
+                            key={idx} 
+                            foodServing={food} 
+                            handleDeleteFood={()=>handleDeleteFood(food)}
+                            onPress={() => onFoodPress(food)}
+                        />
                     )
                 })
                 }
             </View>
         </View>
-        
-        
     )
 }
 
