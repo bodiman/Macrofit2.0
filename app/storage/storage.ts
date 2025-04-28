@@ -1,26 +1,27 @@
 import { MMKV } from 'react-native-mmkv';
-import { bacon, hotdog, sandwich, fried, burrito, createInstance } from '@/tempdata'
+import { bacon, hotdog, sandwich, fried, burrito } from '@/tempdata'
 
 
-export const storage = new MMKV();
+const storage = new MMKV();
+export default storage
 
 export const meals = [
     {
         id: '0',
         name: "Breakfast",
         hour: 8,
-        foods: [createInstance(bacon), createInstance(hotdog), createInstance(sandwich)],
+        foods: [],
     },
     {
         id: '1',
         name: "Lunch",
         hour: 13,
-        foods: [createInstance(burrito), createInstance(bacon), createInstance(hotdog)],
+        foods: [],
     },
     {
         id: '2',
         name: "Dinner",
         hour: 18,
-        foods: [createInstance(burrito), createInstance(sandwich), createInstance(fried), createInstance(bacon)],
+        foods: [],
     }
 ]

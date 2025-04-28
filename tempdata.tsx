@@ -36,12 +36,6 @@ export type FoodServing = {
     servingUnits: Unit[],
 }
 
-// export type FoodPreview = {
-//     id: number,
-//     name: string,
-//     macros: Macros,
-// }
-
 export type Meal = {
     id: string,
     name: string,
@@ -68,22 +62,22 @@ export const unitMap = {
 }
 
 // Units
-const gram: Unit = {
+export const gram: Unit = {
     name: "g",
     grams: 1
 }
 
-const ounce: Unit = {
+export const ounce: Unit = {
     name: "oz",
     grams: 28.35
 }
 
-const cup: Unit = {
+export const cup: Unit = {
     name: "cups",
     grams: 20
 }
 
-const servingUnits: Unit[] = [
+export const servingUnits: Unit[] = [
     gram, ounce, cup
 ]
 

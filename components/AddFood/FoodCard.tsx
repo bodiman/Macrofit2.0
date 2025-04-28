@@ -1,19 +1,47 @@
 import Colors from '@/styles/colors'
-import { FoodServing, Unit } from '@/tempdata'
+import { FoodServing, Unit, Portion } from '@/tempdata'
 import { Text, View, StyleSheet } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TextInput } from 'react-native-gesture-handler';
 import { useState, useRef } from 'react';
 import UnitSpinner from '../Spinner/UnitSpinner';
+import { v4 as uuidv4 } from 'uuid';
 
 type Props = {
-    food: FoodServing
+    food: FoodServing,
+    onUpdatePortion: (portion: Portion) => void
 }
 
-export default function FoodCard({ food }: Props) {
-    const [unit, setUnit] = useState<Unit>(food.servingUnits[0]);
-    const [quantity, setQuantity] = useState(0);
-    const [stringQuantity, setStringQuantity] = useState('0');
+export default function FoodCard({ food, onUpdatePortion }: Props) {
+    const [unit, setUnit] = useState<Unit>(food.portion.unit);
+    const [quantity, setQuantity] = useState(food.portion.quantity);
+    const [stringQuantity, setStringQuantity] = useState(food.portion.quantity.toString());
+
+    const handleQuantityChange = (val: string) => {
+        setStringQuantity(val);
+        try {
+            const newQuantity = parseFloat(val);
+            setQuantity(newQuantity);
+            if (onUpdatePortion) {
+                onUpdatePortion({
+                    unit,
+                    quantity: newQuantity
+                });
+            }
+        } catch {
+            setQuantity(0);
+        }
+    };
+
+    const handleUnitChange = (newUnit: Unit) => {
+        setUnit(newUnit);
+        if (onUpdatePortion) {
+            onUpdatePortion({
+                unit: newUnit,
+                quantity
+            });
+        }
+    };
 
     return (
         <View style={styles.foodCardContainer}>
@@ -27,16 +55,14 @@ export default function FoodCard({ food }: Props) {
                 <TextInput 
                     style={styles.portionBox}
                     value={stringQuantity}
-                    onChangeText={(val)=> {
-                        setStringQuantity(val)
-                        try {
-                            setQuantity(parseFloat(stringQuantity))
-                        } catch {
-                            
-                        }
-                    }}
-                ></TextInput>
-                <UnitSpinner foodItem={food} unit={unit} setUnit={setUnit} ></UnitSpinner>
+                    onChangeText={handleQuantityChange}
+                    keyboardType="numeric"
+                />
+                <UnitSpinner 
+                    foodItem={food} 
+                    unit={unit} 
+                    setUnit={handleUnitChange} 
+                />
             </View>
         </View>
     )

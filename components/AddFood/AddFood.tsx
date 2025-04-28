@@ -2,18 +2,24 @@ import Colors from "@/styles/colors";
 import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { foodDataBase, Food, FoodServing, createInstance, myMacroPreferences } from "@/tempdata";
+import { foodDataBase, Food, FoodServing, createInstance, myMacroPreferences, Portion } from "@/tempdata";
 import { FlatList } from "react-native-gesture-handler";
 import FoodCard from "./FoodCard";
 import { useEffect, useState, } from "react";
-import { storage } from "@/app/storage/storage";
+import storage from "@/app/storage/storage";
 import GlobalMacrosDisplay from "../MacroDisplay/GlobalMacrosDisplay";
 import ResultContent from "./ResultContent";
+import React from "react";
 
-export default function AddFood() {
+type Props = {
+    shoppingCart: FoodServing[],
+    setShoppingCart: (cart: FoodServing[]) => void
+}
+
+export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
     const foodDB: Food[] = Object.values(foodDataBase);
-    const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
     const [displayResults, setDisplayResults] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(()=> {
         const cachedShoppingCart = storage.getString('shoppingCart');
@@ -22,9 +28,26 @@ export default function AddFood() {
         }
     }, []);
 
-    const handleLog = ()=> {
+    useEffect(() => {
+        storage.set('shoppingCart', JSON.stringify(shoppingCart));
+    }, [shoppingCart]);
 
-    }
+    const handleAddToCart = (foodServing: FoodServing) => {
+        setShoppingCart([...shoppingCart, foodServing]);
+    };
+
+    const handleUpdatePortion = (foodId: string, newPortion: Portion) => {
+        const updatedCart = shoppingCart.map(item => {
+            if (item.id === foodId) {
+                return {
+                    ...item,
+                    portion: newPortion
+                };
+            }
+            return item;
+        });
+        setShoppingCart(updatedCart);
+    };
 
     return (
         <>
@@ -32,7 +55,10 @@ export default function AddFood() {
                 <View style={styles.headerContainer}>
                     <View style={styles.searchBarContainer}>
                         <TextInput 
-                            style={styles.searchBar} placeholder={"Search Foods to Add"} 
+                            style={styles.searchBar} 
+                            placeholder={"Search Foods to Add"} 
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
                             onFocus={() => setDisplayResults(true)}
                         />
                         <View style={styles.iconContainer}>
@@ -45,7 +71,12 @@ export default function AddFood() {
                         <View style={{position: "fixed", top: 0, left: 0, width: "100%", height: "100%"}} />
                     </Pressable>
                     <View style={{position: "absolute", top: "100%", width: "100%"}}>
-                        <ResultContent visible={displayResults} closeModal={()=>{}} />
+                        <ResultContent 
+                            visible={displayResults} 
+                            closeModal={()=>setDisplayResults(false)} 
+                            searchQuery={searchQuery}
+                            onAddToCart={handleAddToCart}
+                        />
                     </View>
                 </View>   
             </View>
@@ -59,7 +90,10 @@ export default function AddFood() {
                     keyExtractor={(item) => (item.id)}
                     renderItem={ ({ item }) =>{ 
                         return (
-                            <FoodCard food={item}></FoodCard>
+                            <FoodCard 
+                                food={item}
+                                onUpdatePortion={(portion) => handleUpdatePortion(item.id, portion)}
+                            />
                         )}
                     }
                     contentContainerStyle={{

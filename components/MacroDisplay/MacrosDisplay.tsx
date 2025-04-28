@@ -1,34 +1,17 @@
-import { Text, View, StyleSheet, LayoutChangeEvent, FlatList, Dimensions, Platform, ScaledSize } from "react-native"
-import { MacroPreferences, myMacros } from "@/tempdata"
-import { myMacroPreferences } from "@/tempdata"
+import { Text, View, StyleSheet, LayoutChangeEvent, FlatList, Dimensions } from "react-native"
+import { MacroPreferences, Macros } from "@/tempdata"
 import MacroIndicator from "./MacroIndicator"
 import { MacroKey } from "@/tempdata"
-import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { ScrollView } from "react-native-gesture-handler"
-import { useState, useEffect } from "react"
-import { calculateTotalMacros } from "./calculateMacros"
-import { eventBus } from "@/app/storage/eventEmitter"
+import { useState } from "react"
 
 type Props = {
     macroPreferences: MacroPreferences,
+    macroValues: Macros,
     radius: number,
     indicators: number
 }
 
-export default function GlobalMacrosDisplay({ macroPreferences, radius, indicators }: Props) {
-    const [totalMacros, setTotalMacros] = useState(calculateTotalMacros());
-
-    useEffect(() => {
-        const updateMacros = () => {
-            setTotalMacros(calculateTotalMacros());
-        };
-
-        eventBus.on('mealsUpdated', updateMacros);
-        return () => {
-            eventBus.off('mealsUpdated', updateMacros);
-        };
-    }, []);
-
+export default function MacrosDisplay({ macroPreferences, macroValues, radius, indicators }: Props) {
     // total width = 2 * radius * indicators + gap * (indicators - 1)
     const [containerWidth, setContainerWidth] = useState(Dimensions.get("window").width - 40);
     const [gap, setGap] = useState((containerWidth - 2 * radius * indicators) / (indicators - 1))
@@ -38,16 +21,6 @@ export default function GlobalMacrosDisplay({ macroPreferences, radius, indicato
         setContainerWidth(width);
         setGap(Math.max((width - 2 * radius * indicators) / (indicators - 1), 0))
     };
-
-    // useEffect(() => {
-    //     const onChange = ({ window }: { window: ScaledSize }) => {
-    //         setWindowWidth(window.width);
-    //     };
-
-    //     const subscription = Dimensions.addEventListener("change", onChange);
-
-    //     return () => subscription.remove(); // Clean up on unmount
-    // }, []);
 
     const groupedMacros = (Object.keys(macroPreferences) as MacroKey[]).reduce<MacroKey[][]>((acc, item, index) => {
         if (!macroPreferences[item]) return acc;
@@ -66,7 +39,7 @@ export default function GlobalMacrosDisplay({ macroPreferences, radius, indicato
             <MacroIndicator
                 key={macro}
                 unit={macro}
-                value={totalMacros[macro] || 0}
+                value={macroValues[macro] || 0}
                 radius={radius}
                 range={macroPreferences[macro]}
             />
@@ -87,35 +60,12 @@ export default function GlobalMacrosDisplay({ macroPreferences, radius, indicato
             />
         </View>
     )
-
-    // const renderItemWeb = ({ macro }: { macro: MacroKey }) => (
-    //         macroPreferences[macro] &&
-    //         <MacroIndicator
-    //             key={macro}
-    //             unit={macro}
-    //             value={myMacros[macro]}
-    //             range={macroPreferences[macro]}
-    //         />
-    // );
-    // return null
-
-    // return (
-    //     <FlatList
-    //         data={(Object.keys(myMacroPreferences) as MacroKey[])}
-    //         keyExtractor={(_, i) => i.toString()}
-    //         renderItem={renderItemWeb}
-    //         horizontal
-    //         showsHorizontalScrollIndicator={false}
-    //         contentContainerStyle={styles.flatListContainer}
-    //     />
-    // )
 }
 
 const styles = StyleSheet.create({
     macroContainer: {
         display: "flex",
         flexDirection: "row",
-        // justifyContent: "space-between"
     },
     flatListContainer: {
         // gap: 20,
@@ -123,4 +73,4 @@ const styles = StyleSheet.create({
         // justifyContent: "space-evenly",
         // backgroundColor: "red",
     }
-})
+}) 

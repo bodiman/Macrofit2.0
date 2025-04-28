@@ -1,20 +1,38 @@
 import Colors from "@/styles/colors"
 import { Text, View, StyleSheet } from "react-native"
 import Logo from "./Logo"
-import GlobalMacrosDisplay from "./MacroDisplay/GlobalMacrosDisplay"
+import MacrosDisplay from "./MacroDisplay/MacrosDisplay"
 import { myMacroPreferences } from "@/tempdata"
-
-
+import { useState, useEffect } from "react"
+import { calculateTotalMacros } from "./MacroDisplay/calculateMacros"
+import { eventBus } from "@/app/storage/eventEmitter"
 
 export default function AppHeader() {
+    const [totalMacros, setTotalMacros] = useState(calculateTotalMacros());
+
+    useEffect(() => {
+        const updateMacros = () => {
+            setTotalMacros(calculateTotalMacros());
+        };
+
+        eventBus.on('mealsUpdated', updateMacros);
+        return () => {
+            eventBus.off('mealsUpdated', updateMacros);
+        };
+    }, []);
 
     return (
-            <View style={styles.header}>
-                <Logo size1={25} size2={25} theme={"dark"} />
-                <View style={styles.globalMacroContainer}>
-                    <GlobalMacrosDisplay macroPreferences={myMacroPreferences} indicators={3} radius={50} />
-                </View>  
-            </View>        
+        <View style={styles.header}>
+            <Logo size1={25} size2={25} theme={"dark"} />
+            <View style={styles.globalMacroContainer}>
+                <MacrosDisplay 
+                    macroPreferences={myMacroPreferences} 
+                    macroValues={totalMacros}
+                    indicators={3} 
+                    radius={50} 
+                />
+            </View>  
+        </View>        
     )
 }
 

@@ -23,12 +23,21 @@ const MyIcon = React.memo(() => (
     </Svg>
   ));
 
+const calculateAdjustedCalories = (foodServing: FoodServing): number => {
+    const { food, portion } = foodServing;
+    const baseCalories = food.macros.calories || 0;
+    const gramsInPortion = portion.quantity * portion.unit.grams;
+    return Math.round(baseCalories * gramsInPortion);
+};
+
 type Props = {
     foodServing: FoodServing,
     handleDeleteFood: ()=> void
 }
 
 export default function TableRow({ foodServing, handleDeleteFood }: Props) {
+    const adjustedCalories = calculateAdjustedCalories(foodServing);
+
     return (
         <View style={styles.container}>
             <Text style={styles.tableName}>
@@ -36,7 +45,7 @@ export default function TableRow({ foodServing, handleDeleteFood }: Props) {
                 <View><Text style={styles.portion}>{ foodServing.portion.quantity } { foodServing.portion.unit.name }</Text></View>
             </Text>
             <Text style={styles.tableDatum}>
-                { foodServing.food.macros.calories }
+                { adjustedCalories }
             </Text>
             <Pressable style={styles.deleteIcon} onPress={handleDeleteFood}>
                 <MyIcon></MyIcon>

@@ -4,7 +4,7 @@ import { Svg, Circle, Text as SVGText } from 'react-native-svg';
 import Colors from '@/styles/colors'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import TableDisplay from './TableDisplay';
-import { storage } from '@/app/storage/storage';
+import storage from '@/app/storage/storage';
 import React, { useEffect } from 'react';
 import { eventBus } from '@/app/storage/eventEmitter';
 
