@@ -38,6 +38,11 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
         setShoppingCart([...shoppingCart, foodServing]);
     };
 
+    const handleRemoveFromCart = (foodId: string) => {
+        const updatedCart = shoppingCart.filter(item => item.id !== foodId);
+        setShoppingCart(updatedCart);
+    };
+
     const handleUpdatePortion = (foodId: string, newPortion: Portion) => {
         const updatedCart = shoppingCart.map(item => {
             if (item.id === foodId) {
@@ -100,6 +105,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
                             <FoodCard 
                                 food={item}
                                 onUpdatePortion={(portion) => handleUpdatePortion(item.id, portion)}
+                                onRemove={() => handleRemoveFromCart(item.id)}
                             />
                         )}
                     }

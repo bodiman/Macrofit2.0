@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     buttonDisabled: {
-        backgroundColor: Colors.coolgray,
+        // backgroundColor: "#87D5DD",
         opacity: 0.5,
     },
     buttonText: {

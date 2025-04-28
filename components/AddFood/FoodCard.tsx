@@ -1,6 +1,6 @@
 import Colors from '@/styles/colors'
 import { FoodServing, Unit, Portion } from '@/tempdata'
-import { Text, View, StyleSheet } from 'react-native'
+import { Text, View, StyleSheet, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TextInput } from 'react-native-gesture-handler';
 import { useState, useRef } from 'react';
@@ -9,10 +9,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 type Props = {
     food: FoodServing,
-    onUpdatePortion: (portion: Portion) => void
+    onUpdatePortion: (portion: Portion) => void,
+    onRemove: () => void
 }
 
-export default function FoodCard({ food, onUpdatePortion }: Props) {
+export default function FoodCard({ food, onUpdatePortion, onRemove }: Props) {
     const [unit, setUnit] = useState<Unit>(food.portion.unit);
     const [quantity, setQuantity] = useState(food.portion.quantity);
     const [stringQuantity, setStringQuantity] = useState(food.portion.quantity.toString());
@@ -46,7 +47,9 @@ export default function FoodCard({ food, onUpdatePortion }: Props) {
     return (
         <View style={styles.foodCardContainer}>
             <View style={styles.foodTitleSection} >
-                <Ionicons name="close" size={24} color="black" />
+                <Pressable onPress={onRemove}>
+                    <Ionicons name="close" size={24} color="black" />
+                </Pressable>
                 <Text style={styles.foodTitle}>
                     {food.food.name}
                 </Text>
