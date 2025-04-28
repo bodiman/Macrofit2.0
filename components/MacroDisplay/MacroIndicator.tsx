@@ -32,10 +32,6 @@ export default function MacroIndicator({ value, range, unit, radius }: Props) {
         if (range.max !== undefined && value > range.max) return range.max;
         return value;
     }
-
-    // if (unit === "sugar") {
-    //     console.log(value, maxValue);
-    // }
     
     return (
         <View style={{pointerEvents: "none"}}>

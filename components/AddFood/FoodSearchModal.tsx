@@ -23,8 +23,6 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
 
     const handleLog = () => {
         if (activeMeal) {
-
-            console.log(shoppingCart)
             // Add foods from shopping cart to the meal
             const updatedMeal = {
                 ...activeMeal,
