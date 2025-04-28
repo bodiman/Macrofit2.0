@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 2,
         borderBottomLeftRadius: 5,
         borderBottomRightRadius: 5,
+        zIndex: 1000,
     },
     globalMacroContainer: {
         width: "100%",

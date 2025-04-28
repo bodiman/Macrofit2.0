@@ -242,7 +242,8 @@ export const myMacroPreferences: MacroPreferences = {
         max: 275
     },
     fat: {
-        max: 25,
+        min: 10,
+        max: 37,
     },
     fiber: {
         min: 28,

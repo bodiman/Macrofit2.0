@@ -2,7 +2,7 @@ import Colors from '@/styles/colors'
 import { SignedIn, SignedOut } from '@clerk/clerk-expo'
 import { Redirect } from 'expo-router'
 import { Slot, Stack, Tabs } from 'expo-router'
-import { Text } from 'react-native'
+import { Text, View } from 'react-native'
 import AppHeader from '@/components/AppHeader'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 console.log("loading fontawesome")
@@ -13,7 +13,7 @@ import FoodSelector from '@/components/AddFood/FoodSearchModal'
 export default function Layout() {
 
   return (
-  <>
+  <View style={{flex: 1}}>
     <SignedIn>
         <AppHeader />
         
@@ -39,6 +39,6 @@ export default function Layout() {
     <SignedOut>
         <Redirect href={"/landing"}></Redirect>
     </SignedOut>
-  </>
+  </View>
   )
 }
