@@ -2,8 +2,9 @@ import Colors from "@/styles/colors"
 import { Text, View } from "react-native"
 import CircularProgressBar from 'react-native-circular-progress-indicator'
 import { Range, unitMap } from "@/tempdata";
-// import { useState } from "react"
+import { useState } from "react"
 import { MacroKey } from "@/tempdata";
+import { useEffect } from "react";
 
 type Props = { 
     value: number, 
@@ -12,36 +13,54 @@ type Props = {
     unit: MacroKey}
 
 export default function MacroIndicator({ value, range, unit, radius }: Props) {
+    const [maxValue, setMaxValue] = useState(0);
+    const [displayValue, setDisplayValue] = useState(0);
+
+    useEffect(() => {
+        const clippedValue = clip(value, range);
+        if (clippedValue == 0 && value == 0) {
+            setMaxValue(1);
+            setDisplayValue(1);
+        } else {
+            setMaxValue(clippedValue);
+            setDisplayValue(value);
+        }
+    }, [value, range]);
 
     function clip(value: number, range: Range): number {
-        if (range.min && value < range.min) return range.min;
-        if (range.max && value > range.max) return range.max;
+        if (range.min !== undefined && value < range.min) return range.min;
+        if (range.max !== undefined && value > range.max) return range.max;
         return value;
     }
+
+    // if (unit === "sugar") {
+    //     console.log(value, maxValue);
+    // }
     
     return (
         <View style={{pointerEvents: "none"}}>
             <CircularProgressBar 
+                key={maxValue}
                 radius={radius}
-                value={ value }
+                value={displayValue}
+                maxValue={maxValue}
                 titleColor={Colors.black}
                 circleBackgroundColor={Colors.white}
                 title={unit}
                 activeStrokeWidth={10}
                 inActiveStrokeWidth={10}
-                maxValue={clip(value, range)}
                 progressValueStyle={{ fontSize: 3 * radius / (3 + Math.max(String(value.toFixed() + unitMap[unit]).length, 4)) }}
-                progressFormatter={(value: number) => {                    
+                progressFormatter={() => {  
                     return value.toFixed() + unitMap[unit]; // 2 decimal places
                 }}
                 strokeColorConfig={[
-                    { color: '#ef4444', value: 0 },
-                    { color: 'orange', value: 0.3 * clip(value, range) },
-                    { color: 'yellow', value: 0.6 * clip(value, range) },
-                    { color: '#22c55e', value: clip(value, range) },
-                    { color: 'yellow', value: 1.10 * clip(value, range) },
-                    { color: 'orange', value: 1.25 * clip(value, range) },
-                    { color: '#ef4444', value: 1.5 * clip(value, range) },
+                    { color: '#ef4444', value: 0 * maxValue },
+                    { color: 'orange', value: 0.3 * maxValue },
+                    { color: 'yellow', value: 0.6 * maxValue },
+                    { color: '#22c55e', value: 1 * maxValue },
+                    { color: 'yellow', value: 1.10 * maxValue },
+                    { color: 'orange', value: 1.25 * maxValue },
+                    { color: '#ef4444', value: 1.5 * maxValue },
                 ]}
             />
         </View>

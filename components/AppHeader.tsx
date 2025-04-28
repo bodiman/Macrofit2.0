@@ -3,23 +3,17 @@ import { Text, View, StyleSheet } from "react-native"
 import Logo from "./Logo"
 import MacrosDisplay from "./MacroDisplay/MacrosDisplay"
 import { myMacroPreferences } from "@/tempdata"
-import { useState, useEffect } from "react"
-import { calculateTotalMacros } from "./MacroDisplay/calculateMacros"
-import { eventBus } from "@/app/storage/eventEmitter"
+import { useEffect, useMemo } from "react"
+import { useMacros } from "@/app/hooks/useMacros"
+import { useMeals } from "@/app/hooks/useMeals"
 
 export default function AppHeader() {
-    const [totalMacros, setTotalMacros] = useState(calculateTotalMacros());
-
-    useEffect(() => {
-        const updateMacros = () => {
-            setTotalMacros(calculateTotalMacros());
-        };
-
-        eventBus.on('mealsUpdated', updateMacros);
-        return () => {
-            eventBus.off('mealsUpdated', updateMacros);
-        };
-    }, []);
+    const { meals } = useMeals();
+    const allFoodServings = useMemo(() => 
+        meals.flatMap(meal => meal.foods),
+        [meals]
+    );
+    const totalMacros = useMacros(allFoodServings);
 
     return (
         <View style={styles.header}>

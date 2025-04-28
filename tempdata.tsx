@@ -242,16 +242,17 @@ export const myMacroPreferences: MacroPreferences = {
         max: 275
     },
     fat: {
-        max: 15
+        max: 25,
     },
     fiber: {
-        max: 15
+        min: 28,
+        max: 38,
     },
     sugar: {
-        max: 15
+        max: 15,
     },
     sodium: {
-        max: 15
+        max: 2300,
     },
     potassium: {
         min: 5000,

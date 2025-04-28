@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, LayoutChangeEvent, FlatList, Dimensions } from 
 import { MacroPreferences, Macros } from "@/tempdata"
 import MacroIndicator from "./MacroIndicator"
 import { MacroKey } from "@/tempdata"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 type Props = {
     macroPreferences: MacroPreferences,

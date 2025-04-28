@@ -7,9 +7,10 @@ import { FlatList } from "react-native-gesture-handler";
 import FoodCard from "./FoodCard";
 import { useEffect, useState, } from "react";
 import storage from "@/app/storage/storage";
-import GlobalMacrosDisplay from "../MacroDisplay/GlobalMacrosDisplay";
+import MacrosDisplay from "../MacroDisplay/MacrosDisplay";
 import ResultContent from "./ResultContent";
 import React from "react";
+import { useMacros } from "@/app/hooks/useMacros";
 
 type Props = {
     shoppingCart: FoodServing[],
@@ -20,6 +21,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
     const foodDB: Food[] = Object.values(foodDataBase);
     const [displayResults, setDisplayResults] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const totalMacros = useMacros(shoppingCart);
 
     useEffect(()=> {
         const cachedShoppingCart = storage.getString('shoppingCart');
@@ -83,7 +85,12 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
 
             <View style={styles.shoppingCart}>
                 <View style={styles.macroContainer}>
-                    <GlobalMacrosDisplay macroPreferences={myMacroPreferences} radius={30} indicators={4} />
+                    <MacrosDisplay 
+                        macroPreferences={myMacroPreferences} 
+                        macroValues={totalMacros}
+                        indicators={4} 
+                        radius={30} 
+                    />
                 </View>
                 <FlatList 
                     data={shoppingCart}
