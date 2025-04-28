@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren, useState, useEffect, act } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Meal, FoodServing } from '@/tempdata';
 import Colors from '@/styles/colors';
@@ -17,6 +17,12 @@ type Props = PropsWithChildren<{
 
 export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUpdateMeal }: Props) {
     const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
+
+    useEffect(() => {
+        if (activeMeal !== null) {
+            eventBus.emit('foodSearchModalOpen');
+        }
+    }, [activeMeal]);
 
     if (activeMeal === null) return null;
 
@@ -36,7 +42,6 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
             storage.set('shoppingCart', JSON.stringify([]));
             eventBus.emit('shoppingCartUpdated');
             
-            // Close the modal
             modalCloser();
         }
     };

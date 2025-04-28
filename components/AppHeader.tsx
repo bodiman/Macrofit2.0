@@ -15,6 +15,7 @@ export default function AppHeader() {
         const cachedCart = storage.getString('shoppingCart');
         return cachedCart ? JSON.parse(cachedCart) : [];
     });
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const handleCartUpdate = () => {
@@ -22,9 +23,17 @@ export default function AppHeader() {
             setShoppingCart(cachedCart ? JSON.parse(cachedCart) : []);
         };
 
+        const handleModalOpen = () => setIsModalOpen(true);
+        const handleModalClose = () => setIsModalOpen(false);
+
         eventBus.on('shoppingCartUpdated', handleCartUpdate);
+        eventBus.on('foodSearchModalOpen', handleModalOpen);
+        eventBus.on('foodSearchModalClose', handleModalClose);
+
         return () => {
             eventBus.off('shoppingCartUpdated', handleCartUpdate);
+            eventBus.off('foodSearchModalOpen', handleModalOpen);
+            eventBus.off('foodSearchModalClose', handleModalClose);
         };
     }, []);
 
@@ -39,22 +48,22 @@ export default function AppHeader() {
     const totalMacros = useMemo(() => {
         const combined: typeof mealMacros = {};
         
-        // Combine macros from meals and shopping cart
+        // Always include meal macros
         Object.keys(mealMacros).forEach(key => {
             const macroKey = key as keyof typeof mealMacros;
-            combined[macroKey] = (mealMacros[macroKey] || 0) + (cartMacros[macroKey] || 0);
+            combined[macroKey] = mealMacros[macroKey] || 0;
         });
         
-        // Add any macros that only exist in cart
-        Object.keys(cartMacros).forEach(key => {
-            const macroKey = key as keyof typeof cartMacros;
-            if (!(macroKey in combined)) {
-                combined[macroKey] = cartMacros[macroKey];
-            }
-        });
+        // Only include cart macros when modal is open
+        if (isModalOpen) {
+            Object.keys(cartMacros).forEach(key => {
+                const macroKey = key as keyof typeof cartMacros;
+                combined[macroKey] = (combined[macroKey] || 0) + (cartMacros[macroKey] || 0);
+            });
+        }
         
         return combined;
-    }, [mealMacros, cartMacros]);
+    }, [mealMacros, cartMacros, isModalOpen]);
 
     return (
         <View style={styles.header}>

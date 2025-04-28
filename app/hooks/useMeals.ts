@@ -85,6 +85,8 @@ export function useMeals() {
 
     // Close the food search modal
     const closeFoodSearch = () => {
+        // Close the modal
+        eventBus.emit('foodSearchModalClose');
         setActiveMeal(null);
     };
 
