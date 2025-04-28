@@ -3,17 +3,58 @@ import { Text, View, StyleSheet } from "react-native"
 import Logo from "./Logo"
 import MacrosDisplay from "./MacroDisplay/MacrosDisplay"
 import { myMacroPreferences } from "@/tempdata"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMacros } from "@/app/hooks/useMacros"
 import { useMeals } from "@/app/hooks/useMeals"
+import storage from "@/app/storage/storage"
+import { eventBus } from "@/app/storage/eventEmitter"
 
 export default function AppHeader() {
     const { meals } = useMeals();
+    const [shoppingCart, setShoppingCart] = useState(() => {
+        const cachedCart = storage.getString('shoppingCart');
+        return cachedCart ? JSON.parse(cachedCart) : [];
+    });
+
+    useEffect(() => {
+        const handleCartUpdate = () => {
+            const cachedCart = storage.getString('shoppingCart');
+            setShoppingCart(cachedCart ? JSON.parse(cachedCart) : []);
+        };
+
+        eventBus.on('shoppingCartUpdated', handleCartUpdate);
+        return () => {
+            eventBus.off('shoppingCartUpdated', handleCartUpdate);
+        };
+    }, []);
+
     const allFoodServings = useMemo(() => 
         meals.flatMap(meal => meal.foods),
         [meals]
     );
-    const totalMacros = useMacros(allFoodServings);
+    
+    const mealMacros = useMacros(allFoodServings);
+    const cartMacros = useMacros(shoppingCart);
+
+    const totalMacros = useMemo(() => {
+        const combined: typeof mealMacros = {};
+        
+        // Combine macros from meals and shopping cart
+        Object.keys(mealMacros).forEach(key => {
+            const macroKey = key as keyof typeof mealMacros;
+            combined[macroKey] = (mealMacros[macroKey] || 0) + (cartMacros[macroKey] || 0);
+        });
+        
+        // Add any macros that only exist in cart
+        Object.keys(cartMacros).forEach(key => {
+            const macroKey = key as keyof typeof cartMacros;
+            if (!(macroKey in combined)) {
+                combined[macroKey] = cartMacros[macroKey];
+            }
+        });
+        
+        return combined;
+    }, [mealMacros, cartMacros]);
 
     return (
         <View style={styles.header}>

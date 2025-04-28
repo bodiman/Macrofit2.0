@@ -6,6 +6,7 @@ import Colors from '@/styles/colors';
 import AddFood from './AddFood';
 import storage from '@/app/storage/storage';
 import AnimatedModal from '../AnimatedModal';
+import { eventBus } from '@/app/storage/eventEmitter';
 
 type Props = PropsWithChildren<{
     onClose: () => void,
@@ -33,6 +34,7 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
             // Clear the shopping cart
             setShoppingCart([]);
             storage.set('shoppingCart', JSON.stringify([]));
+            eventBus.emit('shoppingCartUpdated');
             
             // Close the modal
             modalCloser();
@@ -48,10 +50,12 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
                         <MaterialIcons name="close" color="#fff" size={22} />
                     </Pressable>
                 </View>
-                <AddFood 
-                    shoppingCart={shoppingCart}
-                    setShoppingCart={setShoppingCart}
-                />
+                <View style={styles.contentContainer}>
+                    <AddFood 
+                        shoppingCart={shoppingCart}
+                        setShoppingCart={setShoppingCart}
+                    />
+                </View>
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity 
                         style={[styles.button, shoppingCart.length === 0 && styles.buttonDisabled]} 
@@ -90,6 +94,10 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 600,
     },
+    contentContainer: {
+        flex: 1,
+        maxHeight: '80%',
+    },
     buttonContainer: {
         width: "80%",
         margin: "auto",
@@ -106,7 +114,6 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     buttonDisabled: {
-        // backgroundColor: "#87D5DD",
         opacity: 0.5,
     },
     buttonText: {

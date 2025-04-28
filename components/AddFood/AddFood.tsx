@@ -1,5 +1,5 @@
 import Colors from "@/styles/colors";
-import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity } from "react-native"
+import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity, ScrollView } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { foodDataBase, Food, FoodServing, createInstance, myMacroPreferences, Portion } from "@/tempdata";
@@ -11,6 +11,7 @@ import MacrosDisplay from "../MacroDisplay/MacrosDisplay";
 import ResultContent from "./ResultContent";
 import React from "react";
 import { useMacros } from "@/app/hooks/useMacros";
+import { eventBus } from "@/app/storage/eventEmitter";
 
 type Props = {
     shoppingCart: FoodServing[],
@@ -32,6 +33,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
 
     useEffect(() => {
         storage.set('shoppingCart', JSON.stringify(shoppingCart));
+        eventBus.emit('shoppingCartUpdated');
     }, [shoppingCart]);
 
     const handleAddToCart = (foodServing: FoodServing) => {
@@ -99,20 +101,16 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
                 </View>
                 <FlatList 
                     data={shoppingCart}
-                    keyExtractor={(item) => (item.id)}
-                    renderItem={ ({ item }) =>{ 
-                        return (
-                            <FoodCard 
-                                food={item}
-                                onUpdatePortion={(portion) => handleUpdatePortion(item.id, portion)}
-                                onRemove={() => handleRemoveFromCart(item.id)}
-                            />
-                        )}
-                    }
-                    contentContainerStyle={{
-                        gap: 10,
-                        padding: 20
-                    }}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <FoodCard 
+                            food={item}
+                            onUpdatePortion={(portion) => handleUpdatePortion(item.id, portion)}
+                            onRemove={() => handleRemoveFromCart(item.id)}
+                        />
+                    )}
+                    style={styles.cartList}
+                    contentContainerStyle={styles.cartContent}
                 />
             </View>
         </>
@@ -174,7 +172,11 @@ const styles = StyleSheet.create({
         marginHorizontal: "auto",
         marginTop: 20,
         bottom: 0,
-        flexGrow: 1,
+        flex: 1,
+        paddingBottom: 5,
+        // height: "100%",
+        // flexGrow: 1,
+        // maxHeight: '60%',
         borderRadius: 20,
         shadowColor: Colors.black,
         shadowOpacity: 0.25,
@@ -211,5 +213,12 @@ const styles = StyleSheet.create({
         // flexDirection: "column",
         flexDirection: "row",
         flexGrow: 1,
+    },
+    cartList: {
+        flex: 1,
+    },
+    cartContent: {
+        gap: 10,
+        padding: 20
     },
 });
