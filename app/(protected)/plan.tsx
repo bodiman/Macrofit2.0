@@ -6,9 +6,7 @@ export default function Page() {
 
   return (
     <View>
-      <SignedIn>
         <Text>This are the meal plan</Text>
-      </SignedIn>
     </View>
   )
 }

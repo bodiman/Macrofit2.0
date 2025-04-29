@@ -3,7 +3,7 @@ import { Meal, FoodServing, Portion } from '@/tempdata';
 import storage, { meals as defaultMeals } from '../storage/storage';
 import { eventBus } from '../storage/eventEmitter';
 
-export function useMeals() {
+export default function useMeals() {
     const [meals, setMeals] = useState<Meal[]>(defaultMeals);
     const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
     const [editingFood, setEditingFood] = useState<FoodServing | null>(null);

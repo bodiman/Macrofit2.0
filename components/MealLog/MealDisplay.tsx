@@ -1,29 +1,12 @@
 import { FoodServing, Meal } from '@/tempdata'
 import { Text, View, StyleSheet, Pressable } from 'react-native'
-import { Svg, Circle, Text as SVGText } from 'react-native-svg';
 import Colors from '@/styles/colors'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import TableDisplay from './TableDisplay';
 import storage from '@/app/storage/storage';
 import React, { useEffect } from 'react';
 import { eventBus } from '@/app/storage/eventEmitter';
-
-const MyIcon = React.memo(() => (
-    <Svg width="24" height="24" viewBox="0 0 100 100">
-      <Circle cx="50" cy="50" r="45" fill={Colors.black} />
-      <SVGText
-        x="50"
-        y="53"
-        fontSize="90"
-        fontWeight="bold"
-        fill={Colors.white}
-        textAnchor="middle"
-        alignmentBaseline="middle"
-      >
-        +
-      </SVGText>
-    </Svg>
-  ));
+import PlusIcon from '@/components/Icons/PlusIcon';
 
 type Props = { 
     meal: Meal, 
@@ -51,7 +34,7 @@ export default function MealDisplay({ meal, modalLauncher, onFoodPress }: Props)
             <View style={styles.mealHeader}>
                 <Text key={meal.id} style={styles.mealTitle}>{meal.name}</Text>
                 <Pressable onPress={modalLauncher}>
-                    <MyIcon />
+                    <PlusIcon backgroundColor={Colors.black} />
                 </Pressable>
             </View>
             <View style={styles.foodContainer}>

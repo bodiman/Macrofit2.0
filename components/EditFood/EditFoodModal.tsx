@@ -5,7 +5,7 @@ import { useState, useMemo } from 'react';
 import { TextInput } from 'react-native-gesture-handler';
 import UnitSpinner from '../Spinner/UnitSpinner';
 import AnimatedModal from '../AnimatedModal';
-import { useMacros } from '@/app/hooks/useMacros';
+import useMacros from '@/app/hooks/useMacros';
 
 type Props = {
     food: FoodServing;

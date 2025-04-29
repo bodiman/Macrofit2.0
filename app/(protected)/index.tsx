@@ -10,7 +10,7 @@ import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
-import { useMeals } from '../hooks/useMeals';
+import useMeals from '../hooks/useMeals';
 
 export default function Page() {
   const { 
@@ -26,7 +26,6 @@ export default function Page() {
 
   return (
       <View style={styles.parentReference}>
-        <SignedIn>
           <FlatList
             style={styles.mealContent}
             data={meals}
@@ -58,7 +57,6 @@ export default function Page() {
               }}
             />
           )}
-        </SignedIn>
       </View>
   )
 }

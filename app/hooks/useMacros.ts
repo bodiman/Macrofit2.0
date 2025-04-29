@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { FoodServing, Macros } from '@/tempdata';
 import { calculateAdjustedMacros } from '@/components/MacroDisplay/calculateMacros';
 
-export function useMacros(foodServings: FoodServing[]) {
+export default function useMacros(foodServings: FoodServing[]) {
     return useMemo(() => {
         const totalMacros: Macros = {};
         

@@ -10,7 +10,7 @@ import storage from "@/app/storage/storage";
 import MacrosDisplay from "../MacroDisplay/MacrosDisplay";
 import ResultContent from "./ResultContent";
 import React from "react";
-import { useMacros } from "@/app/hooks/useMacros";
+import useMacros from "@/app/hooks/useMacros";
 import { eventBus } from "@/app/storage/eventEmitter";
 
 type Props = {

@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  meals     Meal[]
+  preferences UserPreferences
+  menus     Menu[]
+}
+
+model UserPreferences {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  macrosId  String   @unique
+  macros    Macros   @relation(fields: [macrosId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Macros {
+  id        String   @id @default(uuid())
+  calories  MacroRange?
+  protein   MacroRange?
+  carbs     MacroRange?
+  fat       MacroRange?
+  fiber     MacroRange?
+  sugar     MacroRange?
+  sodium    MacroRange?
+  preferences UserPreferences[]?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MacroRange {
+  id        String   @id @default(uuid())
+  min       Int
+  max       Int
+  unit      String
+  macrosId  String   @unique
+  macros    Macros   @relation(fields: [macrosId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Meal {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foods     FoodServing[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Food {
+  id          String   @id @default(uuid())
+  name        String
+  menu       String?
+  description String?
+  servings    FoodServing[]?
+  liveMenus   LiveMenu[]?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model FoodServing {
+  id        String   @id @default(uuid())
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id])
+  mealId    String
+  meal      Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  quantity  Float
+  unit      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Menu {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foods     LiveMenu[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LiveMenu {
+  id        String   @id @default(uuid())
+  menuId    String
+  menu      Menu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  foodId    String
+  food      Food     @relation(fields: [foodId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

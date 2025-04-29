@@ -1,15 +1,13 @@
 import { SignedIn, SignedOut, useUser } from '@clerk/clerk-expo'
-import { Text, View } from 'react-native'
+import { Text, ScrollView } from 'react-native'
 import { SignOutButton } from '@/components/SignOutButton'
+import Preferences from '@/components/Preferences'
 
 export default function Page() {
 
   return (
-    <View>
-      <SignedIn>
-        <Text>This are the preferences</Text>
-        <SignOutButton></SignOutButton>
-      </SignedIn>
-    </View>
+    <ScrollView showsVerticalScrollIndicator={false} style={{height: "100%", overflow: "scroll"}}>
+      <Preferences />
+    </ScrollView>
   )
 }
