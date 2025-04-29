@@ -6,11 +6,13 @@ import MacrosDisplay from './MacroDisplay/MacrosDisplay';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import PlusIcon from './Icons/PlusIcon';
 import { useAuth } from '@clerk/clerk-expo';
+import EditMacroModal from './Preferences/EditMacroModal';
 
 type MacroGoal = {
     id: string;
     name: string;
-    target: number;
+    min: number;
+    max: number;
     unit: string;
 };
 
@@ -21,21 +23,22 @@ type MealPreferences = {
 export default function Preferences() {
     const { signOut } = useAuth();
     const [macroGoals, setMacroGoals] = useState<MacroGoal[]>([
-        { id: '1', name: 'Calories', target: 2000, unit: 'kcal' },
-        { id: '2', name: 'Protein', target: 160, unit: 'g' },
-        { id: '3', name: 'Carbs', target: 250, unit: 'g' },
-        { id: '4', name: 'Fat', target: 67, unit: 'g' }
+        { id: '1', name: 'Calories', min: 1800, max: 2200, unit: 'kcal' },
+        { id: '2', name: 'Protein', min: 140, max: 180, unit: 'g' },
+        { id: '3', name: 'Carbs', min: 200, max: 300, unit: 'g' },
+        { id: '4', name: 'Fat', min: 50, max: 80, unit: 'g' }
     ]);
 
     const [mealPreferences, setMealPreferences] = useState<MealPreferences>({
         defaultMealNames: ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
     });
 
-    const handleMacroChange = (id: string, value: string) => {
-        const numValue = parseInt(value) || 0;
+    const [editingMacro, setEditingMacro] = useState<MacroGoal | null>(null);
+
+    const handleMacroChange = (id: string, newRange: { min: number; max: number; unit: string }) => {
         setMacroGoals(prev => 
             prev.map(goal => 
-                goal.id === id ? { ...goal, target: numValue } : goal
+                goal.id === id ? { ...goal, ...newRange } : goal
             )
         );
     };
@@ -48,7 +51,8 @@ export default function Preferences() {
         const newGoal: MacroGoal = {
             id: Date.now().toString(),
             name: 'New Goal',
-            target: 0,
+            min: 0,
+            max: 0,
             unit: 'g'
         };
         setMacroGoals(prev => [...prev, newGoal]);
@@ -94,6 +98,7 @@ export default function Preferences() {
                                 key={goal.id}
                                 goal={goal}
                                 onDelete={() => handleDeleteMacro(goal.id)}
+                                onPress={() => setEditingMacro(goal)}
                             />
                         ))}
                     </View>
@@ -119,16 +124,27 @@ export default function Preferences() {
             >
                 <Text style={styles.logoutText}>Log Out</Text>
             </TouchableOpacity>
+
+            {editingMacro && (
+                <EditMacroModal
+                    visible={!!editingMacro}
+                    onClose={() => setEditingMacro(null)}
+                    macroName={editingMacro.name}
+                    range={{ min: editingMacro.min, max: editingMacro.max, unit: editingMacro.unit }}
+                    onSave={(newRange) => handleMacroChange(editingMacro.id, newRange)}
+                />
+            )}
         </View>
     );
 }
 
-function MacroCard({ goal, onDelete }: { 
+function MacroCard({ goal, onDelete, onPress }: { 
     goal: MacroGoal;
     onDelete: () => void;
+    onPress: () => void;
 }) {
     return (
-        <View style={styles.card}>
+        <TouchableOpacity style={styles.card} onPress={onPress}>
             <View style={styles.cardHeader}>
                 <TouchableOpacity onPress={onDelete}>
                     <MaterialIcons name="delete" size={20} color={Colors.gray} />
@@ -136,10 +152,10 @@ function MacroCard({ goal, onDelete }: {
                 <Text style={styles.cardTitle}>{goal.name}</Text>
             </View>
             <View style={styles.cardContent}>
-                <Text style={styles.target}>{goal.target}</Text>
+                <Text style={styles.target}>{goal.min}-{goal.max}</Text>
                 <Text style={styles.unit}>{goal.unit}</Text>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
@@ -163,7 +179,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: 'transparent',
+        // backgroundColor: 'transparent',
+        flexGrow: 1,
     },
     title: {
         fontSize: 24,

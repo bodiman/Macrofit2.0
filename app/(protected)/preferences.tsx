@@ -6,8 +6,6 @@ import Preferences from '@/components/Preferences'
 export default function Page() {
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} style={{height: "100%", overflow: "scroll"}}>
       <Preferences />
-    </ScrollView>
   )
 }
