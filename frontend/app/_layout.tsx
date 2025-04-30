@@ -5,10 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { StyleSheet } from 'react-native'
 import Colors from '@/styles/colors'
 import { View } from 'react-native'
-
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 export default function RootLayout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <ClerkProvider tokenCache={tokenCache}>
         <Stack 
           screenOptions={{
@@ -19,5 +20,6 @@ export default function RootLayout() {
           }}
         />
       </ClerkProvider>
+    </GestureHandlerRootView>
   )
 }

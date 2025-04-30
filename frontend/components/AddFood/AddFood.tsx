@@ -1,5 +1,5 @@
 import Colors from "@/styles/colors";
-import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity, ScrollView } from "react-native"
+import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity, ScrollView, Platform } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Food, FoodServing, myMacroPreferences, Portion } from "@/tempdata";
@@ -58,7 +58,16 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
     };
 
     return (
-        <>
+        <View style={styles.container}>
+            <View style={styles.macroContainer}>
+                <MacrosDisplay 
+                    macroPreferences={myMacroPreferences} 
+                    macroValues={totalMacros}
+                    indicators={4} 
+                    radius={30} 
+                />
+            </View>
+
             <View style={styles.searchContainer}>
                 <View style={styles.headerContainer}>
                     <View style={styles.searchBarContainer}>
@@ -70,34 +79,24 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
                             onFocus={() => setDisplayResults(true)}
                         />
                         <View style={styles.iconContainer}>
-                            <MaterialCommunityIcons name="barcode-scan" size={24} color="black" style={styles.iconContainer} />
+                            <MaterialCommunityIcons name="barcode-scan" size={24} color="black" />
                         </View>
-                    </View>
-                    
-
-                    <Pressable style={{ zIndex: -5, display: displayResults? "flex": "none" }} onPress={()=>setDisplayResults(false)}>
-                        <View style={{position: "fixed", top: 0, left: 0, width: "100%", height: "100%"}} />
-                    </Pressable>
-                    <View style={{position: "absolute", top: "100%", width: "100%"}}>
-                        <ResultContent 
-                            visible={displayResults} 
-                            closeModal={()=>setDisplayResults(false)} 
-                            searchQuery={searchQuery}
-                            onAddToCart={handleAddToCart}
-                        />
                     </View>
                 </View>   
             </View>
 
-            <View style={styles.shoppingCart}>
-                <View style={styles.macroContainer}>
-                    <MacrosDisplay 
-                        macroPreferences={myMacroPreferences} 
-                        macroValues={totalMacros}
-                        indicators={4} 
-                        radius={30} 
+            {displayResults && (
+                <View style={styles.resultsContainer}>
+                    <ResultContent 
+                        visible={displayResults} 
+                        closeModal={()=>setDisplayResults(false)} 
+                        searchQuery={searchQuery}
+                        onAddToCart={handleAddToCart}
                     />
                 </View>
+            )}
+
+            <View style={styles.shoppingCart}>
                 <FlatList 
                     data={shoppingCart}
                     keyExtractor={(item) => item.id}
@@ -112,112 +111,73 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
                     contentContainerStyle={styles.cartContent}
                 />
             </View>
-        </>
-        
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: Colors.white,
+    },
+    macroContainer: {
+        padding: 10,
+        width: "100%",
+        backgroundColor: Colors.white,
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.gray,
+    },
     iconContainer: {
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-        paddingLeft: 6,
-        paddingRight: 6,
+        padding: 10,
         backgroundColor: Colors.lightgray,
     },
     searchContainer: {
-        // paddingVertical: 20,
-        alignContent: "center",
-        marginLeft: "auto",
-        marginRight: "auto",
-        marginTop: 20,
-        width: "80%",
+        padding: 10,
+        width: "100%",
     },
     searchText: {
         fontSize: 18,
-        fontWeight: 600,
+        fontWeight: '600',
         marginBottom: 5,
-        // marginLeft: "20%"
     },
     headerContainer: {
-        display: "flex",
         width: "100%",
         flexDirection: "row",
-        // gap: 10,
-        marginHorizontal: "auto",
         alignItems: "center",
-        zIndex: 5
-        // borderRadius: 5,
-        // marginTop: 20,
     },
     searchBar: {
+        flex: 1,
         backgroundColor: Colors.white,
-        // borderTopLeftRadius: 5,
-        // borderBottomLeftRadius: 5,
-        flexGrow: 1,
         padding: 10,
         borderColor: Colors.black,
-        borderRightWidth: 1,
-        // borderTopWidth: 0,
-        // borderBottomWidth: 0,
-        // marginHorizontal: "auto",
-    },
-    shoppingCart: {
-        display: "flex",
-        width: "80%",
-        backgroundColor: Colors.white,
-        marginHorizontal: "auto",
-        marginTop: 20,
-        bottom: 0,
-        flex: 1,
-        paddingBottom: 5,
-        // height: "100%",
-        // flexGrow: 1,
-        // maxHeight: '60%',
-        borderRadius: 20,
-        shadowColor: Colors.black,
-        shadowOpacity: 0.25,
-        shadowOffset: {
-            width: 2,
-            height: 2
-        },
-        overflow: "hidden",
-        zIndex: -5
-    },
-    macroContainer: {
-        // paddingTop: 20,
-        // paddingHorizontal: 10,
-        padding: 5,
-        paddingHorizontal: 20,
-        width: "100%",
-        margin: "auto",
-        backgroundColor: Colors.white,
-        borderBottomLeftRadius: 5,
-        borderBottomRightRadius: 5,
-        shadowColor: Colors.black,
-        shadowOpacity: 0.25,
-        shadowOffset: {
-            width: 0,
-            height: 1
-        }
-    },
-    searchBarContainer: {
-        borderTopColor: Colors.black,
         borderWidth: 1,
         borderRadius: 5,
-        overflow: "hidden",
-        display: "flex",
-        // flexDirection: "column",
+        marginRight: 10,
+    },
+    searchBarContainer: {
         flexDirection: "row",
-        flexGrow: 1,
+        alignItems: "center",
+        width: "100%",
+    },
+    resultsContainer: {
+        position: 'absolute',
+        top: 150,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: Colors.white,
+        zIndex: 1000,
+    },
+    shoppingCart: {
+        flex: 1,
+        width: "100%",
+        backgroundColor: Colors.white,
     },
     cartList: {
         flex: 1,
     },
     cartContent: {
+        padding: 10,
         gap: 10,
-        padding: 20
     },
 });
