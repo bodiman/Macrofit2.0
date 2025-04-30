@@ -1,4 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '@/lib/utils/uuid';
 
 //types
 
@@ -92,118 +93,19 @@ export type MacroPreferences = {
     potassium?: Range
 }
 
-// Foods
-
-export const bacon: Food = {
-    id: uuidv4(),
-    name: "bacon",
-    macros: {
-        calories: 5,
-        protein: 0.37,
-        carbs: 0.01,
-        fat: 0.42,
-        fiber: 0,
-    },
-    // portion: {
-    //     unit: gram,
-    //     quantity: 10
-    // },
-    // servingUnits: servingUnits
-} 
-
-export const hotdog: Food = {
-    id: uuidv4(),
-    name: "hotdog",
-    macros: {
-        calories: 5,
-        protein: 0.37,
-        carbs: 0.01,
-        fat: 0.42,
-        fiber: 0,
-        sugar: 0.1,
-        sodium: 10,
-        potassium: 2,
-    },
-    // servingUnits: servingUnits,
-    // portion: {
-    //     unit: gram,
-    //     quantity: 10
-    // }
-}
-
-export const burrito: Food = {
-    id: uuidv4(),
-    name: "burrito",
-    macros: {
-        calories: 100,
-        protein: 0.237,
-        carbs: 0.41,
-        fat: 0.2,
-        fiber: 2,
-        sugar: 1,
-        sodium: 100,
-        potassium: 2,
-    },
-    // servingUnits: servingUnits,
-    // portion: {
-    //     unit: ounce,
-    //     quantity: 5
-    // }
-}
-
-export const sandwich: Food = {
-    id: "",
-    name: "sandwich",
-    macros: {
-        calories: 40,
-        protein: 0.37,
-        carbs: 1,
-        fat: 0.1,
-        fiber: 1,
-        sugar: 2,
-        sodium: 32,
-        potassium: 200,
-    },
-    // servingUnits: servingUnits,
-    // portion: {
-    //     unit: ounce,
-    //     quantity: 8
-    // }
-}
-
-export const fried: Food = {
-    id: "",
-    name: "fried chicken with gravy and tartar sauce",
-    macros: {
-        calories: 200,
-        protein: 0.0,
-        carbs: 0,
-        fat: 22,
-        fiber: 0,
-        sugar: 0,
-        sodium: 500,
-        potassium: 20,
-    },
-    // servingUnits: servingUnits,
-    // portion: {
-    //     unit: ounce,
-    //     quantity: 8
-    // }
-}
-
-// temporary for testing
-export function createInstance(food: Food) {
-    const instance: FoodServing = {
-        id: uuidv4(),
-        food: {...food},
-        portion: {
-            unit: gram,
-            quantity: 10
-        },
-        servingUnits: servingUnits
-    }
-    return instance
-}
+// // temporary for testing
+// export async function createInstance(food: Food) {
+//     const instance: FoodServing = {
+//         id: await generateUUID(),
+//         food: {...food},
+//         portion: {
+//             unit: gram,
+//             quantity: 10
+//         },
+//         servingUnits: servingUnits
+//     }
+//     return instance
+// }
 
 
 // meals
@@ -217,13 +119,6 @@ export const myMacros = {
     sugar: 5,
     sodium: 10,
     potassium: 2000,
-}
-
-export const foodDataBase = {
-    sandwich: sandwich,
-    hotdog: hotdog,
-    burrito: burrito,
-    fried: fried
 }
 
 // Macro preferences

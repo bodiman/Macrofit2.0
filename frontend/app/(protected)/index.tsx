@@ -11,6 +11,8 @@ import { useEffect, useState } from 'react';
 import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import useMeals from '../hooks/useMeals';
+import 'react-native-get-random-values';
+
 
 export default function Page() {
   const { 

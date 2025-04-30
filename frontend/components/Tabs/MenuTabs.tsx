@@ -18,7 +18,7 @@ export default function MenuTabs({ tabs, selected, setSelected }: Props) {
             {tabs.map(tab=> (
                 <View key={tab.id} style={[styles.tab, tab.id == selected ? styles.selectedTab: null]}>
                     <Pressable onPress={()=>setSelected(tab.id)}>
-                        <Text style={{}}>{tab.name}</Text>
+                        <Text style={styles.tabText}>{tab.name}</Text>
                     </Pressable>
                 </View>
             ))}
@@ -41,4 +41,9 @@ const styles = StyleSheet.create({
         borderBottomColor: Colors.black,
         borderBottomWidth: 4
     },
+    tabText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: Colors.black
+    }
 });

@@ -2,7 +2,7 @@ import Colors from "@/styles/colors";
 import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity, ScrollView } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { foodDataBase, Food, FoodServing, createInstance, myMacroPreferences, Portion } from "@/tempdata";
+import { Food, FoodServing, myMacroPreferences, Portion } from "@/tempdata";
 import { FlatList } from "react-native-gesture-handler";
 import FoodCard from "./FoodCard";
 import { useEffect, useState, } from "react";
@@ -19,7 +19,6 @@ type Props = {
 }
 
 export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
-    const foodDB: Food[] = Object.values(foodDataBase);
     const [displayResults, setDisplayResults] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const totalMacros = useMacros(shoppingCart);
