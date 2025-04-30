@@ -27,6 +27,7 @@
         <data android:scheme="myapp"/>
         <data android:scheme="com.bodiman.macrofit"/>
         <data android:scheme="exp+macrofit"/>
+        <data android:scheme="macrofit"/>
       </intent-filter>
     </activity>
   </application>

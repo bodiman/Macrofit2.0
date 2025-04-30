@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>myapp</string>
+          <string>macrofit</string>
           <string>com.bodiman.macrofit</string>
         </array>
       </dict>

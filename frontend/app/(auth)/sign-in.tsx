@@ -1,9 +1,28 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback} from 'react'
 import { View, StyleSheet, TextInput, TouchableOpacity, Text, Platform } from 'react-native'
 import Colors from '@/styles/colors'
 import { router } from 'expo-router'
 import { FontAwesome } from '@expo/vector-icons'
 import { useSignIn, useSSO } from '@clerk/clerk-expo'
+import * as Linking from 'expo-linking';
+
+import * as WebBrowser from 'expo-web-browser'
+import * as AuthSession from 'expo-auth-session'
+
+export const useWarmUpBrowser = () => {
+  useEffect(() => {
+    // Preloads the browser for Android devices to reduce authentication load time
+    // See: https://docs.expo.dev/guides/authentication/#improving-user-experience
+    void WebBrowser.warmUpAsync()
+    return () => {
+      // Cleanup: closes browser when component unmounts
+      void WebBrowser.coolDownAsync()
+    }
+  }, [])
+}
+
+// Handle any pending authentication sessions
+WebBrowser.maybeCompleteAuthSession()
 
 export default function SignInPage() {
   const { signIn, isLoaded } = useSignIn()
@@ -20,31 +39,36 @@ export default function SignInPage() {
         password,
       })
 
-      if (completeSignIn.status === 'complete') {
-        router.replace('/redirect')
-      }
+      // if (completeSignIn.status === 'complete') {
+      //   router.replace('/redirect')
+      // }
     } catch (err) {
       console.error(JSON.stringify(err, null, 2))
     }
   }
 
-  const onGoogleSignIn = async () => {
+  const onGoogleSignIn = useCallback(async () => {
     try {
+      console.log('onGoogleSignIn');
+      console.log(Linking.createURL('sso-callback'));
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy: 'oauth_google',
-        redirectUrl: Platform.OS === 'web' 
-          ? window.location.origin 
-          : 'exp://localhost:19000',
+        // redirectUrl: 'macrofit://sso-callback'
+        redirectUrl: Linking.createURL('sso-callback'),
+        // redirectUrl: AuthSession.makeRedirectUri(),
+        // redirectUrl: Platform.OS === 'web' 
+        //   ? 'http://localhost:8081/sso-callback'
+        //   : Linking.createURL('sso-callback'),
       })
 
       if (createdSessionId) {
         setActive?.({ session: createdSessionId })
-        router.replace('/redirect')
+        // router.replace('/redirect')
       }
     } catch (err) {
       console.error('OAuth error', err)
     }
-  }
+  }, [startSSOFlow])
 
   return (
     <View style={styles.container}>

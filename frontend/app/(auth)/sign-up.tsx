@@ -4,6 +4,7 @@ import Colors from '@/styles/colors'
 import { router } from 'expo-router'
 import { FontAwesome } from '@expo/vector-icons'
 import { useSignUp, useSSO } from '@clerk/clerk-expo'
+import * as Linking from 'expo-linking';
 
 export default function SignUpPage() {
   const { signUp, isLoaded } = useSignUp()
@@ -38,9 +39,9 @@ export default function SignUpPage() {
         code,
       })
 
-      if (completeSignUp.status === 'complete') {
-        router.replace('/redirect')
-      }
+      // if (completeSignUp.status === 'complete') {
+      //   router.replace('/redirect')
+      // }
     } catch (err) {
       console.error(JSON.stringify(err, null, 2))
     }
@@ -51,18 +52,19 @@ export default function SignUpPage() {
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy: 'oauth_google',
         redirectUrl: Platform.OS === 'web' 
-          ? window.location.origin 
-          : 'exp://localhost:19000',
+          ? 'http://localhost:8081/sso-callback'
+          : Linking.createURL('sso-callback')
       })
 
       if (createdSessionId) {
         setActive?.({ session: createdSessionId })
-        router.replace('/redirect')
+      //   router.replace('/redirect')
       }
     } catch (err) {
       console.error('OAuth error', err)
     }
   }
+  return null;
 
   return (
     <View style={styles.container}>

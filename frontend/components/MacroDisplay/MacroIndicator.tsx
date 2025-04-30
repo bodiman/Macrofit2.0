@@ -5,6 +5,7 @@ import { Range, unitMap } from "@/tempdata";
 import { useState } from "react"
 import { MacroKey } from "@/tempdata";
 import { useEffect } from "react";
+import 'react-native-reanimated';
 
 type Props = { 
     value: number, 
@@ -32,6 +33,11 @@ export default function MacroIndicator({ value, range, unit, radius }: Props) {
         if (range.max !== undefined && value > range.max) return range.max;
         return value;
     }
+
+    const progressFormatter = (value: number) => {
+        'worklet';
+        return value.toFixed() + unitMap[unit];
+    };
     
     return (
         <View style={{pointerEvents: "none"}}>
@@ -46,9 +52,7 @@ export default function MacroIndicator({ value, range, unit, radius }: Props) {
                 activeStrokeWidth={10}
                 inActiveStrokeWidth={10}
                 progressValueStyle={{ fontSize: 3 * radius / (3 + Math.max(String(value.toFixed() + unitMap[unit]).length, 4)) }}
-                progressFormatter={() => {  
-                    return value.toFixed() + unitMap[unit]; // 2 decimal places
-                }}
+                progressFormatter={progressFormatter}
                 strokeColorConfig={[
                     { color: '#ef4444', value: 0 * maxValue },
                     { color: 'orange', value: 0.3 * maxValue },
@@ -60,6 +64,5 @@ export default function MacroIndicator({ value, range, unit, radius }: Props) {
                 ]}
             />
         </View>
-        
     )
 }
