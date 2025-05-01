@@ -123,7 +123,6 @@ const styles = StyleSheet.create({
     macroContainer: {
         padding: 10,
         width: "100%",
-        backgroundColor: Colors.white,
         borderBottomWidth: 1,
         borderBottomColor: Colors.gray,
     },
@@ -147,7 +146,6 @@ const styles = StyleSheet.create({
     },
     searchBar: {
         flex: 1,
-        backgroundColor: Colors.white,
         padding: 10,
         borderColor: Colors.black,
         borderWidth: 1,
@@ -165,7 +163,6 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: Colors.white,
         zIndex: 1000,
     },
     shoppingCart: {

@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
     modalContent: {
       height: '100%',
       width: '100%',
+    //   backgroundColor: "red",
       paddingHorizontal: 20,
       borderTopRightRadius: 18,
       borderTopLeftRadius: 18,
@@ -105,19 +106,21 @@ const styles = StyleSheet.create({
         maxHeight: '80%',
     },
     buttonContainer: {
-        width: "80%",
+        width: "100%",
         margin: "auto",
         gap: 20,
         paddingVertical: 20,
         flexDirection: "row",
-        justifyContent: "space-between"
+        justifyContent: "space-between",
+        backgroundColor: Colors.white,
     },
     button: {
         backgroundColor: Colors.blue,
         padding: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
-        width: "100%",
+        width: "80%",
+        marginHorizontal: "auto",
     },
     buttonDisabled: {
         opacity: 0.5,

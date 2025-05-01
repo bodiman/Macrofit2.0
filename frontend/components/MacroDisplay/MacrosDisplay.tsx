@@ -57,6 +57,8 @@ export default function MacrosDisplay({ macroPreferences, macroValues, radius, i
                 pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={[styles.flatListContainer, { gap: gap }]}
+                snapToInterval={containerWidth + gap}
+                // ItemSeparatorComponent={() => <View style={{ width: gap }} />}
             />
         </View>
     )
@@ -66,6 +68,8 @@ const styles = StyleSheet.create({
     macroContainer: {
         display: "flex",
         flexDirection: "row",
+        flex: 1,
+        width: "100%",
     },
     flatListContainer: {
         // gap: 20,
