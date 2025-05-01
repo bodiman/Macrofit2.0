@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity,
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Food, FoodServing, myMacroPreferences, Portion } from "@/tempdata";
-import { FlatList } from "react-native-gesture-handler";
+import { FlatList } from "react-native";
 import FoodCard from "./FoodCard";
 import { useEffect, useState, } from "react";
 import storage from "@/app/storage/storage";
@@ -86,7 +86,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
             </View>
 
             {displayResults && (
-                <View style={styles.resultsContainer}>
+                <View style={[styles.resultsContainer]}>
                     <ResultContent 
                         visible={displayResults} 
                         closeModal={()=>setDisplayResults(false)} 
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
         width: "100%",
         borderBottomWidth: 1,
         borderBottomColor: Colors.gray,
+        zIndex: 1000,
     },
     iconContainer: {
         padding: 10,

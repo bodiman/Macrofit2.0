@@ -1,5 +1,7 @@
 import { Animated, View, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { PropsWithChildren, useEffect, useRef } from 'react';
+import MacrosDisplay from './MacroDisplay/MacrosDisplay';
+import { myMacroPreferences, myMacros } from '@/tempdata';
 
 type Props = PropsWithChildren<{
     isVisible: boolean;
@@ -29,7 +31,6 @@ export default function AnimatedModal({ isVisible, onClose, children, zIndex = 1
     if (!isVisible) return null;
 
     return (
-        <TouchableWithoutFeedback onPress={onClose}>
             <Animated.View 
                 style={[
                     styles.modalOverlay,
@@ -39,7 +40,6 @@ export default function AnimatedModal({ isVisible, onClose, children, zIndex = 1
                     }
                 ]}
             >
-                <TouchableWithoutFeedback>
                     <Animated.View 
                         style={[
                             styles.modalContent,
@@ -55,9 +55,7 @@ export default function AnimatedModal({ isVisible, onClose, children, zIndex = 1
                     >
                         {children}
                     </Animated.View>
-                </TouchableWithoutFeedback>
             </Animated.View>
-        </TouchableWithoutFeedback>
     );
 }
 

@@ -54,10 +54,12 @@ export default function MacrosDisplay({ macroPreferences, macroValues, radius, i
                 keyExtractor={(_, i) => i.toString()}
                 renderItem={renderItem}
                 horizontal
-                pagingEnabled
+                // pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={[styles.flatListContainer, { gap: gap }]}
+                nestedScrollEnabled={true}
                 snapToInterval={containerWidth + gap}
+                decelerationRate={0.9}
                 // ItemSeparatorComponent={() => <View style={{ width: gap }} />}
             />
         </View>
@@ -72,9 +74,6 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     flatListContainer: {
-        // gap: 20,
-        // width: "20%",
-        // justifyContent: "space-evenly",
-        // backgroundColor: "red",
+
     }
 }) 

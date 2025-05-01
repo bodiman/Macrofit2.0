@@ -1,12 +1,13 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
 import { PropsWithChildren, useState, useEffect, act } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Meal, FoodServing } from '@/tempdata';
+import { Meal, FoodServing, myMacroPreferences, myMacros } from '@/tempdata';
 import Colors from '@/styles/colors';
 import AddFood from './AddFood';
 import storage from '@/app/storage/storage';
 import AnimatedModal from '../AnimatedModal';
 import { eventBus } from '@/app/storage/eventEmitter';
+import MacrosDisplay from '../MacroDisplay/MacrosDisplay';
 
 type Props = PropsWithChildren<{
     onClose: () => void,
@@ -130,5 +131,5 @@ const styles = StyleSheet.create({
         fontWeight: 600,
         color: Colors.white,
         margin: "auto"
-    }
+    },
 });
