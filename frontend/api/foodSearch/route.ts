@@ -66,6 +66,45 @@ const mockFoods: Food[] = [
             sodium: 0.55,
             potassium: 3.37
         }
+    },
+    {
+        id: '6',
+        name: 'Sweet Potato',
+        macros: {
+            calories: 0.86,
+            protein: 0.016,
+            carbs: 0.2,
+            fat: 0.001,
+            fiber: 0.03,
+            sodium: 0.55,
+            potassium: 3.37
+        }
+    },
+    {
+        id: '7',
+        name: 'Sweet Potato',
+        macros: {
+            calories: 0.86,
+            protein: 0.016,
+            carbs: 0.2,
+            fat: 0.001,
+            fiber: 0.03,
+            sodium: 0.55,
+            potassium: 3.37
+        }
+    },
+    {
+        id: '8',
+        name: 'Sweet Potato',
+        macros: {
+            calories: 0.86,
+            protein: 0.016,
+            carbs: 0.2,
+            fat: 0.001,
+            fiber: 0.03,
+            sodium: 0.55,
+            potassium: 3.37
+        }
     }
 ];
 

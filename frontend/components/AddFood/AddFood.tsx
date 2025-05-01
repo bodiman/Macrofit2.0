@@ -161,9 +161,9 @@ const styles = StyleSheet.create({
     resultsContainer: {
         position: 'absolute',
         top: 150,
+        bottom: 0,
         left: 0,
         right: 0,
-        bottom: 0,
         zIndex: 1000,
     },
     shoppingCart: {

@@ -67,6 +67,14 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
         },
         {
             id: 3,
+            name: "Foothill",
+        },
+        {
+            id: 4,
+            name: "Cafe 3",
+        },
+        {
+            id: 5,
             name: "+ Add Menu",
         }
     ]
@@ -77,7 +85,10 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 {searchQuery ? `Showing Results for "${searchQuery}"` : "Search for foods to add"}
             </Text>
             
-            <MenuTabs tabs={tabs} selected={selected} setSelected={(tab: number)=>setSelected(tab)} />
+            <View style={styles.menuTabsContainer}>
+                <MenuTabs tabs={tabs} selected={selected} setSelected={(tab: number)=>setSelected(tab)} />
+            </View>
+            
             
             <FlatList
                 data={searchResults}
@@ -117,5 +128,8 @@ const styles = StyleSheet.create({
     resultsList: {
         padding: 10,
         gap: 10
+    },
+    menuTabsContainer: {
+        // backgroundColor: "red",
     }
 });
