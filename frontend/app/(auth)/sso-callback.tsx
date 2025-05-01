@@ -1,18 +1,17 @@
 // app/sso-callback.tsx
 
 import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useSignIn } from '@clerk/clerk-expo';
-
+import { Text } from 'react-native';
 export default function SSOCallback() {
   const { signIn } = useSignIn();
   const router = useRouter();
 
-  console.log('sso-callback');
-
   useEffect(() => {
     (async () => {
-      await signIn?.reload();
+      const test = await signIn?.reload();
+      console.log("signIn", test);
     })();
   }, []);
 
