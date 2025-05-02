@@ -71,7 +71,7 @@ export default function Preferences() {
 
     const handleLogout = async () => {
         try {
-            await signOut();
+            await signOut({ redirectUrl: '/landing' });
         } catch (err) {
             console.error('Error signing out:', err);
         }

@@ -1,6 +1,7 @@
 // hooks/useUser.ts
 import { useUser as useClerkUser, useAuth } from '@clerk/clerk-expo';
 import { useEffect, useState } from 'react';
+import Constants from 'expo-constants';
 
 type AppUser = {
   id: number;
@@ -10,14 +11,41 @@ type AppUser = {
 };
 
 export function useUser() {
+
+  const serverAddress = Constants.expoConfig?.extra?.SERVER_ADDRESS;
+
   const { user: clerkUser, isLoaded } = useClerkUser();
   const { getToken } = useAuth();
-
 
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [error, setError] = useState<null | string>(null);
+
+  const createUser = async (userData: { email: string; name: string }) => {
+    try {
+        setLoading(true);
+            const res = await fetch(`${serverAddress}/api/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData),
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to create user');
+            }
+
+            const user = await res.json();
+            setAppUser(user);
+
+        } catch (err) {
+            console.error('Failed to register app user:', err);
+            setError('Failed to register user');
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
 
   useEffect(() => {
     if (!isLoaded || !clerkUser) return;
@@ -30,9 +58,7 @@ export function useUser() {
             externalId: clerkUser.id,
         });
 
-        console.log("params", params.toString());
-
-        const res = await fetch(`http://10.58.250.107:5050/api/users?${params.toString()}`, {
+        const res = await fetch(`${serverAddress}/api/users?${params.toString()}`, {
           method: 'GET',
         });
 
@@ -54,7 +80,7 @@ export function useUser() {
     fetchAppUser();
   }, [isLoaded, clerkUser]);
 
-  return { appUser, loading, needsRegistration, error, clerkUser };
+  return { appUser, loading, needsRegistration, error, clerkUser, createUser };
 }
 
 export default useUser;
