@@ -14,10 +14,20 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
 
 /**
- * Model Users
+ * Model User
  * 
  */
-export type Users = $Result.DefaultSelection<Prisma.$UsersPayload>
+export type User = $Result.DefaultSelection<Prisma.$UserPayload>
+/**
+ * Model NutritionalMetric
+ * 
+ */
+export type NutritionalMetric = $Result.DefaultSelection<Prisma.$NutritionalMetricPayload>
+/**
+ * Model UserPreference
+ * 
+ */
+export type UserPreference = $Result.DefaultSelection<Prisma.$UserPreferencePayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -27,7 +37,7 @@ export type Users = $Result.DefaultSelection<Prisma.$UsersPayload>
  * ```
  * const prisma = new PrismaClient()
  * // Fetch zero or more Users
- * const users = await prisma.users.findMany()
+ * const users = await prisma.user.findMany()
  * ```
  *
  *
@@ -48,7 +58,7 @@ export class PrismaClient<
    * ```
    * const prisma = new PrismaClient()
    * // Fetch zero or more Users
-   * const users = await prisma.users.findMany()
+   * const users = await prisma.user.findMany()
    * ```
    *
    *
@@ -145,14 +155,34 @@ export class PrismaClient<
   }>>
 
       /**
-   * `prisma.users`: Exposes CRUD operations for the **Users** model.
+   * `prisma.user`: Exposes CRUD operations for the **User** model.
     * Example usage:
     * ```ts
     * // Fetch zero or more Users
-    * const users = await prisma.users.findMany()
+    * const users = await prisma.user.findMany()
     * ```
     */
-  get users(): Prisma.UsersDelegate<ExtArgs, ClientOptions>;
+  get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.nutritionalMetric`: Exposes CRUD operations for the **NutritionalMetric** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NutritionalMetrics
+    * const nutritionalMetrics = await prisma.nutritionalMetric.findMany()
+    * ```
+    */
+  get nutritionalMetric(): Prisma.NutritionalMetricDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userPreference`: Exposes CRUD operations for the **UserPreference** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserPreferences
+    * const userPreferences = await prisma.userPreference.findMany()
+    * ```
+    */
+  get userPreference(): Prisma.UserPreferenceDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -593,7 +623,9 @@ export namespace Prisma {
 
 
   export const ModelName: {
-    Users: 'Users'
+    User: 'User',
+    NutritionalMetric: 'NutritionalMetric',
+    UserPreference: 'UserPreference'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -612,81 +644,229 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "users"
+      modelProps: "user" | "nutritionalMetric" | "userPreference"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
-      Users: {
-        payload: Prisma.$UsersPayload<ExtArgs>
-        fields: Prisma.UsersFieldRefs
+      User: {
+        payload: Prisma.$UserPayload<ExtArgs>
+        fields: Prisma.UserFieldRefs
         operations: {
           findUnique: {
-            args: Prisma.UsersFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload> | null
+            args: Prisma.UserFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
           }
           findUniqueOrThrow: {
-            args: Prisma.UsersFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>
+            args: Prisma.UserFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
           }
           findFirst: {
-            args: Prisma.UsersFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload> | null
+            args: Prisma.UserFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
           }
           findFirstOrThrow: {
-            args: Prisma.UsersFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>
+            args: Prisma.UserFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
           }
           findMany: {
-            args: Prisma.UsersFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>[]
+            args: Prisma.UserFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
           }
           create: {
-            args: Prisma.UsersCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>
+            args: Prisma.UserCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
           }
           createMany: {
-            args: Prisma.UsersCreateManyArgs<ExtArgs>
+            args: Prisma.UserCreateManyArgs<ExtArgs>
             result: BatchPayload
           }
           createManyAndReturn: {
-            args: Prisma.UsersCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>[]
+            args: Prisma.UserCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
           }
           delete: {
-            args: Prisma.UsersDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>
+            args: Prisma.UserDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
           }
           update: {
-            args: Prisma.UsersUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>
+            args: Prisma.UserUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
           }
           deleteMany: {
-            args: Prisma.UsersDeleteManyArgs<ExtArgs>
+            args: Prisma.UserDeleteManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateMany: {
-            args: Prisma.UsersUpdateManyArgs<ExtArgs>
+            args: Prisma.UserUpdateManyArgs<ExtArgs>
             result: BatchPayload
           }
           updateManyAndReturn: {
-            args: Prisma.UsersUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>[]
+            args: Prisma.UserUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
           }
           upsert: {
-            args: Prisma.UsersUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UsersPayload>
+            args: Prisma.UserUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
           }
           aggregate: {
-            args: Prisma.UsersAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateUsers>
+            args: Prisma.UserAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUser>
           }
           groupBy: {
-            args: Prisma.UsersGroupByArgs<ExtArgs>
-            result: $Utils.Optional<UsersGroupByOutputType>[]
+            args: Prisma.UserGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserGroupByOutputType>[]
           }
           count: {
-            args: Prisma.UsersCountArgs<ExtArgs>
-            result: $Utils.Optional<UsersCountAggregateOutputType> | number
+            args: Prisma.UserCountArgs<ExtArgs>
+            result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      NutritionalMetric: {
+        payload: Prisma.$NutritionalMetricPayload<ExtArgs>
+        fields: Prisma.NutritionalMetricFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NutritionalMetricFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NutritionalMetricFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>
+          }
+          findFirst: {
+            args: Prisma.NutritionalMetricFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NutritionalMetricFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>
+          }
+          findMany: {
+            args: Prisma.NutritionalMetricFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>[]
+          }
+          create: {
+            args: Prisma.NutritionalMetricCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>
+          }
+          createMany: {
+            args: Prisma.NutritionalMetricCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NutritionalMetricCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>[]
+          }
+          delete: {
+            args: Prisma.NutritionalMetricDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>
+          }
+          update: {
+            args: Prisma.NutritionalMetricUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>
+          }
+          deleteMany: {
+            args: Prisma.NutritionalMetricDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NutritionalMetricUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NutritionalMetricUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>[]
+          }
+          upsert: {
+            args: Prisma.NutritionalMetricUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NutritionalMetricPayload>
+          }
+          aggregate: {
+            args: Prisma.NutritionalMetricAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNutritionalMetric>
+          }
+          groupBy: {
+            args: Prisma.NutritionalMetricGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NutritionalMetricGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NutritionalMetricCountArgs<ExtArgs>
+            result: $Utils.Optional<NutritionalMetricCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserPreference: {
+        payload: Prisma.$UserPreferencePayload<ExtArgs>
+        fields: Prisma.UserPreferenceFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserPreferenceFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserPreferenceFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>
+          }
+          findFirst: {
+            args: Prisma.UserPreferenceFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserPreferenceFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>
+          }
+          findMany: {
+            args: Prisma.UserPreferenceFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>[]
+          }
+          create: {
+            args: Prisma.UserPreferenceCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>
+          }
+          createMany: {
+            args: Prisma.UserPreferenceCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserPreferenceCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>[]
+          }
+          delete: {
+            args: Prisma.UserPreferenceDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>
+          }
+          update: {
+            args: Prisma.UserPreferenceUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>
+          }
+          deleteMany: {
+            args: Prisma.UserPreferenceDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserPreferenceUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserPreferenceUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>[]
+          }
+          upsert: {
+            args: Prisma.UserPreferenceUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPreferencePayload>
+          }
+          aggregate: {
+            args: Prisma.UserPreferenceAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserPreference>
+          }
+          groupBy: {
+            args: Prisma.UserPreferenceGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserPreferenceGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserPreferenceCountArgs<ExtArgs>
+            result: $Utils.Optional<UserPreferenceCountAggregateOutputType> | number
           }
         }
       }
@@ -774,7 +954,9 @@ export namespace Prisma {
     omit?: Prisma.GlobalOmitConfig
   }
   export type GlobalOmitConfig = {
-    users?: UsersOmit
+    user?: UserOmit
+    nutritionalMetric?: NutritionalMetricOmit
+    userPreference?: UserPreferenceOmit
   }
 
   /* Types for Logging */
@@ -864,44 +1046,105 @@ export namespace Prisma {
    */
 
 
+  /**
+   * Count Type UserCountOutputType
+   */
+
+  export type UserCountOutputType = {
+    macroPreferences: number
+  }
+
+  export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    macroPreferences?: boolean | UserCountOutputTypeCountMacroPreferencesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserCountOutputType
+     */
+    select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountMacroPreferencesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserPreferenceWhereInput
+  }
+
+
+  /**
+   * Count Type NutritionalMetricCountOutputType
+   */
+
+  export type NutritionalMetricCountOutputType = {
+    preferences: number
+  }
+
+  export type NutritionalMetricCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    preferences?: boolean | NutritionalMetricCountOutputTypeCountPreferencesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * NutritionalMetricCountOutputType without action
+   */
+  export type NutritionalMetricCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetricCountOutputType
+     */
+    select?: NutritionalMetricCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * NutritionalMetricCountOutputType without action
+   */
+  export type NutritionalMetricCountOutputTypeCountPreferencesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserPreferenceWhereInput
+  }
+
 
   /**
    * Models
    */
 
   /**
-   * Model Users
+   * Model User
    */
 
-  export type AggregateUsers = {
-    _count: UsersCountAggregateOutputType | null
-    _avg: UsersAvgAggregateOutputType | null
-    _sum: UsersSumAggregateOutputType | null
-    _min: UsersMinAggregateOutputType | null
-    _max: UsersMaxAggregateOutputType | null
+  export type AggregateUser = {
+    _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
   }
 
-  export type UsersAvgAggregateOutputType = {
+  export type UserAvgAggregateOutputType = {
     user_id: number | null
   }
 
-  export type UsersSumAggregateOutputType = {
+  export type UserSumAggregateOutputType = {
     user_id: number | null
   }
 
-  export type UsersMinAggregateOutputType = {
-    user_id: number | null
-    name: string | null
-    email: string | null
-  }
-
-  export type UsersMaxAggregateOutputType = {
+  export type UserMinAggregateOutputType = {
     user_id: number | null
     name: string | null
     email: string | null
   }
 
-  export type UsersCountAggregateOutputType = {
+  export type UserMaxAggregateOutputType = {
+    user_id: number | null
+    name: string | null
+    email: string | null
+  }
+
+  export type UserCountAggregateOutputType = {
     user_id: number
     name: number
     email: number
@@ -909,50 +1152,50 @@ export namespace Prisma {
   }
 
 
-  export type UsersAvgAggregateInputType = {
+  export type UserAvgAggregateInputType = {
     user_id?: true
   }
 
-  export type UsersSumAggregateInputType = {
+  export type UserSumAggregateInputType = {
     user_id?: true
   }
 
-  export type UsersMinAggregateInputType = {
-    user_id?: true
-    name?: true
-    email?: true
-  }
-
-  export type UsersMaxAggregateInputType = {
+  export type UserMinAggregateInputType = {
     user_id?: true
     name?: true
     email?: true
   }
 
-  export type UsersCountAggregateInputType = {
+  export type UserMaxAggregateInputType = {
+    user_id?: true
+    name?: true
+    email?: true
+  }
+
+  export type UserCountAggregateInputType = {
     user_id?: true
     name?: true
     email?: true
     _all?: true
   }
 
-  export type UsersAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Filter which Users to aggregate.
+     * Filter which User to aggregate.
      */
-    where?: UsersWhereInput
+    where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
      */
-    orderBy?: UsersOrderByWithRelationInput | UsersOrderByWithRelationInput[]
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
      */
-    cursor?: UsersWhereUniqueInput
+    cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -970,246 +1213,256 @@ export namespace Prisma {
      * 
      * Count returned Users
     **/
-    _count?: true | UsersCountAggregateInputType
+    _count?: true | UserCountAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to average
     **/
-    _avg?: UsersAvgAggregateInputType
+    _avg?: UserAvgAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to sum
     **/
-    _sum?: UsersSumAggregateInputType
+    _sum?: UserSumAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the minimum value
     **/
-    _min?: UsersMinAggregateInputType
+    _min?: UserMinAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the maximum value
     **/
-    _max?: UsersMaxAggregateInputType
+    _max?: UserMaxAggregateInputType
   }
 
-  export type GetUsersAggregateType<T extends UsersAggregateArgs> = {
-        [P in keyof T & keyof AggregateUsers]: P extends '_count' | 'count'
+  export type GetUserAggregateType<T extends UserAggregateArgs> = {
+        [P in keyof T & keyof AggregateUser]: P extends '_count' | 'count'
       ? T[P] extends true
         ? number
-        : GetScalarType<T[P], AggregateUsers[P]>
-      : GetScalarType<T[P], AggregateUsers[P]>
+        : GetScalarType<T[P], AggregateUser[P]>
+      : GetScalarType<T[P], AggregateUser[P]>
   }
 
 
 
 
-  export type UsersGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: UsersWhereInput
-    orderBy?: UsersOrderByWithAggregationInput | UsersOrderByWithAggregationInput[]
-    by: UsersScalarFieldEnum[] | UsersScalarFieldEnum
-    having?: UsersScalarWhereWithAggregatesInput
+  export type UserGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithAggregationInput | UserOrderByWithAggregationInput[]
+    by: UserScalarFieldEnum[] | UserScalarFieldEnum
+    having?: UserScalarWhereWithAggregatesInput
     take?: number
     skip?: number
-    _count?: UsersCountAggregateInputType | true
-    _avg?: UsersAvgAggregateInputType
-    _sum?: UsersSumAggregateInputType
-    _min?: UsersMinAggregateInputType
-    _max?: UsersMaxAggregateInputType
+    _count?: UserCountAggregateInputType | true
+    _avg?: UserAvgAggregateInputType
+    _sum?: UserSumAggregateInputType
+    _min?: UserMinAggregateInputType
+    _max?: UserMaxAggregateInputType
   }
 
-  export type UsersGroupByOutputType = {
+  export type UserGroupByOutputType = {
     user_id: number
     name: string | null
     email: string
-    _count: UsersCountAggregateOutputType | null
-    _avg: UsersAvgAggregateOutputType | null
-    _sum: UsersSumAggregateOutputType | null
-    _min: UsersMinAggregateOutputType | null
-    _max: UsersMaxAggregateOutputType | null
+    _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
   }
 
-  type GetUsersGroupByPayload<T extends UsersGroupByArgs> = Prisma.PrismaPromise<
+  type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
     Array<
-      PickEnumerable<UsersGroupByOutputType, T['by']> &
+      PickEnumerable<UserGroupByOutputType, T['by']> &
         {
-          [P in ((keyof T) & (keyof UsersGroupByOutputType))]: P extends '_count'
+          [P in ((keyof T) & (keyof UserGroupByOutputType))]: P extends '_count'
             ? T[P] extends boolean
               ? number
-              : GetScalarType<T[P], UsersGroupByOutputType[P]>
-            : GetScalarType<T[P], UsersGroupByOutputType[P]>
+              : GetScalarType<T[P], UserGroupByOutputType[P]>
+            : GetScalarType<T[P], UserGroupByOutputType[P]>
         }
       >
     >
 
 
-  export type UsersSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     user_id?: boolean
     name?: boolean
     email?: boolean
-  }, ExtArgs["result"]["users"]>
+    macroPreferences?: boolean | User$macroPreferencesArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["user"]>
 
-  export type UsersSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     user_id?: boolean
     name?: boolean
     email?: boolean
-  }, ExtArgs["result"]["users"]>
+  }, ExtArgs["result"]["user"]>
 
-  export type UsersSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+  export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     user_id?: boolean
     name?: boolean
     email?: boolean
-  }, ExtArgs["result"]["users"]>
+  }, ExtArgs["result"]["user"]>
 
-  export type UsersSelectScalar = {
+  export type UserSelectScalar = {
     user_id?: boolean
     name?: boolean
     email?: boolean
   }
 
-  export type UsersOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"user_id" | "name" | "email", ExtArgs["result"]["users"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"user_id" | "name" | "email", ExtArgs["result"]["user"]>
+  export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    macroPreferences?: boolean | User$macroPreferencesArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
-  export type $UsersPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "Users"
-    objects: {}
+  export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "User"
+    objects: {
+      macroPreferences: Prisma.$UserPreferencePayload<ExtArgs>[]
+    }
     scalars: $Extensions.GetPayloadResult<{
       user_id: number
       name: string | null
       email: string
-    }, ExtArgs["result"]["users"]>
+    }, ExtArgs["result"]["user"]>
     composites: {}
   }
 
-  type UsersGetPayload<S extends boolean | null | undefined | UsersDefaultArgs> = $Result.GetResult<Prisma.$UsersPayload, S>
+  type UserGetPayload<S extends boolean | null | undefined | UserDefaultArgs> = $Result.GetResult<Prisma.$UserPayload, S>
 
-  type UsersCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<UsersFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: UsersCountAggregateInputType | true
+  type UserCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserCountAggregateInputType | true
     }
 
-  export interface UsersDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Users'], meta: { name: 'Users' } }
+  export interface UserDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['User'], meta: { name: 'User' } }
     /**
-     * Find zero or one Users that matches the filter.
-     * @param {UsersFindUniqueArgs} args - Arguments to find a Users
+     * Find zero or one User that matches the filter.
+     * @param {UserFindUniqueArgs} args - Arguments to find a User
      * @example
-     * // Get one Users
-     * const users = await prisma.users.findUnique({
+     * // Get one User
+     * const user = await prisma.user.findUnique({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUnique<T extends UsersFindUniqueArgs>(args: SelectSubset<T, UsersFindUniqueArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findUnique<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find one Users that matches the filter or throw an error with `error.code='P2025'`
+     * Find one User that matches the filter or throw an error with `error.code='P2025'`
      * if no matches were found.
-     * @param {UsersFindUniqueOrThrowArgs} args - Arguments to find a Users
+     * @param {UserFindUniqueOrThrowArgs} args - Arguments to find a User
      * @example
-     * // Get one Users
-     * const users = await prisma.users.findUniqueOrThrow({
+     * // Get one User
+     * const user = await prisma.user.findUniqueOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findUniqueOrThrow<T extends UsersFindUniqueOrThrowArgs>(args: SelectSubset<T, UsersFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findUniqueOrThrow<T extends UserFindUniqueOrThrowArgs>(args: SelectSubset<T, UserFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Users that matches the filter.
+     * Find the first User that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {UsersFindFirstArgs} args - Arguments to find a Users
+     * @param {UserFindFirstArgs} args - Arguments to find a User
      * @example
-     * // Get one Users
-     * const users = await prisma.users.findFirst({
+     * // Get one User
+     * const user = await prisma.user.findFirst({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirst<T extends UsersFindFirstArgs>(args?: SelectSubset<T, UsersFindFirstArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    findFirst<T extends UserFindFirstArgs>(args?: SelectSubset<T, UserFindFirstArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Find the first Users that matches the filter or
+     * Find the first User that matches the filter or
      * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {UsersFindFirstOrThrowArgs} args - Arguments to find a Users
+     * @param {UserFindFirstOrThrowArgs} args - Arguments to find a User
      * @example
-     * // Get one Users
-     * const users = await prisma.users.findFirstOrThrow({
+     * // Get one User
+     * const user = await prisma.user.findFirstOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      */
-    findFirstOrThrow<T extends UsersFindFirstOrThrowArgs>(args?: SelectSubset<T, UsersFindFirstOrThrowArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    findFirstOrThrow<T extends UserFindFirstOrThrowArgs>(args?: SelectSubset<T, UserFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
      * Find zero or more Users that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {UsersFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @param {UserFindManyArgs} args - Arguments to filter and select certain fields only.
      * @example
      * // Get all Users
-     * const users = await prisma.users.findMany()
+     * const users = await prisma.user.findMany()
      * 
      * // Get first 10 Users
-     * const users = await prisma.users.findMany({ take: 10 })
+     * const users = await prisma.user.findMany({ take: 10 })
      * 
      * // Only select the `user_id`
-     * const usersWithUser_idOnly = await prisma.users.findMany({ select: { user_id: true } })
+     * const userWithUser_idOnly = await prisma.user.findMany({ select: { user_id: true } })
      * 
      */
-    findMany<T extends UsersFindManyArgs>(args?: SelectSubset<T, UsersFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+    findMany<T extends UserFindManyArgs>(args?: SelectSubset<T, UserFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
 
     /**
-     * Create a Users.
-     * @param {UsersCreateArgs} args - Arguments to create a Users.
+     * Create a User.
+     * @param {UserCreateArgs} args - Arguments to create a User.
      * @example
-     * // Create one Users
-     * const Users = await prisma.users.create({
+     * // Create one User
+     * const User = await prisma.user.create({
      *   data: {
-     *     // ... data to create a Users
+     *     // ... data to create a User
      *   }
      * })
      * 
      */
-    create<T extends UsersCreateArgs>(args: SelectSubset<T, UsersCreateArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    create<T extends UserCreateArgs>(args: SelectSubset<T, UserCreateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
      * Create many Users.
-     * @param {UsersCreateManyArgs} args - Arguments to create many Users.
+     * @param {UserCreateManyArgs} args - Arguments to create many Users.
      * @example
      * // Create many Users
-     * const users = await prisma.users.createMany({
+     * const user = await prisma.user.createMany({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      *     
      */
-    createMany<T extends UsersCreateManyArgs>(args?: SelectSubset<T, UsersCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    createMany<T extends UserCreateManyArgs>(args?: SelectSubset<T, UserCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Create many Users and returns the data saved in the database.
-     * @param {UsersCreateManyAndReturnArgs} args - Arguments to create many Users.
+     * @param {UserCreateManyAndReturnArgs} args - Arguments to create many Users.
      * @example
      * // Create many Users
-     * const users = await prisma.users.createManyAndReturn({
+     * const user = await prisma.user.createManyAndReturn({
      *   data: [
      *     // ... provide data here
      *   ]
      * })
      * 
      * // Create many Users and only return the `user_id`
-     * const usersWithUser_idOnly = await prisma.users.createManyAndReturn({
+     * const userWithUser_idOnly = await prisma.user.createManyAndReturn({
      *   select: { user_id: true },
      *   data: [
      *     // ... provide data here
@@ -1219,28 +1472,28 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    createManyAndReturn<T extends UsersCreateManyAndReturnArgs>(args?: SelectSubset<T, UsersCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+    createManyAndReturn<T extends UserCreateManyAndReturnArgs>(args?: SelectSubset<T, UserCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Delete a Users.
-     * @param {UsersDeleteArgs} args - Arguments to delete one Users.
+     * Delete a User.
+     * @param {UserDeleteArgs} args - Arguments to delete one User.
      * @example
-     * // Delete one Users
-     * const Users = await prisma.users.delete({
+     * // Delete one User
+     * const User = await prisma.user.delete({
      *   where: {
-     *     // ... filter to delete one Users
+     *     // ... filter to delete one User
      *   }
      * })
      * 
      */
-    delete<T extends UsersDeleteArgs>(args: SelectSubset<T, UsersDeleteArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    delete<T extends UserDeleteArgs>(args: SelectSubset<T, UserDeleteArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
-     * Update one Users.
-     * @param {UsersUpdateArgs} args - Arguments to update one Users.
+     * Update one User.
+     * @param {UserUpdateArgs} args - Arguments to update one User.
      * @example
-     * // Update one Users
-     * const users = await prisma.users.update({
+     * // Update one User
+     * const user = await prisma.user.update({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -1250,30 +1503,30 @@ export namespace Prisma {
      * })
      * 
      */
-    update<T extends UsersUpdateArgs>(args: SelectSubset<T, UsersUpdateArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    update<T extends UserUpdateArgs>(args: SelectSubset<T, UserUpdateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
     /**
      * Delete zero or more Users.
-     * @param {UsersDeleteManyArgs} args - Arguments to filter Users to delete.
+     * @param {UserDeleteManyArgs} args - Arguments to filter Users to delete.
      * @example
      * // Delete a few Users
-     * const { count } = await prisma.users.deleteMany({
+     * const { count } = await prisma.user.deleteMany({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      * 
      */
-    deleteMany<T extends UsersDeleteManyArgs>(args?: SelectSubset<T, UsersDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    deleteMany<T extends UserDeleteManyArgs>(args?: SelectSubset<T, UserDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more Users.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {UsersUpdateManyArgs} args - Arguments to update one or more rows.
+     * @param {UserUpdateManyArgs} args - Arguments to update one or more rows.
      * @example
      * // Update many Users
-     * const users = await prisma.users.updateMany({
+     * const user = await prisma.user.updateMany({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -1283,14 +1536,14 @@ export namespace Prisma {
      * })
      * 
      */
-    updateMany<T extends UsersUpdateManyArgs>(args: SelectSubset<T, UsersUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+    updateMany<T extends UserUpdateManyArgs>(args: SelectSubset<T, UserUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more Users and returns the data updated in the database.
-     * @param {UsersUpdateManyAndReturnArgs} args - Arguments to update many Users.
+     * @param {UserUpdateManyAndReturnArgs} args - Arguments to update many Users.
      * @example
      * // Update many Users
-     * const users = await prisma.users.updateManyAndReturn({
+     * const user = await prisma.user.updateManyAndReturn({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -1300,7 +1553,7 @@ export namespace Prisma {
      * })
      * 
      * // Update zero or more Users and only return the `user_id`
-     * const usersWithUser_idOnly = await prisma.users.updateManyAndReturn({
+     * const userWithUser_idOnly = await prisma.user.updateManyAndReturn({
      *   select: { user_id: true },
      *   where: {
      *     // ... provide filter here
@@ -1313,56 +1566,56 @@ export namespace Prisma {
      * Read more here: https://pris.ly/d/null-undefined
      * 
      */
-    updateManyAndReturn<T extends UsersUpdateManyAndReturnArgs>(args: SelectSubset<T, UsersUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+    updateManyAndReturn<T extends UserUpdateManyAndReturnArgs>(args: SelectSubset<T, UserUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
     /**
-     * Create or update one Users.
-     * @param {UsersUpsertArgs} args - Arguments to update or create a Users.
+     * Create or update one User.
+     * @param {UserUpsertArgs} args - Arguments to update or create a User.
      * @example
-     * // Update or create a Users
-     * const users = await prisma.users.upsert({
+     * // Update or create a User
+     * const user = await prisma.user.upsert({
      *   create: {
-     *     // ... data to create a Users
+     *     // ... data to create a User
      *   },
      *   update: {
      *     // ... in case it already exists, update
      *   },
      *   where: {
-     *     // ... the filter for the Users we want to update
+     *     // ... the filter for the User we want to update
      *   }
      * })
      */
-    upsert<T extends UsersUpsertArgs>(args: SelectSubset<T, UsersUpsertArgs<ExtArgs>>): Prisma__UsersClient<$Result.GetResult<Prisma.$UsersPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+    upsert<T extends UserUpsertArgs>(args: SelectSubset<T, UserUpsertArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
 
 
     /**
      * Count the number of Users.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {UsersCountArgs} args - Arguments to filter Users to count.
+     * @param {UserCountArgs} args - Arguments to filter Users to count.
      * @example
      * // Count the number of Users
-     * const count = await prisma.users.count({
+     * const count = await prisma.user.count({
      *   where: {
      *     // ... the filter for the Users we want to count
      *   }
      * })
     **/
-    count<T extends UsersCountArgs>(
-      args?: Subset<T, UsersCountArgs>,
+    count<T extends UserCountArgs>(
+      args?: Subset<T, UserCountArgs>,
     ): Prisma.PrismaPromise<
       T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
-          : GetScalarType<T['select'], UsersCountAggregateOutputType>
+          : GetScalarType<T['select'], UserCountAggregateOutputType>
         : number
     >
 
     /**
-     * Allows you to perform aggregations operations on a Users.
+     * Allows you to perform aggregations operations on a User.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {UsersAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @param {UserAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
      * @example
      * // Ordered by age ascending
      * // Where email contains prisma.io
@@ -1382,13 +1635,13 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends UsersAggregateArgs>(args: Subset<T, UsersAggregateArgs>): Prisma.PrismaPromise<GetUsersAggregateType<T>>
+    aggregate<T extends UserAggregateArgs>(args: Subset<T, UserAggregateArgs>): Prisma.PrismaPromise<GetUserAggregateType<T>>
 
     /**
-     * Group by Users.
+     * Group by User.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {UsersGroupByArgs} args - Group by arguments.
+     * @param {UserGroupByArgs} args - Group by arguments.
      * @example
      * // Group by city, order by createdAt, get count
      * const result = await prisma.user.groupBy({
@@ -1403,14 +1656,14 @@ export namespace Prisma {
      * 
     **/
     groupBy<
-      T extends UsersGroupByArgs,
+      T extends UserGroupByArgs,
       HasSelectOrTake extends Or<
         Extends<'skip', Keys<T>>,
         Extends<'take', Keys<T>>
       >,
       OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: UsersGroupByArgs['orderBy'] }
-        : { orderBy?: UsersGroupByArgs['orderBy'] },
+        ? { orderBy: UserGroupByArgs['orderBy'] }
+        : { orderBy?: UserGroupByArgs['orderBy'] },
       OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
       ByFields extends MaybeTupleToUnion<T['by']>,
       ByValid extends Has<ByFields, OrderFields>,
@@ -1459,21 +1712,22 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, UsersGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUsersGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, UserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
   /**
-   * Fields of the Users model
+   * Fields of the User model
    */
-  readonly fields: UsersFieldRefs;
+  readonly fields: UserFieldRefs;
   }
 
   /**
-   * The delegate class that acts as a "Promise-like" for Users.
+   * The delegate class that acts as a "Promise-like" for User.
    * Why is this prefixed with `Prisma__`?
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export interface Prisma__UsersClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+  export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    macroPreferences<T extends User$macroPreferencesArgs<ExtArgs> = {}>(args?: Subset<T, User$macroPreferencesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1500,80 +1754,92 @@ export namespace Prisma {
 
 
   /**
-   * Fields of the Users model
+   * Fields of the User model
    */
-  interface UsersFieldRefs {
-    readonly user_id: FieldRef<"Users", 'Int'>
-    readonly name: FieldRef<"Users", 'String'>
-    readonly email: FieldRef<"Users", 'String'>
+  interface UserFieldRefs {
+    readonly user_id: FieldRef<"User", 'Int'>
+    readonly name: FieldRef<"User", 'String'>
+    readonly email: FieldRef<"User", 'String'>
   }
     
 
   // Custom InputTypes
   /**
-   * Users findUnique
+   * User findUnique
    */
-  export type UsersFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * Filter, which Users to fetch.
+     * Choose, which related nodes to fetch as well
      */
-    where: UsersWhereUniqueInput
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
   }
 
   /**
-   * Users findUniqueOrThrow
+   * User findUniqueOrThrow
    */
-  export type UsersFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * Filter, which Users to fetch.
+     * Choose, which related nodes to fetch as well
      */
-    where: UsersWhereUniqueInput
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
   }
 
   /**
-   * Users findFirst
+   * User findFirst
    */
-  export type UsersFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * Filter, which Users to fetch.
+     * Choose, which related nodes to fetch as well
      */
-    where?: UsersWhereInput
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
      */
-    orderBy?: UsersOrderByWithRelationInput | UsersOrderByWithRelationInput[]
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for Users.
      */
-    cursor?: UsersWhereUniqueInput
+    cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -1591,37 +1857,41 @@ export namespace Prisma {
      * 
      * Filter by unique combinations of Users.
      */
-    distinct?: UsersScalarFieldEnum | UsersScalarFieldEnum[]
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
-   * Users findFirstOrThrow
+   * User findFirstOrThrow
    */
-  export type UsersFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * Filter, which Users to fetch.
+     * Choose, which related nodes to fetch as well
      */
-    where?: UsersWhereInput
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
      */
-    orderBy?: UsersOrderByWithRelationInput | UsersOrderByWithRelationInput[]
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for Users.
      */
-    cursor?: UsersWhereUniqueInput
+    cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -1639,37 +1909,41 @@ export namespace Prisma {
      * 
      * Filter by unique combinations of Users.
      */
-    distinct?: UsersScalarFieldEnum | UsersScalarFieldEnum[]
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
-   * Users findMany
+   * User findMany
    */
-  export type UsersFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which Users to fetch.
      */
-    where?: UsersWhereInput
+    where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
      */
-    orderBy?: UsersOrderByWithRelationInput | UsersOrderByWithRelationInput[]
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing Users.
      */
-    cursor?: UsersWhereUniqueInput
+    cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
@@ -1682,91 +1956,99 @@ export namespace Prisma {
      * Skip the first `n` Users.
      */
     skip?: number
-    distinct?: UsersScalarFieldEnum | UsersScalarFieldEnum[]
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
   /**
-   * Users create
+   * User create
    */
-  export type UsersCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * The data needed to create a Users.
+     * Choose, which related nodes to fetch as well
      */
-    data: XOR<UsersCreateInput, UsersUncheckedCreateInput>
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * The data needed to create a User.
+     */
+    data: XOR<UserCreateInput, UserUncheckedCreateInput>
   }
 
   /**
-   * Users createMany
+   * User createMany
    */
-  export type UsersCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many Users.
      */
-    data: UsersCreateManyInput | UsersCreateManyInput[]
+    data: UserCreateManyInput | UserCreateManyInput[]
     skipDuplicates?: boolean
   }
 
   /**
-   * Users createManyAndReturn
+   * User createManyAndReturn
    */
-  export type UsersCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelectCreateManyAndReturn<ExtArgs> | null
+    select?: UserSelectCreateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
      * The data used to create many Users.
      */
-    data: UsersCreateManyInput | UsersCreateManyInput[]
+    data: UserCreateManyInput | UserCreateManyInput[]
     skipDuplicates?: boolean
   }
 
   /**
-   * Users update
+   * User update
    */
-  export type UsersUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * The data needed to update a Users.
+     * Choose, which related nodes to fetch as well
      */
-    data: XOR<UsersUpdateInput, UsersUncheckedUpdateInput>
+    include?: UserInclude<ExtArgs> | null
     /**
-     * Choose, which Users to update.
+     * The data needed to update a User.
      */
-    where: UsersWhereUniqueInput
+    data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    /**
+     * Choose, which User to update.
+     */
+    where: UserWhereUniqueInput
   }
 
   /**
-   * Users updateMany
+   * User updateMany
    */
-  export type UsersUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * The data used to update Users.
      */
-    data: XOR<UsersUpdateManyMutationInput, UsersUncheckedUpdateManyInput>
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
     /**
      * Filter which Users to update
      */
-    where?: UsersWhereInput
+    where?: UserWhereInput
     /**
      * Limit how many Users to update.
      */
@@ -1774,25 +2056,25 @@ export namespace Prisma {
   }
 
   /**
-   * Users updateManyAndReturn
+   * User updateManyAndReturn
    */
-  export type UsersUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelectUpdateManyAndReturn<ExtArgs> | null
+    select?: UserSelectUpdateManyAndReturn<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
      * The data used to update Users.
      */
-    data: XOR<UsersUpdateManyMutationInput, UsersUncheckedUpdateManyInput>
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
     /**
      * Filter which Users to update
      */
-    where?: UsersWhereInput
+    where?: UserWhereInput
     /**
      * Limit how many Users to update.
      */
@@ -1800,57 +2082,65 @@ export namespace Prisma {
   }
 
   /**
-   * Users upsert
+   * User upsert
    */
-  export type UsersUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * The filter to search for the Users to update in case it exists.
+     * Choose, which related nodes to fetch as well
      */
-    where: UsersWhereUniqueInput
+    include?: UserInclude<ExtArgs> | null
     /**
-     * In case the Users found by the `where` argument doesn't exist, create a new Users with this data.
+     * The filter to search for the User to update in case it exists.
      */
-    create: XOR<UsersCreateInput, UsersUncheckedCreateInput>
+    where: UserWhereUniqueInput
     /**
-     * In case the Users was found with the provided `where` argument, update it with this data.
+     * In case the User found by the `where` argument doesn't exist, create a new User with this data.
      */
-    update: XOR<UsersUpdateInput, UsersUncheckedUpdateInput>
+    create: XOR<UserCreateInput, UserUncheckedCreateInput>
+    /**
+     * In case the User was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserUpdateInput, UserUncheckedUpdateInput>
   }
 
   /**
-   * Users delete
+   * User delete
    */
-  export type UsersDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the User
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the User
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserOmit<ExtArgs> | null
     /**
-     * Filter which Users to delete.
+     * Choose, which related nodes to fetch as well
      */
-    where: UsersWhereUniqueInput
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter which User to delete.
+     */
+    where: UserWhereUniqueInput
   }
 
   /**
-   * Users deleteMany
+   * User deleteMany
    */
-  export type UsersDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type UserDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
      * Filter which Users to delete
      */
-    where?: UsersWhereInput
+    where?: UserWhereInput
     /**
      * Limit how many Users to delete.
      */
@@ -1858,17 +2148,2252 @@ export namespace Prisma {
   }
 
   /**
-   * Users without action
+   * User.macroPreferences
    */
-  export type UsersDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type User$macroPreferencesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Users
+     * Select specific fields to fetch from the UserPreference
      */
-    select?: UsersSelect<ExtArgs> | null
+    select?: UserPreferenceSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Users
+     * Omit specific fields from the UserPreference
      */
-    omit?: UsersOmit<ExtArgs> | null
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    where?: UserPreferenceWhereInput
+    orderBy?: UserPreferenceOrderByWithRelationInput | UserPreferenceOrderByWithRelationInput[]
+    cursor?: UserPreferenceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserPreferenceScalarFieldEnum | UserPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * User without action
+   */
+  export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model NutritionalMetric
+   */
+
+  export type AggregateNutritionalMetric = {
+    _count: NutritionalMetricCountAggregateOutputType | null
+    _avg: NutritionalMetricAvgAggregateOutputType | null
+    _sum: NutritionalMetricSumAggregateOutputType | null
+    _min: NutritionalMetricMinAggregateOutputType | null
+    _max: NutritionalMetricMaxAggregateOutputType | null
+  }
+
+  export type NutritionalMetricAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type NutritionalMetricSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type NutritionalMetricMinAggregateOutputType = {
+    id: number | null
+    name: string | null
+    description: string | null
+    unit: string | null
+  }
+
+  export type NutritionalMetricMaxAggregateOutputType = {
+    id: number | null
+    name: string | null
+    description: string | null
+    unit: string | null
+  }
+
+  export type NutritionalMetricCountAggregateOutputType = {
+    id: number
+    name: number
+    description: number
+    unit: number
+    _all: number
+  }
+
+
+  export type NutritionalMetricAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type NutritionalMetricSumAggregateInputType = {
+    id?: true
+  }
+
+  export type NutritionalMetricMinAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    unit?: true
+  }
+
+  export type NutritionalMetricMaxAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    unit?: true
+  }
+
+  export type NutritionalMetricCountAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    unit?: true
+    _all?: true
+  }
+
+  export type NutritionalMetricAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NutritionalMetric to aggregate.
+     */
+    where?: NutritionalMetricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NutritionalMetrics to fetch.
+     */
+    orderBy?: NutritionalMetricOrderByWithRelationInput | NutritionalMetricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NutritionalMetricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NutritionalMetrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NutritionalMetrics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NutritionalMetrics
+    **/
+    _count?: true | NutritionalMetricCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: NutritionalMetricAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: NutritionalMetricSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NutritionalMetricMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NutritionalMetricMaxAggregateInputType
+  }
+
+  export type GetNutritionalMetricAggregateType<T extends NutritionalMetricAggregateArgs> = {
+        [P in keyof T & keyof AggregateNutritionalMetric]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNutritionalMetric[P]>
+      : GetScalarType<T[P], AggregateNutritionalMetric[P]>
+  }
+
+
+
+
+  export type NutritionalMetricGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NutritionalMetricWhereInput
+    orderBy?: NutritionalMetricOrderByWithAggregationInput | NutritionalMetricOrderByWithAggregationInput[]
+    by: NutritionalMetricScalarFieldEnum[] | NutritionalMetricScalarFieldEnum
+    having?: NutritionalMetricScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NutritionalMetricCountAggregateInputType | true
+    _avg?: NutritionalMetricAvgAggregateInputType
+    _sum?: NutritionalMetricSumAggregateInputType
+    _min?: NutritionalMetricMinAggregateInputType
+    _max?: NutritionalMetricMaxAggregateInputType
+  }
+
+  export type NutritionalMetricGroupByOutputType = {
+    id: number
+    name: string
+    description: string | null
+    unit: string
+    _count: NutritionalMetricCountAggregateOutputType | null
+    _avg: NutritionalMetricAvgAggregateOutputType | null
+    _sum: NutritionalMetricSumAggregateOutputType | null
+    _min: NutritionalMetricMinAggregateOutputType | null
+    _max: NutritionalMetricMaxAggregateOutputType | null
+  }
+
+  type GetNutritionalMetricGroupByPayload<T extends NutritionalMetricGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NutritionalMetricGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NutritionalMetricGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NutritionalMetricGroupByOutputType[P]>
+            : GetScalarType<T[P], NutritionalMetricGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NutritionalMetricSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    unit?: boolean
+    preferences?: boolean | NutritionalMetric$preferencesArgs<ExtArgs>
+    _count?: boolean | NutritionalMetricCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["nutritionalMetric"]>
+
+  export type NutritionalMetricSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    unit?: boolean
+  }, ExtArgs["result"]["nutritionalMetric"]>
+
+  export type NutritionalMetricSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    unit?: boolean
+  }, ExtArgs["result"]["nutritionalMetric"]>
+
+  export type NutritionalMetricSelectScalar = {
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    unit?: boolean
+  }
+
+  export type NutritionalMetricOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "unit", ExtArgs["result"]["nutritionalMetric"]>
+  export type NutritionalMetricInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    preferences?: boolean | NutritionalMetric$preferencesArgs<ExtArgs>
+    _count?: boolean | NutritionalMetricCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type NutritionalMetricIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type NutritionalMetricIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $NutritionalMetricPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NutritionalMetric"
+    objects: {
+      preferences: Prisma.$UserPreferencePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      name: string
+      description: string | null
+      unit: string
+    }, ExtArgs["result"]["nutritionalMetric"]>
+    composites: {}
+  }
+
+  type NutritionalMetricGetPayload<S extends boolean | null | undefined | NutritionalMetricDefaultArgs> = $Result.GetResult<Prisma.$NutritionalMetricPayload, S>
+
+  type NutritionalMetricCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NutritionalMetricFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NutritionalMetricCountAggregateInputType | true
+    }
+
+  export interface NutritionalMetricDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NutritionalMetric'], meta: { name: 'NutritionalMetric' } }
+    /**
+     * Find zero or one NutritionalMetric that matches the filter.
+     * @param {NutritionalMetricFindUniqueArgs} args - Arguments to find a NutritionalMetric
+     * @example
+     * // Get one NutritionalMetric
+     * const nutritionalMetric = await prisma.nutritionalMetric.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NutritionalMetricFindUniqueArgs>(args: SelectSubset<T, NutritionalMetricFindUniqueArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NutritionalMetric that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NutritionalMetricFindUniqueOrThrowArgs} args - Arguments to find a NutritionalMetric
+     * @example
+     * // Get one NutritionalMetric
+     * const nutritionalMetric = await prisma.nutritionalMetric.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NutritionalMetricFindUniqueOrThrowArgs>(args: SelectSubset<T, NutritionalMetricFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NutritionalMetric that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NutritionalMetricFindFirstArgs} args - Arguments to find a NutritionalMetric
+     * @example
+     * // Get one NutritionalMetric
+     * const nutritionalMetric = await prisma.nutritionalMetric.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NutritionalMetricFindFirstArgs>(args?: SelectSubset<T, NutritionalMetricFindFirstArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NutritionalMetric that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NutritionalMetricFindFirstOrThrowArgs} args - Arguments to find a NutritionalMetric
+     * @example
+     * // Get one NutritionalMetric
+     * const nutritionalMetric = await prisma.nutritionalMetric.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NutritionalMetricFindFirstOrThrowArgs>(args?: SelectSubset<T, NutritionalMetricFindFirstOrThrowArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NutritionalMetrics that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NutritionalMetricFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NutritionalMetrics
+     * const nutritionalMetrics = await prisma.nutritionalMetric.findMany()
+     * 
+     * // Get first 10 NutritionalMetrics
+     * const nutritionalMetrics = await prisma.nutritionalMetric.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const nutritionalMetricWithIdOnly = await prisma.nutritionalMetric.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NutritionalMetricFindManyArgs>(args?: SelectSubset<T, NutritionalMetricFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NutritionalMetric.
+     * @param {NutritionalMetricCreateArgs} args - Arguments to create a NutritionalMetric.
+     * @example
+     * // Create one NutritionalMetric
+     * const NutritionalMetric = await prisma.nutritionalMetric.create({
+     *   data: {
+     *     // ... data to create a NutritionalMetric
+     *   }
+     * })
+     * 
+     */
+    create<T extends NutritionalMetricCreateArgs>(args: SelectSubset<T, NutritionalMetricCreateArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NutritionalMetrics.
+     * @param {NutritionalMetricCreateManyArgs} args - Arguments to create many NutritionalMetrics.
+     * @example
+     * // Create many NutritionalMetrics
+     * const nutritionalMetric = await prisma.nutritionalMetric.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NutritionalMetricCreateManyArgs>(args?: SelectSubset<T, NutritionalMetricCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NutritionalMetrics and returns the data saved in the database.
+     * @param {NutritionalMetricCreateManyAndReturnArgs} args - Arguments to create many NutritionalMetrics.
+     * @example
+     * // Create many NutritionalMetrics
+     * const nutritionalMetric = await prisma.nutritionalMetric.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NutritionalMetrics and only return the `id`
+     * const nutritionalMetricWithIdOnly = await prisma.nutritionalMetric.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NutritionalMetricCreateManyAndReturnArgs>(args?: SelectSubset<T, NutritionalMetricCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NutritionalMetric.
+     * @param {NutritionalMetricDeleteArgs} args - Arguments to delete one NutritionalMetric.
+     * @example
+     * // Delete one NutritionalMetric
+     * const NutritionalMetric = await prisma.nutritionalMetric.delete({
+     *   where: {
+     *     // ... filter to delete one NutritionalMetric
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NutritionalMetricDeleteArgs>(args: SelectSubset<T, NutritionalMetricDeleteArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NutritionalMetric.
+     * @param {NutritionalMetricUpdateArgs} args - Arguments to update one NutritionalMetric.
+     * @example
+     * // Update one NutritionalMetric
+     * const nutritionalMetric = await prisma.nutritionalMetric.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NutritionalMetricUpdateArgs>(args: SelectSubset<T, NutritionalMetricUpdateArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NutritionalMetrics.
+     * @param {NutritionalMetricDeleteManyArgs} args - Arguments to filter NutritionalMetrics to delete.
+     * @example
+     * // Delete a few NutritionalMetrics
+     * const { count } = await prisma.nutritionalMetric.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NutritionalMetricDeleteManyArgs>(args?: SelectSubset<T, NutritionalMetricDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NutritionalMetrics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NutritionalMetricUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NutritionalMetrics
+     * const nutritionalMetric = await prisma.nutritionalMetric.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NutritionalMetricUpdateManyArgs>(args: SelectSubset<T, NutritionalMetricUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NutritionalMetrics and returns the data updated in the database.
+     * @param {NutritionalMetricUpdateManyAndReturnArgs} args - Arguments to update many NutritionalMetrics.
+     * @example
+     * // Update many NutritionalMetrics
+     * const nutritionalMetric = await prisma.nutritionalMetric.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NutritionalMetrics and only return the `id`
+     * const nutritionalMetricWithIdOnly = await prisma.nutritionalMetric.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NutritionalMetricUpdateManyAndReturnArgs>(args: SelectSubset<T, NutritionalMetricUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NutritionalMetric.
+     * @param {NutritionalMetricUpsertArgs} args - Arguments to update or create a NutritionalMetric.
+     * @example
+     * // Update or create a NutritionalMetric
+     * const nutritionalMetric = await prisma.nutritionalMetric.upsert({
+     *   create: {
+     *     // ... data to create a NutritionalMetric
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NutritionalMetric we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NutritionalMetricUpsertArgs>(args: SelectSubset<T, NutritionalMetricUpsertArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NutritionalMetrics.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NutritionalMetricCountArgs} args - Arguments to filter NutritionalMetrics to count.
+     * @example
+     * // Count the number of NutritionalMetrics
+     * const count = await prisma.nutritionalMetric.count({
+     *   where: {
+     *     // ... the filter for the NutritionalMetrics we want to count
+     *   }
+     * })
+    **/
+    count<T extends NutritionalMetricCountArgs>(
+      args?: Subset<T, NutritionalMetricCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NutritionalMetricCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NutritionalMetric.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NutritionalMetricAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NutritionalMetricAggregateArgs>(args: Subset<T, NutritionalMetricAggregateArgs>): Prisma.PrismaPromise<GetNutritionalMetricAggregateType<T>>
+
+    /**
+     * Group by NutritionalMetric.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NutritionalMetricGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NutritionalMetricGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NutritionalMetricGroupByArgs['orderBy'] }
+        : { orderBy?: NutritionalMetricGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NutritionalMetricGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNutritionalMetricGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NutritionalMetric model
+   */
+  readonly fields: NutritionalMetricFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NutritionalMetric.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NutritionalMetricClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    preferences<T extends NutritionalMetric$preferencesArgs<ExtArgs> = {}>(args?: Subset<T, NutritionalMetric$preferencesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NutritionalMetric model
+   */
+  interface NutritionalMetricFieldRefs {
+    readonly id: FieldRef<"NutritionalMetric", 'Int'>
+    readonly name: FieldRef<"NutritionalMetric", 'String'>
+    readonly description: FieldRef<"NutritionalMetric", 'String'>
+    readonly unit: FieldRef<"NutritionalMetric", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NutritionalMetric findUnique
+   */
+  export type NutritionalMetricFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * Filter, which NutritionalMetric to fetch.
+     */
+    where: NutritionalMetricWhereUniqueInput
+  }
+
+  /**
+   * NutritionalMetric findUniqueOrThrow
+   */
+  export type NutritionalMetricFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * Filter, which NutritionalMetric to fetch.
+     */
+    where: NutritionalMetricWhereUniqueInput
+  }
+
+  /**
+   * NutritionalMetric findFirst
+   */
+  export type NutritionalMetricFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * Filter, which NutritionalMetric to fetch.
+     */
+    where?: NutritionalMetricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NutritionalMetrics to fetch.
+     */
+    orderBy?: NutritionalMetricOrderByWithRelationInput | NutritionalMetricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NutritionalMetrics.
+     */
+    cursor?: NutritionalMetricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NutritionalMetrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NutritionalMetrics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NutritionalMetrics.
+     */
+    distinct?: NutritionalMetricScalarFieldEnum | NutritionalMetricScalarFieldEnum[]
+  }
+
+  /**
+   * NutritionalMetric findFirstOrThrow
+   */
+  export type NutritionalMetricFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * Filter, which NutritionalMetric to fetch.
+     */
+    where?: NutritionalMetricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NutritionalMetrics to fetch.
+     */
+    orderBy?: NutritionalMetricOrderByWithRelationInput | NutritionalMetricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NutritionalMetrics.
+     */
+    cursor?: NutritionalMetricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NutritionalMetrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NutritionalMetrics.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NutritionalMetrics.
+     */
+    distinct?: NutritionalMetricScalarFieldEnum | NutritionalMetricScalarFieldEnum[]
+  }
+
+  /**
+   * NutritionalMetric findMany
+   */
+  export type NutritionalMetricFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * Filter, which NutritionalMetrics to fetch.
+     */
+    where?: NutritionalMetricWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NutritionalMetrics to fetch.
+     */
+    orderBy?: NutritionalMetricOrderByWithRelationInput | NutritionalMetricOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NutritionalMetrics.
+     */
+    cursor?: NutritionalMetricWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NutritionalMetrics from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NutritionalMetrics.
+     */
+    skip?: number
+    distinct?: NutritionalMetricScalarFieldEnum | NutritionalMetricScalarFieldEnum[]
+  }
+
+  /**
+   * NutritionalMetric create
+   */
+  export type NutritionalMetricCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NutritionalMetric.
+     */
+    data: XOR<NutritionalMetricCreateInput, NutritionalMetricUncheckedCreateInput>
+  }
+
+  /**
+   * NutritionalMetric createMany
+   */
+  export type NutritionalMetricCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NutritionalMetrics.
+     */
+    data: NutritionalMetricCreateManyInput | NutritionalMetricCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NutritionalMetric createManyAndReturn
+   */
+  export type NutritionalMetricCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * The data used to create many NutritionalMetrics.
+     */
+    data: NutritionalMetricCreateManyInput | NutritionalMetricCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NutritionalMetric update
+   */
+  export type NutritionalMetricUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NutritionalMetric.
+     */
+    data: XOR<NutritionalMetricUpdateInput, NutritionalMetricUncheckedUpdateInput>
+    /**
+     * Choose, which NutritionalMetric to update.
+     */
+    where: NutritionalMetricWhereUniqueInput
+  }
+
+  /**
+   * NutritionalMetric updateMany
+   */
+  export type NutritionalMetricUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NutritionalMetrics.
+     */
+    data: XOR<NutritionalMetricUpdateManyMutationInput, NutritionalMetricUncheckedUpdateManyInput>
+    /**
+     * Filter which NutritionalMetrics to update
+     */
+    where?: NutritionalMetricWhereInput
+    /**
+     * Limit how many NutritionalMetrics to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NutritionalMetric updateManyAndReturn
+   */
+  export type NutritionalMetricUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * The data used to update NutritionalMetrics.
+     */
+    data: XOR<NutritionalMetricUpdateManyMutationInput, NutritionalMetricUncheckedUpdateManyInput>
+    /**
+     * Filter which NutritionalMetrics to update
+     */
+    where?: NutritionalMetricWhereInput
+    /**
+     * Limit how many NutritionalMetrics to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NutritionalMetric upsert
+   */
+  export type NutritionalMetricUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NutritionalMetric to update in case it exists.
+     */
+    where: NutritionalMetricWhereUniqueInput
+    /**
+     * In case the NutritionalMetric found by the `where` argument doesn't exist, create a new NutritionalMetric with this data.
+     */
+    create: XOR<NutritionalMetricCreateInput, NutritionalMetricUncheckedCreateInput>
+    /**
+     * In case the NutritionalMetric was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NutritionalMetricUpdateInput, NutritionalMetricUncheckedUpdateInput>
+  }
+
+  /**
+   * NutritionalMetric delete
+   */
+  export type NutritionalMetricDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+    /**
+     * Filter which NutritionalMetric to delete.
+     */
+    where: NutritionalMetricWhereUniqueInput
+  }
+
+  /**
+   * NutritionalMetric deleteMany
+   */
+  export type NutritionalMetricDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NutritionalMetrics to delete
+     */
+    where?: NutritionalMetricWhereInput
+    /**
+     * Limit how many NutritionalMetrics to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NutritionalMetric.preferences
+   */
+  export type NutritionalMetric$preferencesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    where?: UserPreferenceWhereInput
+    orderBy?: UserPreferenceOrderByWithRelationInput | UserPreferenceOrderByWithRelationInput[]
+    cursor?: UserPreferenceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserPreferenceScalarFieldEnum | UserPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * NutritionalMetric without action
+   */
+  export type NutritionalMetricDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NutritionalMetric
+     */
+    select?: NutritionalMetricSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NutritionalMetric
+     */
+    omit?: NutritionalMetricOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NutritionalMetricInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserPreference
+   */
+
+  export type AggregateUserPreference = {
+    _count: UserPreferenceCountAggregateOutputType | null
+    _avg: UserPreferenceAvgAggregateOutputType | null
+    _sum: UserPreferenceSumAggregateOutputType | null
+    _min: UserPreferenceMinAggregateOutputType | null
+    _max: UserPreferenceMaxAggregateOutputType | null
+  }
+
+  export type UserPreferenceAvgAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    metric_id: number | null
+    min_value: number | null
+    max_value: number | null
+  }
+
+  export type UserPreferenceSumAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    metric_id: number | null
+    min_value: number | null
+    max_value: number | null
+  }
+
+  export type UserPreferenceMinAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    metric_id: number | null
+    min_value: number | null
+    max_value: number | null
+  }
+
+  export type UserPreferenceMaxAggregateOutputType = {
+    id: number | null
+    user_id: number | null
+    metric_id: number | null
+    min_value: number | null
+    max_value: number | null
+  }
+
+  export type UserPreferenceCountAggregateOutputType = {
+    id: number
+    user_id: number
+    metric_id: number
+    min_value: number
+    max_value: number
+    _all: number
+  }
+
+
+  export type UserPreferenceAvgAggregateInputType = {
+    id?: true
+    user_id?: true
+    metric_id?: true
+    min_value?: true
+    max_value?: true
+  }
+
+  export type UserPreferenceSumAggregateInputType = {
+    id?: true
+    user_id?: true
+    metric_id?: true
+    min_value?: true
+    max_value?: true
+  }
+
+  export type UserPreferenceMinAggregateInputType = {
+    id?: true
+    user_id?: true
+    metric_id?: true
+    min_value?: true
+    max_value?: true
+  }
+
+  export type UserPreferenceMaxAggregateInputType = {
+    id?: true
+    user_id?: true
+    metric_id?: true
+    min_value?: true
+    max_value?: true
+  }
+
+  export type UserPreferenceCountAggregateInputType = {
+    id?: true
+    user_id?: true
+    metric_id?: true
+    min_value?: true
+    max_value?: true
+    _all?: true
+  }
+
+  export type UserPreferenceAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserPreference to aggregate.
+     */
+    where?: UserPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPreferences to fetch.
+     */
+    orderBy?: UserPreferenceOrderByWithRelationInput | UserPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPreferences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserPreferences
+    **/
+    _count?: true | UserPreferenceCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: UserPreferenceAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserPreferenceSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserPreferenceMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserPreferenceMaxAggregateInputType
+  }
+
+  export type GetUserPreferenceAggregateType<T extends UserPreferenceAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserPreference]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserPreference[P]>
+      : GetScalarType<T[P], AggregateUserPreference[P]>
+  }
+
+
+
+
+  export type UserPreferenceGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserPreferenceWhereInput
+    orderBy?: UserPreferenceOrderByWithAggregationInput | UserPreferenceOrderByWithAggregationInput[]
+    by: UserPreferenceScalarFieldEnum[] | UserPreferenceScalarFieldEnum
+    having?: UserPreferenceScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserPreferenceCountAggregateInputType | true
+    _avg?: UserPreferenceAvgAggregateInputType
+    _sum?: UserPreferenceSumAggregateInputType
+    _min?: UserPreferenceMinAggregateInputType
+    _max?: UserPreferenceMaxAggregateInputType
+  }
+
+  export type UserPreferenceGroupByOutputType = {
+    id: number
+    user_id: number
+    metric_id: number
+    min_value: number | null
+    max_value: number | null
+    _count: UserPreferenceCountAggregateOutputType | null
+    _avg: UserPreferenceAvgAggregateOutputType | null
+    _sum: UserPreferenceSumAggregateOutputType | null
+    _min: UserPreferenceMinAggregateOutputType | null
+    _max: UserPreferenceMaxAggregateOutputType | null
+  }
+
+  type GetUserPreferenceGroupByPayload<T extends UserPreferenceGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserPreferenceGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserPreferenceGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserPreferenceGroupByOutputType[P]>
+            : GetScalarType<T[P], UserPreferenceGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserPreferenceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    user_id?: boolean
+    metric_id?: boolean
+    min_value?: boolean
+    max_value?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    metric?: boolean | NutritionalMetricDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userPreference"]>
+
+  export type UserPreferenceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    user_id?: boolean
+    metric_id?: boolean
+    min_value?: boolean
+    max_value?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    metric?: boolean | NutritionalMetricDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userPreference"]>
+
+  export type UserPreferenceSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    user_id?: boolean
+    metric_id?: boolean
+    min_value?: boolean
+    max_value?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    metric?: boolean | NutritionalMetricDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userPreference"]>
+
+  export type UserPreferenceSelectScalar = {
+    id?: boolean
+    user_id?: boolean
+    metric_id?: boolean
+    min_value?: boolean
+    max_value?: boolean
+  }
+
+  export type UserPreferenceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "user_id" | "metric_id" | "min_value" | "max_value", ExtArgs["result"]["userPreference"]>
+  export type UserPreferenceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    metric?: boolean | NutritionalMetricDefaultArgs<ExtArgs>
+  }
+  export type UserPreferenceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    metric?: boolean | NutritionalMetricDefaultArgs<ExtArgs>
+  }
+  export type UserPreferenceIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    metric?: boolean | NutritionalMetricDefaultArgs<ExtArgs>
+  }
+
+  export type $UserPreferencePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserPreference"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+      metric: Prisma.$NutritionalMetricPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      user_id: number
+      metric_id: number
+      min_value: number | null
+      max_value: number | null
+    }, ExtArgs["result"]["userPreference"]>
+    composites: {}
+  }
+
+  type UserPreferenceGetPayload<S extends boolean | null | undefined | UserPreferenceDefaultArgs> = $Result.GetResult<Prisma.$UserPreferencePayload, S>
+
+  type UserPreferenceCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserPreferenceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserPreferenceCountAggregateInputType | true
+    }
+
+  export interface UserPreferenceDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserPreference'], meta: { name: 'UserPreference' } }
+    /**
+     * Find zero or one UserPreference that matches the filter.
+     * @param {UserPreferenceFindUniqueArgs} args - Arguments to find a UserPreference
+     * @example
+     * // Get one UserPreference
+     * const userPreference = await prisma.userPreference.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserPreferenceFindUniqueArgs>(args: SelectSubset<T, UserPreferenceFindUniqueArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserPreference that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserPreferenceFindUniqueOrThrowArgs} args - Arguments to find a UserPreference
+     * @example
+     * // Get one UserPreference
+     * const userPreference = await prisma.userPreference.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserPreferenceFindUniqueOrThrowArgs>(args: SelectSubset<T, UserPreferenceFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserPreference that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPreferenceFindFirstArgs} args - Arguments to find a UserPreference
+     * @example
+     * // Get one UserPreference
+     * const userPreference = await prisma.userPreference.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserPreferenceFindFirstArgs>(args?: SelectSubset<T, UserPreferenceFindFirstArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserPreference that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPreferenceFindFirstOrThrowArgs} args - Arguments to find a UserPreference
+     * @example
+     * // Get one UserPreference
+     * const userPreference = await prisma.userPreference.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserPreferenceFindFirstOrThrowArgs>(args?: SelectSubset<T, UserPreferenceFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserPreferences that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPreferenceFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserPreferences
+     * const userPreferences = await prisma.userPreference.findMany()
+     * 
+     * // Get first 10 UserPreferences
+     * const userPreferences = await prisma.userPreference.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userPreferenceWithIdOnly = await prisma.userPreference.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserPreferenceFindManyArgs>(args?: SelectSubset<T, UserPreferenceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserPreference.
+     * @param {UserPreferenceCreateArgs} args - Arguments to create a UserPreference.
+     * @example
+     * // Create one UserPreference
+     * const UserPreference = await prisma.userPreference.create({
+     *   data: {
+     *     // ... data to create a UserPreference
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserPreferenceCreateArgs>(args: SelectSubset<T, UserPreferenceCreateArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserPreferences.
+     * @param {UserPreferenceCreateManyArgs} args - Arguments to create many UserPreferences.
+     * @example
+     * // Create many UserPreferences
+     * const userPreference = await prisma.userPreference.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserPreferenceCreateManyArgs>(args?: SelectSubset<T, UserPreferenceCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserPreferences and returns the data saved in the database.
+     * @param {UserPreferenceCreateManyAndReturnArgs} args - Arguments to create many UserPreferences.
+     * @example
+     * // Create many UserPreferences
+     * const userPreference = await prisma.userPreference.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserPreferences and only return the `id`
+     * const userPreferenceWithIdOnly = await prisma.userPreference.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserPreferenceCreateManyAndReturnArgs>(args?: SelectSubset<T, UserPreferenceCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserPreference.
+     * @param {UserPreferenceDeleteArgs} args - Arguments to delete one UserPreference.
+     * @example
+     * // Delete one UserPreference
+     * const UserPreference = await prisma.userPreference.delete({
+     *   where: {
+     *     // ... filter to delete one UserPreference
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserPreferenceDeleteArgs>(args: SelectSubset<T, UserPreferenceDeleteArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserPreference.
+     * @param {UserPreferenceUpdateArgs} args - Arguments to update one UserPreference.
+     * @example
+     * // Update one UserPreference
+     * const userPreference = await prisma.userPreference.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserPreferenceUpdateArgs>(args: SelectSubset<T, UserPreferenceUpdateArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserPreferences.
+     * @param {UserPreferenceDeleteManyArgs} args - Arguments to filter UserPreferences to delete.
+     * @example
+     * // Delete a few UserPreferences
+     * const { count } = await prisma.userPreference.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserPreferenceDeleteManyArgs>(args?: SelectSubset<T, UserPreferenceDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserPreferences.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPreferenceUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserPreferences
+     * const userPreference = await prisma.userPreference.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserPreferenceUpdateManyArgs>(args: SelectSubset<T, UserPreferenceUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserPreferences and returns the data updated in the database.
+     * @param {UserPreferenceUpdateManyAndReturnArgs} args - Arguments to update many UserPreferences.
+     * @example
+     * // Update many UserPreferences
+     * const userPreference = await prisma.userPreference.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserPreferences and only return the `id`
+     * const userPreferenceWithIdOnly = await prisma.userPreference.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserPreferenceUpdateManyAndReturnArgs>(args: SelectSubset<T, UserPreferenceUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserPreference.
+     * @param {UserPreferenceUpsertArgs} args - Arguments to update or create a UserPreference.
+     * @example
+     * // Update or create a UserPreference
+     * const userPreference = await prisma.userPreference.upsert({
+     *   create: {
+     *     // ... data to create a UserPreference
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserPreference we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserPreferenceUpsertArgs>(args: SelectSubset<T, UserPreferenceUpsertArgs<ExtArgs>>): Prisma__UserPreferenceClient<$Result.GetResult<Prisma.$UserPreferencePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserPreferences.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPreferenceCountArgs} args - Arguments to filter UserPreferences to count.
+     * @example
+     * // Count the number of UserPreferences
+     * const count = await prisma.userPreference.count({
+     *   where: {
+     *     // ... the filter for the UserPreferences we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserPreferenceCountArgs>(
+      args?: Subset<T, UserPreferenceCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserPreferenceCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserPreference.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPreferenceAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserPreferenceAggregateArgs>(args: Subset<T, UserPreferenceAggregateArgs>): Prisma.PrismaPromise<GetUserPreferenceAggregateType<T>>
+
+    /**
+     * Group by UserPreference.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserPreferenceGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserPreferenceGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserPreferenceGroupByArgs['orderBy'] }
+        : { orderBy?: UserPreferenceGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserPreferenceGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserPreferenceGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserPreference model
+   */
+  readonly fields: UserPreferenceFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserPreference.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserPreferenceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    metric<T extends NutritionalMetricDefaultArgs<ExtArgs> = {}>(args?: Subset<T, NutritionalMetricDefaultArgs<ExtArgs>>): Prisma__NutritionalMetricClient<$Result.GetResult<Prisma.$NutritionalMetricPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserPreference model
+   */
+  interface UserPreferenceFieldRefs {
+    readonly id: FieldRef<"UserPreference", 'Int'>
+    readonly user_id: FieldRef<"UserPreference", 'Int'>
+    readonly metric_id: FieldRef<"UserPreference", 'Int'>
+    readonly min_value: FieldRef<"UserPreference", 'Float'>
+    readonly max_value: FieldRef<"UserPreference", 'Float'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserPreference findUnique
+   */
+  export type UserPreferenceFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPreference to fetch.
+     */
+    where: UserPreferenceWhereUniqueInput
+  }
+
+  /**
+   * UserPreference findUniqueOrThrow
+   */
+  export type UserPreferenceFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPreference to fetch.
+     */
+    where: UserPreferenceWhereUniqueInput
+  }
+
+  /**
+   * UserPreference findFirst
+   */
+  export type UserPreferenceFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPreference to fetch.
+     */
+    where?: UserPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPreferences to fetch.
+     */
+    orderBy?: UserPreferenceOrderByWithRelationInput | UserPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserPreferences.
+     */
+    cursor?: UserPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPreferences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserPreferences.
+     */
+    distinct?: UserPreferenceScalarFieldEnum | UserPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * UserPreference findFirstOrThrow
+   */
+  export type UserPreferenceFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPreference to fetch.
+     */
+    where?: UserPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPreferences to fetch.
+     */
+    orderBy?: UserPreferenceOrderByWithRelationInput | UserPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserPreferences.
+     */
+    cursor?: UserPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPreferences.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserPreferences.
+     */
+    distinct?: UserPreferenceScalarFieldEnum | UserPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * UserPreference findMany
+   */
+  export type UserPreferenceFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter, which UserPreferences to fetch.
+     */
+    where?: UserPreferenceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserPreferences to fetch.
+     */
+    orderBy?: UserPreferenceOrderByWithRelationInput | UserPreferenceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserPreferences.
+     */
+    cursor?: UserPreferenceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserPreferences from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserPreferences.
+     */
+    skip?: number
+    distinct?: UserPreferenceScalarFieldEnum | UserPreferenceScalarFieldEnum[]
+  }
+
+  /**
+   * UserPreference create
+   */
+  export type UserPreferenceCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserPreference.
+     */
+    data: XOR<UserPreferenceCreateInput, UserPreferenceUncheckedCreateInput>
+  }
+
+  /**
+   * UserPreference createMany
+   */
+  export type UserPreferenceCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserPreferences.
+     */
+    data: UserPreferenceCreateManyInput | UserPreferenceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserPreference createManyAndReturn
+   */
+  export type UserPreferenceCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserPreferences.
+     */
+    data: UserPreferenceCreateManyInput | UserPreferenceCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserPreference update
+   */
+  export type UserPreferenceUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserPreference.
+     */
+    data: XOR<UserPreferenceUpdateInput, UserPreferenceUncheckedUpdateInput>
+    /**
+     * Choose, which UserPreference to update.
+     */
+    where: UserPreferenceWhereUniqueInput
+  }
+
+  /**
+   * UserPreference updateMany
+   */
+  export type UserPreferenceUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserPreferences.
+     */
+    data: XOR<UserPreferenceUpdateManyMutationInput, UserPreferenceUncheckedUpdateManyInput>
+    /**
+     * Filter which UserPreferences to update
+     */
+    where?: UserPreferenceWhereInput
+    /**
+     * Limit how many UserPreferences to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserPreference updateManyAndReturn
+   */
+  export type UserPreferenceUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * The data used to update UserPreferences.
+     */
+    data: XOR<UserPreferenceUpdateManyMutationInput, UserPreferenceUncheckedUpdateManyInput>
+    /**
+     * Filter which UserPreferences to update
+     */
+    where?: UserPreferenceWhereInput
+    /**
+     * Limit how many UserPreferences to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserPreference upsert
+   */
+  export type UserPreferenceUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserPreference to update in case it exists.
+     */
+    where: UserPreferenceWhereUniqueInput
+    /**
+     * In case the UserPreference found by the `where` argument doesn't exist, create a new UserPreference with this data.
+     */
+    create: XOR<UserPreferenceCreateInput, UserPreferenceUncheckedCreateInput>
+    /**
+     * In case the UserPreference was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserPreferenceUpdateInput, UserPreferenceUncheckedUpdateInput>
+  }
+
+  /**
+   * UserPreference delete
+   */
+  export type UserPreferenceDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
+    /**
+     * Filter which UserPreference to delete.
+     */
+    where: UserPreferenceWhereUniqueInput
+  }
+
+  /**
+   * UserPreference deleteMany
+   */
+  export type UserPreferenceDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserPreferences to delete
+     */
+    where?: UserPreferenceWhereInput
+    /**
+     * Limit how many UserPreferences to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserPreference without action
+   */
+  export type UserPreferenceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserPreference
+     */
+    select?: UserPreferenceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserPreference
+     */
+    omit?: UserPreferenceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserPreferenceInclude<ExtArgs> | null
   }
 
 
@@ -1886,13 +4411,34 @@ export namespace Prisma {
   export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-  export const UsersScalarFieldEnum: {
+  export const UserScalarFieldEnum: {
     user_id: 'user_id',
     name: 'name',
     email: 'email'
   };
 
-  export type UsersScalarFieldEnum = (typeof UsersScalarFieldEnum)[keyof typeof UsersScalarFieldEnum]
+  export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const NutritionalMetricScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    description: 'description',
+    unit: 'unit'
+  };
+
+  export type NutritionalMetricScalarFieldEnum = (typeof NutritionalMetricScalarFieldEnum)[keyof typeof NutritionalMetricScalarFieldEnum]
+
+
+  export const UserPreferenceScalarFieldEnum: {
+    id: 'id',
+    user_id: 'user_id',
+    metric_id: 'metric_id',
+    min_value: 'min_value',
+    max_value: 'max_value'
+  };
+
+  export type UserPreferenceScalarFieldEnum = (typeof UserPreferenceScalarFieldEnum)[keyof typeof UserPreferenceScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -1969,87 +4515,308 @@ export namespace Prisma {
    */
 
 
-  export type UsersWhereInput = {
-    AND?: UsersWhereInput | UsersWhereInput[]
-    OR?: UsersWhereInput[]
-    NOT?: UsersWhereInput | UsersWhereInput[]
-    user_id?: IntFilter<"Users"> | number
-    name?: StringNullableFilter<"Users"> | string | null
-    email?: StringFilter<"Users"> | string
+  export type UserWhereInput = {
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    user_id?: IntFilter<"User"> | number
+    name?: StringNullableFilter<"User"> | string | null
+    email?: StringFilter<"User"> | string
+    macroPreferences?: UserPreferenceListRelationFilter
   }
 
-  export type UsersOrderByWithRelationInput = {
+  export type UserOrderByWithRelationInput = {
     user_id?: SortOrder
     name?: SortOrderInput | SortOrder
     email?: SortOrder
+    macroPreferences?: UserPreferenceOrderByRelationAggregateInput
   }
 
-  export type UsersWhereUniqueInput = Prisma.AtLeast<{
+  export type UserWhereUniqueInput = Prisma.AtLeast<{
     user_id?: number
     email?: string
-    AND?: UsersWhereInput | UsersWhereInput[]
-    OR?: UsersWhereInput[]
-    NOT?: UsersWhereInput | UsersWhereInput[]
-    name?: StringNullableFilter<"Users"> | string | null
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    name?: StringNullableFilter<"User"> | string | null
+    macroPreferences?: UserPreferenceListRelationFilter
   }, "user_id" | "email">
 
-  export type UsersOrderByWithAggregationInput = {
+  export type UserOrderByWithAggregationInput = {
     user_id?: SortOrder
     name?: SortOrderInput | SortOrder
     email?: SortOrder
-    _count?: UsersCountOrderByAggregateInput
-    _avg?: UsersAvgOrderByAggregateInput
-    _max?: UsersMaxOrderByAggregateInput
-    _min?: UsersMinOrderByAggregateInput
-    _sum?: UsersSumOrderByAggregateInput
+    _count?: UserCountOrderByAggregateInput
+    _avg?: UserAvgOrderByAggregateInput
+    _max?: UserMaxOrderByAggregateInput
+    _min?: UserMinOrderByAggregateInput
+    _sum?: UserSumOrderByAggregateInput
   }
 
-  export type UsersScalarWhereWithAggregatesInput = {
-    AND?: UsersScalarWhereWithAggregatesInput | UsersScalarWhereWithAggregatesInput[]
-    OR?: UsersScalarWhereWithAggregatesInput[]
-    NOT?: UsersScalarWhereWithAggregatesInput | UsersScalarWhereWithAggregatesInput[]
-    user_id?: IntWithAggregatesFilter<"Users"> | number
-    name?: StringNullableWithAggregatesFilter<"Users"> | string | null
-    email?: StringWithAggregatesFilter<"Users"> | string
+  export type UserScalarWhereWithAggregatesInput = {
+    AND?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    OR?: UserScalarWhereWithAggregatesInput[]
+    NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    user_id?: IntWithAggregatesFilter<"User"> | number
+    name?: StringNullableWithAggregatesFilter<"User"> | string | null
+    email?: StringWithAggregatesFilter<"User"> | string
   }
 
-  export type UsersCreateInput = {
+  export type NutritionalMetricWhereInput = {
+    AND?: NutritionalMetricWhereInput | NutritionalMetricWhereInput[]
+    OR?: NutritionalMetricWhereInput[]
+    NOT?: NutritionalMetricWhereInput | NutritionalMetricWhereInput[]
+    id?: IntFilter<"NutritionalMetric"> | number
+    name?: StringFilter<"NutritionalMetric"> | string
+    description?: StringNullableFilter<"NutritionalMetric"> | string | null
+    unit?: StringFilter<"NutritionalMetric"> | string
+    preferences?: UserPreferenceListRelationFilter
+  }
+
+  export type NutritionalMetricOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    unit?: SortOrder
+    preferences?: UserPreferenceOrderByRelationAggregateInput
+  }
+
+  export type NutritionalMetricWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    name?: string
+    AND?: NutritionalMetricWhereInput | NutritionalMetricWhereInput[]
+    OR?: NutritionalMetricWhereInput[]
+    NOT?: NutritionalMetricWhereInput | NutritionalMetricWhereInput[]
+    description?: StringNullableFilter<"NutritionalMetric"> | string | null
+    unit?: StringFilter<"NutritionalMetric"> | string
+    preferences?: UserPreferenceListRelationFilter
+  }, "id" | "name">
+
+  export type NutritionalMetricOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    unit?: SortOrder
+    _count?: NutritionalMetricCountOrderByAggregateInput
+    _avg?: NutritionalMetricAvgOrderByAggregateInput
+    _max?: NutritionalMetricMaxOrderByAggregateInput
+    _min?: NutritionalMetricMinOrderByAggregateInput
+    _sum?: NutritionalMetricSumOrderByAggregateInput
+  }
+
+  export type NutritionalMetricScalarWhereWithAggregatesInput = {
+    AND?: NutritionalMetricScalarWhereWithAggregatesInput | NutritionalMetricScalarWhereWithAggregatesInput[]
+    OR?: NutritionalMetricScalarWhereWithAggregatesInput[]
+    NOT?: NutritionalMetricScalarWhereWithAggregatesInput | NutritionalMetricScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"NutritionalMetric"> | number
+    name?: StringWithAggregatesFilter<"NutritionalMetric"> | string
+    description?: StringNullableWithAggregatesFilter<"NutritionalMetric"> | string | null
+    unit?: StringWithAggregatesFilter<"NutritionalMetric"> | string
+  }
+
+  export type UserPreferenceWhereInput = {
+    AND?: UserPreferenceWhereInput | UserPreferenceWhereInput[]
+    OR?: UserPreferenceWhereInput[]
+    NOT?: UserPreferenceWhereInput | UserPreferenceWhereInput[]
+    id?: IntFilter<"UserPreference"> | number
+    user_id?: IntFilter<"UserPreference"> | number
+    metric_id?: IntFilter<"UserPreference"> | number
+    min_value?: FloatNullableFilter<"UserPreference"> | number | null
+    max_value?: FloatNullableFilter<"UserPreference"> | number | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    metric?: XOR<NutritionalMetricScalarRelationFilter, NutritionalMetricWhereInput>
+  }
+
+  export type UserPreferenceOrderByWithRelationInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    metric_id?: SortOrder
+    min_value?: SortOrderInput | SortOrder
+    max_value?: SortOrderInput | SortOrder
+    user?: UserOrderByWithRelationInput
+    metric?: NutritionalMetricOrderByWithRelationInput
+  }
+
+  export type UserPreferenceWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    user_id_metric_id?: UserPreferenceUser_idMetric_idCompoundUniqueInput
+    AND?: UserPreferenceWhereInput | UserPreferenceWhereInput[]
+    OR?: UserPreferenceWhereInput[]
+    NOT?: UserPreferenceWhereInput | UserPreferenceWhereInput[]
+    user_id?: IntFilter<"UserPreference"> | number
+    metric_id?: IntFilter<"UserPreference"> | number
+    min_value?: FloatNullableFilter<"UserPreference"> | number | null
+    max_value?: FloatNullableFilter<"UserPreference"> | number | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    metric?: XOR<NutritionalMetricScalarRelationFilter, NutritionalMetricWhereInput>
+  }, "id" | "user_id_metric_id">
+
+  export type UserPreferenceOrderByWithAggregationInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    metric_id?: SortOrder
+    min_value?: SortOrderInput | SortOrder
+    max_value?: SortOrderInput | SortOrder
+    _count?: UserPreferenceCountOrderByAggregateInput
+    _avg?: UserPreferenceAvgOrderByAggregateInput
+    _max?: UserPreferenceMaxOrderByAggregateInput
+    _min?: UserPreferenceMinOrderByAggregateInput
+    _sum?: UserPreferenceSumOrderByAggregateInput
+  }
+
+  export type UserPreferenceScalarWhereWithAggregatesInput = {
+    AND?: UserPreferenceScalarWhereWithAggregatesInput | UserPreferenceScalarWhereWithAggregatesInput[]
+    OR?: UserPreferenceScalarWhereWithAggregatesInput[]
+    NOT?: UserPreferenceScalarWhereWithAggregatesInput | UserPreferenceScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"UserPreference"> | number
+    user_id?: IntWithAggregatesFilter<"UserPreference"> | number
+    metric_id?: IntWithAggregatesFilter<"UserPreference"> | number
+    min_value?: FloatNullableWithAggregatesFilter<"UserPreference"> | number | null
+    max_value?: FloatNullableWithAggregatesFilter<"UserPreference"> | number | null
+  }
+
+  export type UserCreateInput = {
     name?: string | null
     email: string
+    macroPreferences?: UserPreferenceCreateNestedManyWithoutUserInput
   }
 
-  export type UsersUncheckedCreateInput = {
+  export type UserUncheckedCreateInput = {
+    user_id?: number
+    name?: string | null
+    email: string
+    macroPreferences?: UserPreferenceUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUpdateInput = {
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+    macroPreferences?: UserPreferenceUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateInput = {
+    user_id?: IntFieldUpdateOperationsInput | number
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+    macroPreferences?: UserPreferenceUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateManyInput = {
     user_id?: number
     name?: string | null
     email: string
   }
 
-  export type UsersUpdateInput = {
+  export type UserUpdateManyMutationInput = {
     name?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
   }
 
-  export type UsersUncheckedUpdateInput = {
+  export type UserUncheckedUpdateManyInput = {
     user_id?: IntFieldUpdateOperationsInput | number
     name?: NullableStringFieldUpdateOperationsInput | string | null
     email?: StringFieldUpdateOperationsInput | string
   }
 
-  export type UsersCreateManyInput = {
-    user_id?: number
-    name?: string | null
-    email: string
+  export type NutritionalMetricCreateInput = {
+    name: string
+    description?: string | null
+    unit: string
+    preferences?: UserPreferenceCreateNestedManyWithoutMetricInput
   }
 
-  export type UsersUpdateManyMutationInput = {
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
+  export type NutritionalMetricUncheckedCreateInput = {
+    id?: number
+    name: string
+    description?: string | null
+    unit: string
+    preferences?: UserPreferenceUncheckedCreateNestedManyWithoutMetricInput
   }
 
-  export type UsersUncheckedUpdateManyInput = {
+  export type NutritionalMetricUpdateInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: StringFieldUpdateOperationsInput | string
+    preferences?: UserPreferenceUpdateManyWithoutMetricNestedInput
+  }
+
+  export type NutritionalMetricUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: StringFieldUpdateOperationsInput | string
+    preferences?: UserPreferenceUncheckedUpdateManyWithoutMetricNestedInput
+  }
+
+  export type NutritionalMetricCreateManyInput = {
+    id?: number
+    name: string
+    description?: string | null
+    unit: string
+  }
+
+  export type NutritionalMetricUpdateManyMutationInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type NutritionalMetricUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserPreferenceCreateInput = {
+    min_value?: number | null
+    max_value?: number | null
+    user: UserCreateNestedOneWithoutMacroPreferencesInput
+    metric: NutritionalMetricCreateNestedOneWithoutPreferencesInput
+  }
+
+  export type UserPreferenceUncheckedCreateInput = {
+    id?: number
+    user_id: number
+    metric_id: number
+    min_value?: number | null
+    max_value?: number | null
+  }
+
+  export type UserPreferenceUpdateInput = {
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    user?: UserUpdateOneRequiredWithoutMacroPreferencesNestedInput
+    metric?: NutritionalMetricUpdateOneRequiredWithoutPreferencesNestedInput
+  }
+
+  export type UserPreferenceUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
     user_id?: IntFieldUpdateOperationsInput | number
-    name?: NullableStringFieldUpdateOperationsInput | string | null
-    email?: StringFieldUpdateOperationsInput | string
+    metric_id?: IntFieldUpdateOperationsInput | number
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+  }
+
+  export type UserPreferenceCreateManyInput = {
+    id?: number
+    user_id: number
+    metric_id: number
+    min_value?: number | null
+    max_value?: number | null
+  }
+
+  export type UserPreferenceUpdateManyMutationInput = {
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+  }
+
+  export type UserPreferenceUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    user_id?: IntFieldUpdateOperationsInput | number
+    metric_id?: IntFieldUpdateOperationsInput | number
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -2093,34 +4860,44 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type UserPreferenceListRelationFilter = {
+    every?: UserPreferenceWhereInput
+    some?: UserPreferenceWhereInput
+    none?: UserPreferenceWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
   }
 
-  export type UsersCountOrderByAggregateInput = {
+  export type UserPreferenceOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type UserCountOrderByAggregateInput = {
     user_id?: SortOrder
     name?: SortOrder
     email?: SortOrder
   }
 
-  export type UsersAvgOrderByAggregateInput = {
+  export type UserAvgOrderByAggregateInput = {
     user_id?: SortOrder
   }
 
-  export type UsersMaxOrderByAggregateInput = {
-    user_id?: SortOrder
-    name?: SortOrder
-    email?: SortOrder
-  }
-
-  export type UsersMinOrderByAggregateInput = {
+  export type UserMaxOrderByAggregateInput = {
     user_id?: SortOrder
     name?: SortOrder
     email?: SortOrder
   }
 
-  export type UsersSumOrderByAggregateInput = {
+  export type UserMinOrderByAggregateInput = {
+    user_id?: SortOrder
+    name?: SortOrder
+    email?: SortOrder
+  }
+
+  export type UserSumOrderByAggregateInput = {
     user_id?: SortOrder
   }
 
@@ -2176,6 +4953,131 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type NutritionalMetricCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    unit?: SortOrder
+  }
+
+  export type NutritionalMetricAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type NutritionalMetricMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    unit?: SortOrder
+  }
+
+  export type NutritionalMetricMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    unit?: SortOrder
+  }
+
+  export type NutritionalMetricSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type NutritionalMetricScalarRelationFilter = {
+    is?: NutritionalMetricWhereInput
+    isNot?: NutritionalMetricWhereInput
+  }
+
+  export type UserPreferenceUser_idMetric_idCompoundUniqueInput = {
+    user_id: number
+    metric_id: number
+  }
+
+  export type UserPreferenceCountOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    metric_id?: SortOrder
+    min_value?: SortOrder
+    max_value?: SortOrder
+  }
+
+  export type UserPreferenceAvgOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    metric_id?: SortOrder
+    min_value?: SortOrder
+    max_value?: SortOrder
+  }
+
+  export type UserPreferenceMaxOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    metric_id?: SortOrder
+    min_value?: SortOrder
+    max_value?: SortOrder
+  }
+
+  export type UserPreferenceMinOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    metric_id?: SortOrder
+    min_value?: SortOrder
+    max_value?: SortOrder
+  }
+
+  export type UserPreferenceSumOrderByAggregateInput = {
+    id?: SortOrder
+    user_id?: SortOrder
+    metric_id?: SortOrder
+    min_value?: SortOrder
+    max_value?: SortOrder
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type UserPreferenceCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput> | UserPreferenceCreateWithoutUserInput[] | UserPreferenceUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutUserInput | UserPreferenceCreateOrConnectWithoutUserInput[]
+    createMany?: UserPreferenceCreateManyUserInputEnvelope
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+  }
+
+  export type UserPreferenceUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput> | UserPreferenceCreateWithoutUserInput[] | UserPreferenceUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutUserInput | UserPreferenceCreateOrConnectWithoutUserInput[]
+    createMany?: UserPreferenceCreateManyUserInputEnvelope
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+  }
+
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
   }
@@ -2184,12 +5086,118 @@ export namespace Prisma {
     set?: string
   }
 
+  export type UserPreferenceUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput> | UserPreferenceCreateWithoutUserInput[] | UserPreferenceUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutUserInput | UserPreferenceCreateOrConnectWithoutUserInput[]
+    upsert?: UserPreferenceUpsertWithWhereUniqueWithoutUserInput | UserPreferenceUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserPreferenceCreateManyUserInputEnvelope
+    set?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    disconnect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    delete?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    update?: UserPreferenceUpdateWithWhereUniqueWithoutUserInput | UserPreferenceUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserPreferenceUpdateManyWithWhereWithoutUserInput | UserPreferenceUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type UserPreferenceUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput> | UserPreferenceCreateWithoutUserInput[] | UserPreferenceUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutUserInput | UserPreferenceCreateOrConnectWithoutUserInput[]
+    upsert?: UserPreferenceUpsertWithWhereUniqueWithoutUserInput | UserPreferenceUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserPreferenceCreateManyUserInputEnvelope
+    set?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    disconnect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    delete?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    update?: UserPreferenceUpdateWithWhereUniqueWithoutUserInput | UserPreferenceUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserPreferenceUpdateManyWithWhereWithoutUserInput | UserPreferenceUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
+  }
+
+  export type UserPreferenceCreateNestedManyWithoutMetricInput = {
+    create?: XOR<UserPreferenceCreateWithoutMetricInput, UserPreferenceUncheckedCreateWithoutMetricInput> | UserPreferenceCreateWithoutMetricInput[] | UserPreferenceUncheckedCreateWithoutMetricInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutMetricInput | UserPreferenceCreateOrConnectWithoutMetricInput[]
+    createMany?: UserPreferenceCreateManyMetricInputEnvelope
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+  }
+
+  export type UserPreferenceUncheckedCreateNestedManyWithoutMetricInput = {
+    create?: XOR<UserPreferenceCreateWithoutMetricInput, UserPreferenceUncheckedCreateWithoutMetricInput> | UserPreferenceCreateWithoutMetricInput[] | UserPreferenceUncheckedCreateWithoutMetricInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutMetricInput | UserPreferenceCreateOrConnectWithoutMetricInput[]
+    createMany?: UserPreferenceCreateManyMetricInputEnvelope
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+  }
+
+  export type UserPreferenceUpdateManyWithoutMetricNestedInput = {
+    create?: XOR<UserPreferenceCreateWithoutMetricInput, UserPreferenceUncheckedCreateWithoutMetricInput> | UserPreferenceCreateWithoutMetricInput[] | UserPreferenceUncheckedCreateWithoutMetricInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutMetricInput | UserPreferenceCreateOrConnectWithoutMetricInput[]
+    upsert?: UserPreferenceUpsertWithWhereUniqueWithoutMetricInput | UserPreferenceUpsertWithWhereUniqueWithoutMetricInput[]
+    createMany?: UserPreferenceCreateManyMetricInputEnvelope
+    set?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    disconnect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    delete?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    update?: UserPreferenceUpdateWithWhereUniqueWithoutMetricInput | UserPreferenceUpdateWithWhereUniqueWithoutMetricInput[]
+    updateMany?: UserPreferenceUpdateManyWithWhereWithoutMetricInput | UserPreferenceUpdateManyWithWhereWithoutMetricInput[]
+    deleteMany?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
+  }
+
+  export type UserPreferenceUncheckedUpdateManyWithoutMetricNestedInput = {
+    create?: XOR<UserPreferenceCreateWithoutMetricInput, UserPreferenceUncheckedCreateWithoutMetricInput> | UserPreferenceCreateWithoutMetricInput[] | UserPreferenceUncheckedCreateWithoutMetricInput[]
+    connectOrCreate?: UserPreferenceCreateOrConnectWithoutMetricInput | UserPreferenceCreateOrConnectWithoutMetricInput[]
+    upsert?: UserPreferenceUpsertWithWhereUniqueWithoutMetricInput | UserPreferenceUpsertWithWhereUniqueWithoutMetricInput[]
+    createMany?: UserPreferenceCreateManyMetricInputEnvelope
+    set?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    disconnect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    delete?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    connect?: UserPreferenceWhereUniqueInput | UserPreferenceWhereUniqueInput[]
+    update?: UserPreferenceUpdateWithWhereUniqueWithoutMetricInput | UserPreferenceUpdateWithWhereUniqueWithoutMetricInput[]
+    updateMany?: UserPreferenceUpdateManyWithWhereWithoutMetricInput | UserPreferenceUpdateManyWithWhereWithoutMetricInput[]
+    deleteMany?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutMacroPreferencesInput = {
+    create?: XOR<UserCreateWithoutMacroPreferencesInput, UserUncheckedCreateWithoutMacroPreferencesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutMacroPreferencesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type NutritionalMetricCreateNestedOneWithoutPreferencesInput = {
+    create?: XOR<NutritionalMetricCreateWithoutPreferencesInput, NutritionalMetricUncheckedCreateWithoutPreferencesInput>
+    connectOrCreate?: NutritionalMetricCreateOrConnectWithoutPreferencesInput
+    connect?: NutritionalMetricWhereUniqueInput
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type UserUpdateOneRequiredWithoutMacroPreferencesNestedInput = {
+    create?: XOR<UserCreateWithoutMacroPreferencesInput, UserUncheckedCreateWithoutMacroPreferencesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutMacroPreferencesInput
+    upsert?: UserUpsertWithoutMacroPreferencesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMacroPreferencesInput, UserUpdateWithoutMacroPreferencesInput>, UserUncheckedUpdateWithoutMacroPreferencesInput>
+  }
+
+  export type NutritionalMetricUpdateOneRequiredWithoutPreferencesNestedInput = {
+    create?: XOR<NutritionalMetricCreateWithoutPreferencesInput, NutritionalMetricUncheckedCreateWithoutPreferencesInput>
+    connectOrCreate?: NutritionalMetricCreateOrConnectWithoutPreferencesInput
+    upsert?: NutritionalMetricUpsertWithoutPreferencesInput
+    connect?: NutritionalMetricWhereUniqueInput
+    update?: XOR<XOR<NutritionalMetricUpdateToOneWithWhereWithoutPreferencesInput, NutritionalMetricUpdateWithoutPreferencesInput>, NutritionalMetricUncheckedUpdateWithoutPreferencesInput>
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -2301,6 +5309,256 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type UserPreferenceCreateWithoutUserInput = {
+    min_value?: number | null
+    max_value?: number | null
+    metric: NutritionalMetricCreateNestedOneWithoutPreferencesInput
+  }
+
+  export type UserPreferenceUncheckedCreateWithoutUserInput = {
+    id?: number
+    metric_id: number
+    min_value?: number | null
+    max_value?: number | null
+  }
+
+  export type UserPreferenceCreateOrConnectWithoutUserInput = {
+    where: UserPreferenceWhereUniqueInput
+    create: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserPreferenceCreateManyUserInputEnvelope = {
+    data: UserPreferenceCreateManyUserInput | UserPreferenceCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserPreferenceUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserPreferenceWhereUniqueInput
+    update: XOR<UserPreferenceUpdateWithoutUserInput, UserPreferenceUncheckedUpdateWithoutUserInput>
+    create: XOR<UserPreferenceCreateWithoutUserInput, UserPreferenceUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserPreferenceUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserPreferenceWhereUniqueInput
+    data: XOR<UserPreferenceUpdateWithoutUserInput, UserPreferenceUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserPreferenceUpdateManyWithWhereWithoutUserInput = {
+    where: UserPreferenceScalarWhereInput
+    data: XOR<UserPreferenceUpdateManyMutationInput, UserPreferenceUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type UserPreferenceScalarWhereInput = {
+    AND?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
+    OR?: UserPreferenceScalarWhereInput[]
+    NOT?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
+    id?: IntFilter<"UserPreference"> | number
+    user_id?: IntFilter<"UserPreference"> | number
+    metric_id?: IntFilter<"UserPreference"> | number
+    min_value?: FloatNullableFilter<"UserPreference"> | number | null
+    max_value?: FloatNullableFilter<"UserPreference"> | number | null
+  }
+
+  export type UserPreferenceCreateWithoutMetricInput = {
+    min_value?: number | null
+    max_value?: number | null
+    user: UserCreateNestedOneWithoutMacroPreferencesInput
+  }
+
+  export type UserPreferenceUncheckedCreateWithoutMetricInput = {
+    id?: number
+    user_id: number
+    min_value?: number | null
+    max_value?: number | null
+  }
+
+  export type UserPreferenceCreateOrConnectWithoutMetricInput = {
+    where: UserPreferenceWhereUniqueInput
+    create: XOR<UserPreferenceCreateWithoutMetricInput, UserPreferenceUncheckedCreateWithoutMetricInput>
+  }
+
+  export type UserPreferenceCreateManyMetricInputEnvelope = {
+    data: UserPreferenceCreateManyMetricInput | UserPreferenceCreateManyMetricInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserPreferenceUpsertWithWhereUniqueWithoutMetricInput = {
+    where: UserPreferenceWhereUniqueInput
+    update: XOR<UserPreferenceUpdateWithoutMetricInput, UserPreferenceUncheckedUpdateWithoutMetricInput>
+    create: XOR<UserPreferenceCreateWithoutMetricInput, UserPreferenceUncheckedCreateWithoutMetricInput>
+  }
+
+  export type UserPreferenceUpdateWithWhereUniqueWithoutMetricInput = {
+    where: UserPreferenceWhereUniqueInput
+    data: XOR<UserPreferenceUpdateWithoutMetricInput, UserPreferenceUncheckedUpdateWithoutMetricInput>
+  }
+
+  export type UserPreferenceUpdateManyWithWhereWithoutMetricInput = {
+    where: UserPreferenceScalarWhereInput
+    data: XOR<UserPreferenceUpdateManyMutationInput, UserPreferenceUncheckedUpdateManyWithoutMetricInput>
+  }
+
+  export type UserCreateWithoutMacroPreferencesInput = {
+    name?: string | null
+    email: string
+  }
+
+  export type UserUncheckedCreateWithoutMacroPreferencesInput = {
+    user_id?: number
+    name?: string | null
+    email: string
+  }
+
+  export type UserCreateOrConnectWithoutMacroPreferencesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutMacroPreferencesInput, UserUncheckedCreateWithoutMacroPreferencesInput>
+  }
+
+  export type NutritionalMetricCreateWithoutPreferencesInput = {
+    name: string
+    description?: string | null
+    unit: string
+  }
+
+  export type NutritionalMetricUncheckedCreateWithoutPreferencesInput = {
+    id?: number
+    name: string
+    description?: string | null
+    unit: string
+  }
+
+  export type NutritionalMetricCreateOrConnectWithoutPreferencesInput = {
+    where: NutritionalMetricWhereUniqueInput
+    create: XOR<NutritionalMetricCreateWithoutPreferencesInput, NutritionalMetricUncheckedCreateWithoutPreferencesInput>
+  }
+
+  export type UserUpsertWithoutMacroPreferencesInput = {
+    update: XOR<UserUpdateWithoutMacroPreferencesInput, UserUncheckedUpdateWithoutMacroPreferencesInput>
+    create: XOR<UserCreateWithoutMacroPreferencesInput, UserUncheckedCreateWithoutMacroPreferencesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutMacroPreferencesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutMacroPreferencesInput, UserUncheckedUpdateWithoutMacroPreferencesInput>
+  }
+
+  export type UserUpdateWithoutMacroPreferencesInput = {
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserUncheckedUpdateWithoutMacroPreferencesInput = {
+    user_id?: IntFieldUpdateOperationsInput | number
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type NutritionalMetricUpsertWithoutPreferencesInput = {
+    update: XOR<NutritionalMetricUpdateWithoutPreferencesInput, NutritionalMetricUncheckedUpdateWithoutPreferencesInput>
+    create: XOR<NutritionalMetricCreateWithoutPreferencesInput, NutritionalMetricUncheckedCreateWithoutPreferencesInput>
+    where?: NutritionalMetricWhereInput
+  }
+
+  export type NutritionalMetricUpdateToOneWithWhereWithoutPreferencesInput = {
+    where?: NutritionalMetricWhereInput
+    data: XOR<NutritionalMetricUpdateWithoutPreferencesInput, NutritionalMetricUncheckedUpdateWithoutPreferencesInput>
+  }
+
+  export type NutritionalMetricUpdateWithoutPreferencesInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type NutritionalMetricUncheckedUpdateWithoutPreferencesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserPreferenceCreateManyUserInput = {
+    id?: number
+    metric_id: number
+    min_value?: number | null
+    max_value?: number | null
+  }
+
+  export type UserPreferenceUpdateWithoutUserInput = {
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    metric?: NutritionalMetricUpdateOneRequiredWithoutPreferencesNestedInput
+  }
+
+  export type UserPreferenceUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    metric_id?: IntFieldUpdateOperationsInput | number
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+  }
+
+  export type UserPreferenceUncheckedUpdateManyWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    metric_id?: IntFieldUpdateOperationsInput | number
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+  }
+
+  export type UserPreferenceCreateManyMetricInput = {
+    id?: number
+    user_id: number
+    min_value?: number | null
+    max_value?: number | null
+  }
+
+  export type UserPreferenceUpdateWithoutMetricInput = {
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    user?: UserUpdateOneRequiredWithoutMacroPreferencesNestedInput
+  }
+
+  export type UserPreferenceUncheckedUpdateWithoutMetricInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    user_id?: IntFieldUpdateOperationsInput | number
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+  }
+
+  export type UserPreferenceUncheckedUpdateManyWithoutMetricInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    user_id?: IntFieldUpdateOperationsInput | number
+    min_value?: NullableFloatFieldUpdateOperationsInput | number | null
+    max_value?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
 

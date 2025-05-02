@@ -2,7 +2,7 @@ import prisma from "../prisma_client";
 import { BadRequestError, UserNotFoundError } from "./types";
 
 export const createUser = async (email: string) => {
-    const user = await prisma.users.create({
+    const user = await prisma.user.create({
         data: { email },
     });
 
@@ -10,13 +10,12 @@ export const createUser = async (email: string) => {
 };
 
 export const getUser = async ({email, user_id}: {email?: string, user_id?: number}) => {
-
     if (!email && !user_id) {
         throw new BadRequestError('Email or id is required');
     }
     
-    const user = await prisma.users.findUnique({
-        where: { email, user_id },
+    const user = await prisma.user.findUnique({
+        where: email ? { email } : { user_id: user_id! },
     });
 
     if (!user) {
@@ -26,9 +25,9 @@ export const getUser = async ({email, user_id}: {email?: string, user_id?: numbe
     return user;
 };  
 
-export const deleteUser = async (id: number) => {
-    const user = await prisma.users.delete({
-        where: { user_id: id },
+export const deleteUser = async ({ user_id }: { user_id: number }) => {
+    const user = await prisma.user.delete({
+        where: { user_id },
     });
 
     return user;

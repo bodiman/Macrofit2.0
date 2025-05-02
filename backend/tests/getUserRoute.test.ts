@@ -5,9 +5,9 @@ import prisma from '../prisma_client';
 
 // Mock Prisma client
 jest.mock('../prisma_client', () => ({
-  users: {
+  user: {
     findUnique: jest.fn().mockResolvedValue(
-      { id: 1, name: 'Alice', email: 'alice@example.com' },
+      { user_id: 1, name: 'Alice', email: 'alice@example.com' },
     ),
   },
 }));
@@ -16,16 +16,15 @@ const app = express();
 app.use(express.json());
 app.use('/api', userRoutes);
 
-describe('GET /api/users', () => {
-  it('should return a list of users', async () => {
-
+describe('GET /api/user', () => {
+  it('should return a user', async () => {
     const params = new URLSearchParams({email: "alice@example.com"})
     console.log("params", params.toString());
-    const response = await request(app).get(`/api/users?${params.toString()}`);
+    const response = await request(app).get(`/api/user?${params.toString()}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(
-      { id: 1, name: 'Alice', email: 'alice@example.com' },
+      { user_id: 1, name: 'Alice', email: 'alice@example.com' },
     );
   });
 });

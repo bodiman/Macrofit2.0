@@ -1,13 +1,10 @@
-import Colors from '@/styles/colors'
 import { SignedIn, SignedOut, useAuth, useSSO } from '@clerk/clerk-expo'
 import { Redirect } from 'expo-router'
-import { Slot, Stack, Tabs } from 'expo-router'
-import { Text, View } from 'react-native'
+import { Tabs } from 'expo-router'
+import { View } from 'react-native'
 import AppHeader from '@/components/AppHeader'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useState, useEffect } from 'react'
-import FoodSelector from '@/components/AddFood/FoodSearchModal'
 import useUser from '../hooks/useUser'
 
 export default function Layout() {

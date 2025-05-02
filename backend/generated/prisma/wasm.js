@@ -120,10 +120,25 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.UsersScalarFieldEnum = {
+exports.Prisma.UserScalarFieldEnum = {
   user_id: 'user_id',
   name: 'name',
   email: 'email'
+};
+
+exports.Prisma.NutritionalMetricScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  unit: 'unit'
+};
+
+exports.Prisma.UserPreferenceScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  metric_id: 'metric_id',
+  min_value: 'min_value',
+  max_value: 'max_value'
 };
 
 exports.Prisma.SortOrder = {
@@ -143,7 +158,9 @@ exports.Prisma.NullsOrder = {
 
 
 exports.Prisma.ModelName = {
-  Users: 'Users'
+  User: 'User',
+  NutritionalMetric: 'NutritionalMetric',
+  UserPreference: 'UserPreference'
 };
 
 /**

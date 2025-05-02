@@ -14,8 +14,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
-  user_id Int     @id @default(autoincrement())
-  name    String?
-  email   String  @unique
+model User {
+  user_id          Int              @id @default(autoincrement())
+  name             String?
+  email            String           @unique
+  macroPreferences UserPreference[]
+}
+
+model NutritionalMetric {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  description String?
+  unit        String // e.g., "g", "mg", "kcal"
+  preferences UserPreference[]
+}
+
+model UserPreference {
+  id        Int               @id @default(autoincrement())
+  user_id   Int
+  metric_id Int
+  min_value Float?
+  max_value Float?
+  user      User              @relation(fields: [user_id], references: [user_id])
+  metric    NutritionalMetric @relation(fields: [metric_id], references: [id])
+
+  @@unique([user_id, metric_id])
 }
