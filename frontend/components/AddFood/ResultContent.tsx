@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet, Animated, FlatList } from "react-native"
+import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable } from "react-native"
 import { useEffect, useRef, useState } from "react"
 import Colors from "@/styles/colors"
 import MenuTabs, { type  Tab } from "../Tabs/MenuTabs"
@@ -19,6 +19,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [selected, setSelected] = useState(0);
     const [searchResults, setSearchResults] = useState<Food[]>([]);
+
 
     useEffect(() => {
         fadeAnim.setValue(0);
@@ -88,7 +89,10 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
             <View style={styles.menuTabsContainer}>
                 <MenuTabs tabs={tabs} selected={selected} setSelected={(tab: number)=>setSelected(tab)} />
             </View>
-            
+
+            <View style={{flex: 1}}>
+                
+            </View>
             
             <FlatList
                 data={searchResults}
@@ -101,6 +105,16 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 )}
                 contentContainerStyle={styles.resultsList}
             />
+
+            {
+            /* 
+            Hacked together fucking solution. I don't know why the fuck this works, but it makes it so
+            that the flatlist only takes up as much height as it needs, leaving room for the 
+            modal closer.
+            */
+            }
+
+            <Pressable style={{width: "100%", height: 5000}} onPress={()=>closeModal()}/>
         </Animated.View>
     )
 }
@@ -127,7 +141,8 @@ const styles = StyleSheet.create({
     },
     resultsList: {
         padding: 10,
-        gap: 10
+        gap: 10,
+        backgroundColor: Colors.white,
     },
     menuTabsContainer: {
         // backgroundColor: "red",

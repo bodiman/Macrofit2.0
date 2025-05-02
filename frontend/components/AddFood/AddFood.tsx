@@ -5,7 +5,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Food, FoodServing, myMacroPreferences, Portion } from "@/tempdata";
 import { FlatList } from "react-native";
 import FoodCard from "./FoodCard";
-import { useEffect, useState, } from "react";
+import { useEffect, useState, useRef } from "react";
 import storage from "@/app/storage/storage";
 import MacrosDisplay from "../MacroDisplay/MacrosDisplay";
 import ResultContent from "./ResultContent";
@@ -22,6 +22,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
     const [displayResults, setDisplayResults] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const totalMacros = useMacros(shoppingCart);
+    const searchBarRef = useRef<TextInput>(null);
 
     useEffect(()=> {
         const cachedShoppingCart = storage.getString('shoppingCart');
@@ -57,6 +58,11 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
         setShoppingCart(updatedCart);
     };
 
+    const handleCloseResults = () => {
+        setDisplayResults(false);
+        searchBarRef.current?.blur();
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.macroContainer}>
@@ -72,6 +78,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
                 <View style={styles.headerContainer}>
                     <View style={styles.searchBarContainer}>
                         <TextInput 
+                            ref={searchBarRef}
                             style={styles.searchBar} 
                             placeholder={"Search Foods to Add"} 
                             value={searchQuery}
@@ -89,7 +96,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
                 <View style={[styles.resultsContainer]}>
                     <ResultContent 
                         visible={displayResults} 
-                        closeModal={()=>setDisplayResults(false)} 
+                        closeModal={()=>handleCloseResults()} 
                         searchQuery={searchQuery}
                         onAddToCart={handleAddToCart}
                     />
@@ -160,7 +167,7 @@ const styles = StyleSheet.create({
     },
     resultsContainer: {
         position: 'absolute',
-        top: 150,
+        top: 140,
         bottom: 0,
         left: 0,
         right: 0,
