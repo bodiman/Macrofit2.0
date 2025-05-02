@@ -10,13 +10,12 @@ export default function Landing() {
     const { user } = useUser()
 
     if (user) return <Redirect href={"/"} />
-    console.log(user);
 
     return (
         <LinearGradient 
             colors={[Colors.coolgray, Colors.lightgray]} 
             style={styles.container}   
-            locations={[0, 0.8, 1]}
+            locations={[0.8, 1]}
         >
             <SignedOut>
                 <View style={styles.logoContainer}>

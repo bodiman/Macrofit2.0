@@ -1,5 +1,5 @@
 import Colors from '@/styles/colors'
-import { SignedIn, SignedOut } from '@clerk/clerk-expo'
+import { SignedIn, SignedOut, useAuth, useSSO } from '@clerk/clerk-expo'
 import { Redirect } from 'expo-router'
 import { Slot, Stack, Tabs } from 'expo-router'
 import { Text, View } from 'react-native'
@@ -9,8 +9,22 @@ console.log("loading fontawesome")
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useState, useEffect } from 'react'
 import FoodSelector from '@/components/AddFood/FoodSearchModal'
+import useUser from '../hooks/useUser'
 
 export default function Layout() {
+  const { signOut } = useAuth();
+  const { clerkUser, needsRegistration, error } = useUser();
+
+  if (!clerkUser || error) {
+    signOut();
+    return <Redirect href="/landing" />
+  }
+
+  console.log("needsRegistration", needsRegistration);
+  if (needsRegistration) {
+    console.log("needsRegistration", needsRegistration);
+    return <Redirect href="/register" />
+  }
 
   return (
   <View style={{flex: 1}}>

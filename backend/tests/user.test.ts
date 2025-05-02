@@ -1,4 +1,4 @@
-import { createUser, getUserByEmail, deleteUser } from "../user/user";
+import { createUser, getUser, deleteUser } from "../user/user";
 
 
 test('create user', async () => {
@@ -6,7 +6,7 @@ test('create user', async () => {
     const id = user.user_id;
     expect(user).toBeDefined();
 
-    const retrieved_user = await getUserByEmail("test@test.com");
+    const retrieved_user = await getUser({ email: "test@test.com" });
     expect(retrieved_user).toBeDefined();
     expect(retrieved_user?.user_id).toBe(id);
 
@@ -14,6 +14,6 @@ test('create user', async () => {
     expect(deleted_user).toBeDefined();
     expect(deleted_user.user_id).toBe(id);
 
-    const retrieved_user_after_deletion = await getUserByEmail("test@test.com");
+    const retrieved_user_after_deletion = await getUser({ email: "test@test.com" });
     expect(retrieved_user_after_deletion).toBeNull();
 });

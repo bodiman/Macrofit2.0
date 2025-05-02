@@ -5,7 +5,7 @@ import prisma from '../prisma_client';
 
 // 👇 Mock prisma.user.create
 jest.mock('../prisma_client', () => ({
-  user: {
+  users: {
     create: jest.fn(),
     findMany: jest.fn(),
   },
@@ -24,7 +24,7 @@ describe('POST /api/users', () => {
     };
 
     // 👇 Mock the return value of prisma.user.create
-    (prisma.user.create as jest.Mock).mockResolvedValue(fakeUser);
+    (prisma.users.create as jest.Mock).mockResolvedValue(fakeUser);
 
     const response = await request(app)
       .post('/api/users')
@@ -32,7 +32,7 @@ describe('POST /api/users', () => {
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual(fakeUser);
-    expect(prisma.user.create).toHaveBeenCalledWith({
+    expect(prisma.users.create).toHaveBeenCalledWith({
       data: { name: 'Alice', email: 'alice@example.com' },
     });
   });

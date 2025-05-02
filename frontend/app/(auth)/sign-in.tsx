@@ -49,8 +49,6 @@ export default function SignInPage() {
 
   const onGoogleSignIn = useCallback(async () => {
     try {
-      console.log('onGoogleSignIn');
-      console.log(Linking.createURL('sso-callback'));
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy: 'oauth_google',
         // redirectUrl: 'macrofit://sso-callback'

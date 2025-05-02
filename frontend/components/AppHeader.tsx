@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react"
 import useMacros from "@/app/hooks/useMacros"
 import useMeals from "@/app/hooks/useMeals"
 import storage from "@/app/storage/storage"
-import { eventBus } from "@/app/storage/eventEmitter"
+import eventBus from "@/app/storage/eventEmitter"
 
 export default function AppHeader() {
     const { meals } = useMeals();

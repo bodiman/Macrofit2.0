@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Meal, FoodServing, Portion } from '@/tempdata';
 import storage, { meals as defaultMeals } from '../storage/storage';
-import { eventBus } from '../storage/eventEmitter';
+import eventBus from '../storage/eventEmitter';
 
 export default function useMeals() {
     const [meals, setMeals] = useState<Meal[]>(defaultMeals);

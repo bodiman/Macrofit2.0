@@ -6,7 +6,7 @@ import Colors from '@/styles/colors';
 import AddFood from './AddFood';
 import storage from '@/app/storage/storage';
 import AnimatedModal from '../AnimatedModal';
-import { eventBus } from '@/app/storage/eventEmitter';
+import eventBus from '@/app/storage/eventEmitter';
 import MacrosDisplay from '../MacroDisplay/MacrosDisplay';
 
 type Props = PropsWithChildren<{

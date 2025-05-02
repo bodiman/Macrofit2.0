@@ -11,7 +11,7 @@ import MacrosDisplay from "../MacroDisplay/MacrosDisplay";
 import ResultContent from "./ResultContent";
 import React from "react";
 import useMacros from "@/app/hooks/useMacros";
-import { eventBus } from "@/app/storage/eventEmitter";
+import eventBus from "@/app/storage/eventEmitter";
 
 type Props = {
     shoppingCart: FoodServing[],

@@ -5,7 +5,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import TableDisplay from './TableDisplay';
 import storage from '@/app/storage/storage';
 import React, { useEffect } from 'react';
-import { eventBus } from '@/app/storage/eventEmitter';
+import eventBus from '@/app/storage/eventEmitter';
 import PlusIcon from '@/components/Icons/PlusIcon';
 
 type Props = { 
