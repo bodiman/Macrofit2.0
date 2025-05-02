@@ -1,10 +1,19 @@
-import { createUser } from "../user/user";
+import { createUser, getUserByEmail, deleteUser } from "../user/user";
 
 
-function sum(a: number, b: number): number {
-    return a + b;
-}
+test('create user', async () => {
+    const user = await createUser("test@test.com");
+    const id = user.user_id;
+    expect(user).toBeDefined();
 
-test('adds 1 + 2 to equal 3', () => {
-    expect(sum(1, 2)).toBe(3);
+    const retrieved_user = await getUserByEmail("test@test.com");
+    expect(retrieved_user).toBeDefined();
+    expect(retrieved_user?.user_id).toBe(id);
+
+    const deleted_user = await deleteUser(id);
+    expect(deleted_user).toBeDefined();
+    expect(deleted_user.user_id).toBe(id);
+
+    const retrieved_user_after_deletion = await getUserByEmail("test@test.com");
+    expect(retrieved_user_after_deletion).toBeNull();
 });
