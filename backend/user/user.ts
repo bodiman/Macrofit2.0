@@ -31,6 +31,26 @@ export const createUser = async (email: string, name?: string) => {
 
     // Should create default preferences for the user
 
+    const metrics = await prisma.nutritionalMetric.findMany({
+        where: {
+            name: {
+            in: Object.keys(defaultPreferences),
+            },
+        },
+    });
+
+    const preferencesData = metrics.map(metric => ({
+        user_id: user.user_id,
+        metric_id: metric.id,
+        min_value: defaultPreferences[metric.name].min,
+        max_value: defaultPreferences[metric.name].max,
+    }));
+    
+    await prisma.userPreference.createMany({
+        data: preferencesData,
+        skipDuplicates: true,
+    });
+
     return { user };
 };
 
