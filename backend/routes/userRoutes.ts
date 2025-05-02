@@ -1,7 +1,7 @@
 // backend/routes/userRoutes.ts
 import express from 'express';
 import prisma from '../prisma_client';
-import { getUser } from '../user/user';
+import { getUser, createUser } from '../user/user';
 import { BadRequestError, UserNotFoundError } from '../user/types';
 
 const router = express.Router();
@@ -13,6 +13,7 @@ type GetUserParams = {
 
 type CreateUserParams = {
     email: string;
+    name?: string;
 };
 
 router.get('/user', async (req: express.Request<GetUserParams>, res: express.Response) => {
@@ -37,8 +38,9 @@ router.get('/user', async (req: express.Request<GetUserParams>, res: express.Res
 
 router.post('/register', async (req: express.Request<CreateUserParams>, res: express.Response) => {
     try {
-        const user = await prisma.user.create({ data: req.body });
-        res.status(201).json(user);
+        const { email, name } = req.body;
+        const result = await createUser(email, name);
+        res.status(201).json(result);
     } catch (err) {
         console.error('Failed to create user:', err);
         res.status(500).json({ error: 'Internal Server Error' });

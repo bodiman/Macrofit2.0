@@ -1,12 +1,37 @@
 import prisma from "../prisma_client";
 import { BadRequestError, UserNotFoundError } from "./types";
 
-export const createUser = async (email: string) => {
+type DefaultPreferences = {
+  [key: string]: {
+    min: number;
+    max: number;
+  };
+};
+
+const defaultPreferences: DefaultPreferences = {
+  Calories: { min: 1500, max: 2500 },
+  Protein: { min: 120, max: 200 },
+  Carbohydrates: { min: 100, max: 300 },
+  Fat: { min: 10, max: 75 },
+  Fiber: { min: 25, max: 40 },
+  Sugar: { min: 0, max: 50 },
+  Sodium: { min: 0, max: 2300 },
+  Cholesterol: { min: 0, max: 300 },
+  'Saturated Fat': { min: 0, max: 20 },
+};
+
+export const createUser = async (email: string, name?: string) => {
+    // Create the user
     const user = await prisma.user.create({
-        data: { email },
+        data: { 
+            email,
+            name,
+        },
     });
 
-    return user;
+    // Should create default preferences for the user
+
+    return { user };
 };
 
 export const getUser = async ({email, user_id}: {email?: string, user_id?: number}) => {
@@ -16,6 +41,13 @@ export const getUser = async ({email, user_id}: {email?: string, user_id?: numbe
     
     const user = await prisma.user.findUnique({
         where: email ? { email } : { user_id: user_id! },
+        include: {
+            macroPreferences: {
+                include: {
+                    metric: true,
+                },
+            },
+        },
     });
 
     if (!user) {

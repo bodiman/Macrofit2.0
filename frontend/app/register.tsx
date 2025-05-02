@@ -13,7 +13,7 @@ export default function Register() {
         } else if (appUser) {
             router.replace('/');
         } else if (!creatingUser) {
-            console.log("creating user");
+            console.log("creating user", creatingUser);
             setCreatingUser(true);
             createUser({
                 email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
@@ -30,6 +30,8 @@ export default function Register() {
     return (
         <View>
             <Text>Register you cheapskate fucker</Text>
+            <Text>{JSON.stringify(clerkUser)}</Text>
+            <Text>{JSON.stringify(appUser)}</Text>
         </View>
     )
 }

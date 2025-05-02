@@ -55,10 +55,9 @@ export function useUser() {
         const params = new URLSearchParams({
             email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
             name: clerkUser.fullName ?? '',
-            externalId: clerkUser.id,
         });
 
-        const res = await fetch(`${serverAddress}/api/users?${params.toString()}`, {
+        const res = await fetch(`${serverAddress}/api/user?${params.toString()}`, {
           method: 'GET',
         });
 
