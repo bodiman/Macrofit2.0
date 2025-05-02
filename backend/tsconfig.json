@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+      "target": "ES2017",         // Or ES2018 or later
+      "lib": ["ES2017"],          // Or ["ES2017", "DOM"] if needed
+      "module": "commonjs",
+      "esModuleInterop": true,
+      "strict": true,
+      "types": ["jest"]
+    }
+  }
