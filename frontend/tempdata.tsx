@@ -13,16 +13,16 @@ export type Portion = {
     quantity: number
 }
 
-export type Macros = {
-    calories?: number,
-    protein?: number,
-    carbs?: number,
-    fat?: number,
-    fiber?: number,
-    sodium?: number,
-    sugar?: number,
-    potassium?: number
-}
+// export type Macros = {
+//     calories?: number,
+//     protein?: number,
+//     carbs?: number,
+//     fat?: number,
+//     fiber?: number,
+//     sodium?: number,
+//     sugar?: number,
+//     potassium?: number
+// }
 
 export type Food = {
     id: string,
@@ -82,16 +82,7 @@ export const servingUnits: Unit[] = [
     gram, ounce, cup
 ]
 
-export type MacroPreferences = {
-    calories?: Range,
-    protein?: Range,
-    carbs?: Range,
-    fat?: Range,
-    fiber?: Range,
-    sugar?: Range,
-    sodium?: Range,
-    potassium?: Range
-}
+
 
 // // temporary for testing
 // export async function createInstance(food: Food) {
@@ -123,34 +114,22 @@ export const myMacros = {
 
 // Macro preferences
 
-export const myMacroPreferences: MacroPreferences = {
-    calories: {
-        min: 1800,
-        max: 2000
-    },
-    protein: {
-        min: 160,
-        max: 180
-    },
-    carbs: {
-        min: 225,
-        max: 275
-    },
-    fat: {
-        min: 10,
-        max: 37,
-    },
-    fiber: {
-        min: 28,
-        max: 38,
-    },
-    sugar: {
-        max: 15,
-    },
-    sodium: {
-        max: 2300,
-    },
-    potassium: {
-        min: 5000,
-    }
+export type Macros = Record<string, number>
+
+export type MacroPreference = {
+    id: string,
+    name: string,
+    min?: number,
+    max?: number
 }
+
+export type MacroPreferences = Array<MacroPreference>
+
+export const myMacroPreferences: MacroPreferences = [
+    {id: 'calories', name: 'Calories', min: 1800, max: 2000},
+    {id: 'protein', name: 'Protein', min: 160, max: 180},
+    {id: 'carbs', name: 'Carbs', min: 225, max: 275},
+    {id: 'fat', name: 'Fat', min: 10, max: 37},
+    {id: 'fiber', name: 'Fiber', min: 28, max: 38},
+    {id: 'sugar', name: 'Sugar', max: 15},
+]

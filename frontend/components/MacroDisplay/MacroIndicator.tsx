@@ -11,7 +11,8 @@ type Props = {
     value: number, 
     range: Range, 
     radius: number,
-    unit: MacroKey}
+    unit: string
+}
 
 export default function MacroIndicator({ value, range, unit, radius }: Props) {
     const [maxValue, setMaxValue] = useState(0);
@@ -56,7 +57,7 @@ export default function MacroIndicator({ value, range, unit, radius }: Props) {
 
     const progressFormatter = (value: number) => {
         'worklet';
-        return value.toFixed() + unitMap[unit];
+        return value.toFixed() + unit;
     };
     
     return (
@@ -71,7 +72,7 @@ export default function MacroIndicator({ value, range, unit, radius }: Props) {
                 title={unit}
                 activeStrokeWidth={10}
                 inActiveStrokeWidth={10}
-                progressValueStyle={{ fontSize: 3 * radius / (3 + Math.max(String(value.toFixed() + unitMap[unit]).length, 4)) }}
+                progressValueStyle={{ fontSize: 3 * radius / (3 + Math.max(String(value.toFixed() + unit).length, 4)) }}
                 progressFormatter={progressFormatter}
                 activeStrokeColor={getStrokeColor(displayValue, maxValue)}
 

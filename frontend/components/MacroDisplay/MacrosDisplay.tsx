@@ -1,5 +1,5 @@
 import { Text, View, StyleSheet, LayoutChangeEvent, FlatList, Dimensions } from "react-native"
-import { MacroPreferences, Macros } from "@/tempdata"
+import { MacroPreference, MacroPreferences, Macros } from "@/tempdata"
 import MacroIndicator from "./MacroIndicator"
 import { MacroKey } from "@/tempdata"
 import { useEffect, useState } from "react"
@@ -22,8 +22,17 @@ export default function MacrosDisplay({ macroPreferences, macroValues, radius, i
         setGap(Math.max((width - 2 * radius * indicators) / (indicators - 1), 0))
     };
 
-    const groupedMacros = (Object.keys(macroPreferences) as MacroKey[]).reduce<MacroKey[][]>((acc, item, index) => {
-        if (!macroPreferences[item]) return acc;
+    // const groupedMacros = (Object.keys(macroPreferences) as MacroKey[]).reduce<MacroKey[][]>((acc, item, index) => {
+    //     if (!macroPreferences[item]) return acc;
+    //     const groupIndex = Math.floor(index / indicators);
+    //     if (!acc[groupIndex]) {
+    //         acc[groupIndex] = [];
+    //     }
+    //     acc[groupIndex].push(item);
+    //     return acc;
+    // }, []);
+
+    const groupedMacros = macroPreferences.reduce<MacroPreference[][]>((acc, item, index) => {
         const groupIndex = Math.floor(index / indicators);
         if (!acc[groupIndex]) {
             acc[groupIndex] = [];
@@ -31,18 +40,18 @@ export default function MacrosDisplay({ macroPreferences, macroValues, radius, i
         acc[groupIndex].push(item);
         return acc;
     }, []);
+    
 
-    const renderItem = ({ item }: { item: MacroKey[] }) => (
+    const renderItem = ({ item }: { item: MacroPreference[] }) => (
         <View style={[styles.macroContainer, { width: containerWidth, gap: gap }]}>
-            {item.map((macro) => (
-            macroPreferences[macro] &&
-            <MacroIndicator
-                key={macro}
-                unit={macro}
-                value={macroValues[macro] || 0}
-                radius={radius}
-                range={macroPreferences[macro]}
-            />
+            {item.map((macroPreference) => (
+                <MacroIndicator
+                    key={macroPreference.id}
+                    unit={macroPreference.name}
+                    value={macroValues[macroPreference.id] || 0}
+                    radius={radius}
+                    range={macroPreference}
+                />
             ))}
         </View>
     );

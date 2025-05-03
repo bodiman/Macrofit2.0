@@ -7,6 +7,7 @@ export default function useMacros(foodServings: FoodServing[]) {
         const totalMacros: Macros = {};
         
         foodServings.forEach((foodServing) => {
+            // console.log("foodServing", foodServing.food);
             const adjustedMacros = calculateAdjustedMacros(foodServing);
             
             Object.entries(adjustedMacros).forEach(([key, value]) => {

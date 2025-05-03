@@ -34,17 +34,8 @@ export default function SearchFoodCard({ food, onAdd }: Props) {
                 </Text>
             </View>
             <View style={styles.macrosContainer}>
-                <Text style={styles.macroText}>
-                    {food.macros.calories} cal
-                </Text>
-                <Text style={styles.macroText}>
-                    {food.macros.protein}g protein
-                </Text>
-                <Text style={styles.macroText}>
-                    {food.macros.carbs}g carbs
-                </Text>
-                <Text style={styles.macroText}>
-                    {food.macros.fat}g fat
+                <Text>
+                    {JSON.stringify(food.macros)}
                 </Text>
             </View>
         </TouchableOpacity>

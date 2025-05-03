@@ -2,19 +2,20 @@ import Colors from "@/styles/colors"
 import { Text, View, StyleSheet } from "react-native"
 import Logo from "./Logo"
 import MacrosDisplay from "./MacroDisplay/MacrosDisplay"
-import { myMacroPreferences } from "@/tempdata"
+import { Macros, myMacroPreferences } from "@/tempdata"
 import { useEffect, useMemo, useState } from "react"
 import useMacros from "@/app/hooks/useMacros"
 import useMeals from "@/app/hooks/useMeals"
 import storage from "@/app/storage/storage"
 import eventBus from "@/app/storage/eventEmitter"
-
+import useShoppingCart from "@/app/hooks/useShoppingCart"
 export default function AppHeader() {
     const { meals } = useMeals();
-    const [shoppingCart, setShoppingCart] = useState(() => {
-        const cachedCart = storage.getString('shoppingCart');
-        return cachedCart ? JSON.parse(cachedCart) : [];
-    });
+    // const [shoppingCart, setShoppingCart] = useState(() => {
+    //     const cachedCart = storage.getString('shoppingCart');
+    //     return cachedCart ? JSON.parse(cachedCart) : [];
+    // });
+    const { shoppingCart, setShoppingCart } = useShoppingCart();
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
@@ -46,20 +47,18 @@ export default function AppHeader() {
     const cartMacros = useMacros(shoppingCart);
 
     const totalMacros = useMemo(() => {
-        const combined: typeof mealMacros = {};
-        
-        // Always include meal macros
-        Object.keys(mealMacros).forEach(key => {
-            const macroKey = key as keyof typeof mealMacros;
-            combined[macroKey] = mealMacros[macroKey] || 0;
-        });
+        const combined: Macros = {};
+
+        for (const [key, value] of Object.entries(mealMacros)) {
+            combined[key] = (combined[key] || 0) + value;
+        }
+    
         
         // Only include cart macros when modal is open
         if (isModalOpen) {
-            Object.keys(cartMacros).forEach(key => {
-                const macroKey = key as keyof typeof cartMacros;
-                combined[macroKey] = (combined[macroKey] || 0) + (cartMacros[macroKey] || 0);
-            });
+            for (const [key, value] of Object.entries(cartMacros)) {
+                combined[key] = (combined[key] || 0) + value;
+            }
         }
         
         return combined;
