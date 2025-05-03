@@ -1,15 +1,15 @@
 import prisma from '../../prisma_client';
 
 const defaultMetrics = [
-  { name: 'Calories', unit: 'kcal', description: 'Total energy content' },
-  { name: 'Protein', unit: 'g', description: 'Protein content' },
-  { name: 'Carbohydrates', unit: 'g', description: 'Total carbohydrates' },
-  { name: 'Fat', unit: 'g', description: 'Total fat content' },
-  { name: 'Fiber', unit: 'g', description: 'Dietary fiber' },
-  { name: 'Sugar', unit: 'g', description: 'Total sugar content' },
-  { name: 'Sodium', unit: 'mg', description: 'Sodium content' },
-  { name: 'Cholesterol', unit: 'mg', description: 'Cholesterol content' },
-  { name: 'Saturated Fat', unit: 'g', description: 'Saturated fat content' },
+  { name: 'Calories', unit: 'kcal', description: 'Total energy content', id: "calories" },
+  { name: 'Protein', unit: 'g', description: 'Protein content', id: "protein" },
+  { name: 'Carbohydrates', unit: 'g', description: 'Total carbohydrates', id: "carbohydrates" },
+  { name: 'Fat', unit: 'g', description: 'Total fat content', id: "fat" },
+  { name: 'Fiber', unit: 'g', description: 'Dietary fiber', id: "fiber" },
+  { name: 'Sugar', unit: 'g', description: 'Total sugar content', id: "sugar" },
+  { name: 'Sodium', unit: 'mg', description: 'Sodium content', id: "sodium" },
+  { name: 'Cholesterol', unit: 'mg', description: 'Cholesterol content', id: "cholesterol" },
+  { name: 'Saturated Fat', unit: 'g', description: 'Saturated fat content', id: "saturated_fat" },
 ];
 
 const defaultPreferences = {

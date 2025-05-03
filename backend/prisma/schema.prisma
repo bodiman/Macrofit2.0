@@ -23,7 +23,7 @@ model User {
 }
 
 model NutritionalMetric {
-  id          Int             @id @default(autoincrement())
+  id          String          @id
   name        String          @unique
   description String?
   unit        String          // e.g., "g", "mg", "kcal"
@@ -33,7 +33,7 @@ model NutritionalMetric {
 model UserPreference {
   id          Int              @id @default(autoincrement())
   user_id     Int
-  metric_id   Int
+  metric_id   String
   min_value   Float?
   max_value   Float?
   user        User             @relation(fields: [user_id], references: [user_id])

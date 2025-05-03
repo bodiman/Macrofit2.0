@@ -2196,29 +2196,19 @@ export namespace Prisma {
 
   export type AggregateNutritionalMetric = {
     _count: NutritionalMetricCountAggregateOutputType | null
-    _avg: NutritionalMetricAvgAggregateOutputType | null
-    _sum: NutritionalMetricSumAggregateOutputType | null
     _min: NutritionalMetricMinAggregateOutputType | null
     _max: NutritionalMetricMaxAggregateOutputType | null
   }
 
-  export type NutritionalMetricAvgAggregateOutputType = {
-    id: number | null
-  }
-
-  export type NutritionalMetricSumAggregateOutputType = {
-    id: number | null
-  }
-
   export type NutritionalMetricMinAggregateOutputType = {
-    id: number | null
+    id: string | null
     name: string | null
     description: string | null
     unit: string | null
   }
 
   export type NutritionalMetricMaxAggregateOutputType = {
-    id: number | null
+    id: string | null
     name: string | null
     description: string | null
     unit: string | null
@@ -2232,14 +2222,6 @@ export namespace Prisma {
     _all: number
   }
 
-
-  export type NutritionalMetricAvgAggregateInputType = {
-    id?: true
-  }
-
-  export type NutritionalMetricSumAggregateInputType = {
-    id?: true
-  }
 
   export type NutritionalMetricMinAggregateInputType = {
     id?: true
@@ -2301,18 +2283,6 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Select which fields to average
-    **/
-    _avg?: NutritionalMetricAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: NutritionalMetricSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
      * Select which fields to find the minimum value
     **/
     _min?: NutritionalMetricMinAggregateInputType
@@ -2343,20 +2313,16 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: NutritionalMetricCountAggregateInputType | true
-    _avg?: NutritionalMetricAvgAggregateInputType
-    _sum?: NutritionalMetricSumAggregateInputType
     _min?: NutritionalMetricMinAggregateInputType
     _max?: NutritionalMetricMaxAggregateInputType
   }
 
   export type NutritionalMetricGroupByOutputType = {
-    id: number
+    id: string
     name: string
     description: string | null
     unit: string
     _count: NutritionalMetricCountAggregateOutputType | null
-    _avg: NutritionalMetricAvgAggregateOutputType | null
-    _sum: NutritionalMetricSumAggregateOutputType | null
     _min: NutritionalMetricMinAggregateOutputType | null
     _max: NutritionalMetricMaxAggregateOutputType | null
   }
@@ -2419,7 +2385,7 @@ export namespace Prisma {
       preferences: Prisma.$UserPreferencePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
-      id: number
+      id: string
       name: string
       description: string | null
       unit: string
@@ -2847,7 +2813,7 @@ export namespace Prisma {
    * Fields of the NutritionalMetric model
    */
   interface NutritionalMetricFieldRefs {
-    readonly id: FieldRef<"NutritionalMetric", 'Int'>
+    readonly id: FieldRef<"NutritionalMetric", 'String'>
     readonly name: FieldRef<"NutritionalMetric", 'String'>
     readonly description: FieldRef<"NutritionalMetric", 'String'>
     readonly unit: FieldRef<"NutritionalMetric", 'String'>
@@ -3296,7 +3262,6 @@ export namespace Prisma {
   export type UserPreferenceAvgAggregateOutputType = {
     id: number | null
     user_id: number | null
-    metric_id: number | null
     min_value: number | null
     max_value: number | null
   }
@@ -3304,7 +3269,6 @@ export namespace Prisma {
   export type UserPreferenceSumAggregateOutputType = {
     id: number | null
     user_id: number | null
-    metric_id: number | null
     min_value: number | null
     max_value: number | null
   }
@@ -3312,7 +3276,7 @@ export namespace Prisma {
   export type UserPreferenceMinAggregateOutputType = {
     id: number | null
     user_id: number | null
-    metric_id: number | null
+    metric_id: string | null
     min_value: number | null
     max_value: number | null
   }
@@ -3320,7 +3284,7 @@ export namespace Prisma {
   export type UserPreferenceMaxAggregateOutputType = {
     id: number | null
     user_id: number | null
-    metric_id: number | null
+    metric_id: string | null
     min_value: number | null
     max_value: number | null
   }
@@ -3338,7 +3302,6 @@ export namespace Prisma {
   export type UserPreferenceAvgAggregateInputType = {
     id?: true
     user_id?: true
-    metric_id?: true
     min_value?: true
     max_value?: true
   }
@@ -3346,7 +3309,6 @@ export namespace Prisma {
   export type UserPreferenceSumAggregateInputType = {
     id?: true
     user_id?: true
-    metric_id?: true
     min_value?: true
     max_value?: true
   }
@@ -3465,7 +3427,7 @@ export namespace Prisma {
   export type UserPreferenceGroupByOutputType = {
     id: number
     user_id: number
-    metric_id: number
+    metric_id: string
     min_value: number | null
     max_value: number | null
     _count: UserPreferenceCountAggregateOutputType | null
@@ -3550,7 +3512,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       user_id: number
-      metric_id: number
+      metric_id: string
       min_value: number | null
       max_value: number | null
     }, ExtArgs["result"]["userPreference"]>
@@ -3980,7 +3942,7 @@ export namespace Prisma {
   interface UserPreferenceFieldRefs {
     readonly id: FieldRef<"UserPreference", 'Int'>
     readonly user_id: FieldRef<"UserPreference", 'Int'>
-    readonly metric_id: FieldRef<"UserPreference", 'Int'>
+    readonly metric_id: FieldRef<"UserPreference", 'String'>
     readonly min_value: FieldRef<"UserPreference", 'Float'>
     readonly max_value: FieldRef<"UserPreference", 'Float'>
   }
@@ -4566,7 +4528,7 @@ export namespace Prisma {
     AND?: NutritionalMetricWhereInput | NutritionalMetricWhereInput[]
     OR?: NutritionalMetricWhereInput[]
     NOT?: NutritionalMetricWhereInput | NutritionalMetricWhereInput[]
-    id?: IntFilter<"NutritionalMetric"> | number
+    id?: StringFilter<"NutritionalMetric"> | string
     name?: StringFilter<"NutritionalMetric"> | string
     description?: StringNullableFilter<"NutritionalMetric"> | string | null
     unit?: StringFilter<"NutritionalMetric"> | string
@@ -4582,7 +4544,7 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricWhereUniqueInput = Prisma.AtLeast<{
-    id?: number
+    id?: string
     name?: string
     AND?: NutritionalMetricWhereInput | NutritionalMetricWhereInput[]
     OR?: NutritionalMetricWhereInput[]
@@ -4598,17 +4560,15 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     unit?: SortOrder
     _count?: NutritionalMetricCountOrderByAggregateInput
-    _avg?: NutritionalMetricAvgOrderByAggregateInput
     _max?: NutritionalMetricMaxOrderByAggregateInput
     _min?: NutritionalMetricMinOrderByAggregateInput
-    _sum?: NutritionalMetricSumOrderByAggregateInput
   }
 
   export type NutritionalMetricScalarWhereWithAggregatesInput = {
     AND?: NutritionalMetricScalarWhereWithAggregatesInput | NutritionalMetricScalarWhereWithAggregatesInput[]
     OR?: NutritionalMetricScalarWhereWithAggregatesInput[]
     NOT?: NutritionalMetricScalarWhereWithAggregatesInput | NutritionalMetricScalarWhereWithAggregatesInput[]
-    id?: IntWithAggregatesFilter<"NutritionalMetric"> | number
+    id?: StringWithAggregatesFilter<"NutritionalMetric"> | string
     name?: StringWithAggregatesFilter<"NutritionalMetric"> | string
     description?: StringNullableWithAggregatesFilter<"NutritionalMetric"> | string | null
     unit?: StringWithAggregatesFilter<"NutritionalMetric"> | string
@@ -4620,7 +4580,7 @@ export namespace Prisma {
     NOT?: UserPreferenceWhereInput | UserPreferenceWhereInput[]
     id?: IntFilter<"UserPreference"> | number
     user_id?: IntFilter<"UserPreference"> | number
-    metric_id?: IntFilter<"UserPreference"> | number
+    metric_id?: StringFilter<"UserPreference"> | string
     min_value?: FloatNullableFilter<"UserPreference"> | number | null
     max_value?: FloatNullableFilter<"UserPreference"> | number | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -4644,7 +4604,7 @@ export namespace Prisma {
     OR?: UserPreferenceWhereInput[]
     NOT?: UserPreferenceWhereInput | UserPreferenceWhereInput[]
     user_id?: IntFilter<"UserPreference"> | number
-    metric_id?: IntFilter<"UserPreference"> | number
+    metric_id?: StringFilter<"UserPreference"> | string
     min_value?: FloatNullableFilter<"UserPreference"> | number | null
     max_value?: FloatNullableFilter<"UserPreference"> | number | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
@@ -4670,7 +4630,7 @@ export namespace Prisma {
     NOT?: UserPreferenceScalarWhereWithAggregatesInput | UserPreferenceScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"UserPreference"> | number
     user_id?: IntWithAggregatesFilter<"UserPreference"> | number
-    metric_id?: IntWithAggregatesFilter<"UserPreference"> | number
+    metric_id?: StringWithAggregatesFilter<"UserPreference"> | string
     min_value?: FloatNullableWithAggregatesFilter<"UserPreference"> | number | null
     max_value?: FloatNullableWithAggregatesFilter<"UserPreference"> | number | null
   }
@@ -4719,6 +4679,7 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricCreateInput = {
+    id: string
     name: string
     description?: string | null
     unit: string
@@ -4726,7 +4687,7 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricUncheckedCreateInput = {
-    id?: number
+    id: string
     name: string
     description?: string | null
     unit: string
@@ -4734,6 +4695,7 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: StringFieldUpdateOperationsInput | string
@@ -4741,7 +4703,7 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricUncheckedUpdateInput = {
-    id?: IntFieldUpdateOperationsInput | number
+    id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: StringFieldUpdateOperationsInput | string
@@ -4749,20 +4711,21 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricCreateManyInput = {
-    id?: number
+    id: string
     name: string
     description?: string | null
     unit: string
   }
 
   export type NutritionalMetricUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: StringFieldUpdateOperationsInput | string
   }
 
   export type NutritionalMetricUncheckedUpdateManyInput = {
-    id?: IntFieldUpdateOperationsInput | number
+    id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: StringFieldUpdateOperationsInput | string
@@ -4778,7 +4741,7 @@ export namespace Prisma {
   export type UserPreferenceUncheckedCreateInput = {
     id?: number
     user_id: number
-    metric_id: number
+    metric_id: string
     min_value?: number | null
     max_value?: number | null
   }
@@ -4793,7 +4756,7 @@ export namespace Prisma {
   export type UserPreferenceUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     user_id?: IntFieldUpdateOperationsInput | number
-    metric_id?: IntFieldUpdateOperationsInput | number
+    metric_id?: StringFieldUpdateOperationsInput | string
     min_value?: NullableFloatFieldUpdateOperationsInput | number | null
     max_value?: NullableFloatFieldUpdateOperationsInput | number | null
   }
@@ -4801,7 +4764,7 @@ export namespace Prisma {
   export type UserPreferenceCreateManyInput = {
     id?: number
     user_id: number
-    metric_id: number
+    metric_id: string
     min_value?: number | null
     max_value?: number | null
   }
@@ -4814,7 +4777,7 @@ export namespace Prisma {
   export type UserPreferenceUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     user_id?: IntFieldUpdateOperationsInput | number
-    metric_id?: IntFieldUpdateOperationsInput | number
+    metric_id?: StringFieldUpdateOperationsInput | string
     min_value?: NullableFloatFieldUpdateOperationsInput | number | null
     max_value?: NullableFloatFieldUpdateOperationsInput | number | null
   }
@@ -4960,10 +4923,6 @@ export namespace Prisma {
     unit?: SortOrder
   }
 
-  export type NutritionalMetricAvgOrderByAggregateInput = {
-    id?: SortOrder
-  }
-
   export type NutritionalMetricMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -4976,10 +4935,6 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrder
     unit?: SortOrder
-  }
-
-  export type NutritionalMetricSumOrderByAggregateInput = {
-    id?: SortOrder
   }
 
   export type FloatNullableFilter<$PrismaModel = never> = {
@@ -5005,7 +4960,7 @@ export namespace Prisma {
 
   export type UserPreferenceUser_idMetric_idCompoundUniqueInput = {
     user_id: number
-    metric_id: number
+    metric_id: string
   }
 
   export type UserPreferenceCountOrderByAggregateInput = {
@@ -5019,7 +4974,6 @@ export namespace Prisma {
   export type UserPreferenceAvgOrderByAggregateInput = {
     id?: SortOrder
     user_id?: SortOrder
-    metric_id?: SortOrder
     min_value?: SortOrder
     max_value?: SortOrder
   }
@@ -5043,7 +4997,6 @@ export namespace Prisma {
   export type UserPreferenceSumOrderByAggregateInput = {
     id?: SortOrder
     user_id?: SortOrder
-    metric_id?: SortOrder
     min_value?: SortOrder
     max_value?: SortOrder
   }
@@ -5346,7 +5299,7 @@ export namespace Prisma {
 
   export type UserPreferenceUncheckedCreateWithoutUserInput = {
     id?: number
-    metric_id: number
+    metric_id: string
     min_value?: number | null
     max_value?: number | null
   }
@@ -5383,7 +5336,7 @@ export namespace Prisma {
     NOT?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
     id?: IntFilter<"UserPreference"> | number
     user_id?: IntFilter<"UserPreference"> | number
-    metric_id?: IntFilter<"UserPreference"> | number
+    metric_id?: StringFilter<"UserPreference"> | string
     min_value?: FloatNullableFilter<"UserPreference"> | number | null
     max_value?: FloatNullableFilter<"UserPreference"> | number | null
   }
@@ -5444,13 +5397,14 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricCreateWithoutPreferencesInput = {
+    id: string
     name: string
     description?: string | null
     unit: string
   }
 
   export type NutritionalMetricUncheckedCreateWithoutPreferencesInput = {
-    id?: number
+    id: string
     name: string
     description?: string | null
     unit: string
@@ -5495,13 +5449,14 @@ export namespace Prisma {
   }
 
   export type NutritionalMetricUpdateWithoutPreferencesInput = {
+    id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: StringFieldUpdateOperationsInput | string
   }
 
   export type NutritionalMetricUncheckedUpdateWithoutPreferencesInput = {
-    id?: IntFieldUpdateOperationsInput | number
+    id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: StringFieldUpdateOperationsInput | string
@@ -5509,7 +5464,7 @@ export namespace Prisma {
 
   export type UserPreferenceCreateManyUserInput = {
     id?: number
-    metric_id: number
+    metric_id: string
     min_value?: number | null
     max_value?: number | null
   }
@@ -5522,14 +5477,14 @@ export namespace Prisma {
 
   export type UserPreferenceUncheckedUpdateWithoutUserInput = {
     id?: IntFieldUpdateOperationsInput | number
-    metric_id?: IntFieldUpdateOperationsInput | number
+    metric_id?: StringFieldUpdateOperationsInput | string
     min_value?: NullableFloatFieldUpdateOperationsInput | number | null
     max_value?: NullableFloatFieldUpdateOperationsInput | number | null
   }
 
   export type UserPreferenceUncheckedUpdateManyWithoutUserInput = {
     id?: IntFieldUpdateOperationsInput | number
-    metric_id?: IntFieldUpdateOperationsInput | number
+    metric_id?: StringFieldUpdateOperationsInput | string
     min_value?: NullableFloatFieldUpdateOperationsInput | number | null
     max_value?: NullableFloatFieldUpdateOperationsInput | number | null
   }

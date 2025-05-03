@@ -102,7 +102,7 @@ export const updateUserPreferences = async ({
 }: { 
     user_id: number; 
     preferences: Array<{
-        metric_id: number;
+        metric_id: string;
         min_value: number | null;
         max_value: number | null;
     }>;
