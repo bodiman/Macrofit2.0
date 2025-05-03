@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
-import { PropsWithChildren, useState, useEffect, act } from 'react';
+import { PropsWithChildren, useState, useEffect } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Meal, FoodServing, myMacroPreferences, myMacros } from '@/tempdata';
 import Colors from '@/styles/colors';
@@ -8,6 +8,7 @@ import storage from '@/app/storage/storage';
 import AnimatedModal from '../AnimatedModal';
 import eventBus from '@/app/storage/eventEmitter';
 import MacrosDisplay from '../MacroDisplay/MacrosDisplay';
+import useShoppingCart from '@/app/hooks/useShoppingCart';
 
 type Props = PropsWithChildren<{
     onClose: () => void,
@@ -17,8 +18,8 @@ type Props = PropsWithChildren<{
 }>;
 
 export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUpdateMeal }: Props) {
-    const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
-
+    const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
+    // const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
     useEffect(() => {
         if (activeMeal !== null) {
             eventBus.emit('foodSearchModalOpen');
@@ -37,12 +38,8 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
             
             // Update the meal
             onUpdateMeal(updatedMeal);
-            
-            // Clear the shopping cart
-            setShoppingCart([]);
-            storage.set('shoppingCart', JSON.stringify([]));
-            eventBus.emit('shoppingCartUpdated');
-            
+
+            clearCart();
             modalCloser();
         }
     };
@@ -57,7 +54,7 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
                     </Pressable>
                 </View>
                 <View style={styles.contentContainer}>
-                    <AddFood 
+                    <AddFood
                         shoppingCart={shoppingCart}
                         setShoppingCart={setShoppingCart}
                     />

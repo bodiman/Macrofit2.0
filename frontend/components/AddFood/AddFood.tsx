@@ -24,18 +24,6 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
     const totalMacros = useMacros(shoppingCart);
     const searchBarRef = useRef<TextInput>(null);
 
-    useEffect(()=> {
-        const cachedShoppingCart = storage.getString('shoppingCart');
-        if (cachedShoppingCart) {
-            setShoppingCart(JSON.parse(cachedShoppingCart));
-        }
-    }, []);
-
-    useEffect(() => {
-        storage.set('shoppingCart', JSON.stringify(shoppingCart));
-        eventBus.emit('shoppingCartUpdated');
-    }, [shoppingCart]);
-
     const handleAddToCart = (foodServing: FoodServing) => {
         setShoppingCart([...shoppingCart, foodServing]);
     };
