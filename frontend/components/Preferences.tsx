@@ -1,12 +1,15 @@
-import { View, Text, StyleSheet, Pressable, TextInput, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import { useEffect, useState } from 'react';
 import Colors from '@/styles/colors';
 import { myMacroPreferences } from '@/tempdata';
 import MacrosDisplay from './MacroDisplay/MacrosDisplay';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import PlusIcon from './Icons/PlusIcon';
 import { useAuth } from '@clerk/clerk-expo';
+import { useUser } from '@/app/hooks/useUser';
 import EditMacroModal from './Preferences/EditMacroModal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 type MacroGoal = {
     id: string;
@@ -22,12 +25,21 @@ type MealPreferences = {
 
 export default function Preferences() {
     const { signOut } = useAuth();
-    const [macroGoals, setMacroGoals] = useState<MacroGoal[]>([
-        { id: '1', name: 'Calories', min: 1800, max: 2200, unit: 'kcal' },
-        { id: '2', name: 'Protein', min: 140, max: 180, unit: 'g' },
-        { id: '3', name: 'Carbs', min: 200, max: 300, unit: 'g' },
-        { id: '4', name: 'Fat', min: 50, max: 80, unit: 'g' }
-    ]);
+    const { preferences, loading, error, updatePreferences } = useUser();
+    const insets = useSafeAreaInsets();
+    const tabBarHeight = useBottomTabBarHeight();
+
+    function formattedMacroGoals(): MacroGoal[] {
+        return preferences.map(goal => ({
+            id: goal.id.toString(),
+            name: goal.metric.name,
+            min: goal.min_value ?? 0,
+            max: goal.max_value ?? 0,
+            unit: goal.metric.unit
+        }));
+    }
+    
+    const [macroGoals, setMacroGoals] = useState<MacroGoal[]>(formattedMacroGoals());
 
     const [mealPreferences, setMealPreferences] = useState<MealPreferences>({
         defaultMealNames: ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
@@ -35,38 +47,24 @@ export default function Preferences() {
 
     const [editingMacro, setEditingMacro] = useState<MacroGoal | null>(null);
 
+    useEffect(() => {
+        setMacroGoals(formattedMacroGoals());
+    }, [preferences]);
+
     const handleMacroChange = (id: string, newRange: { min: number; max: number; unit: string }) => {
-        setMacroGoals(prev => 
-            prev.map(goal => 
-                goal.id === id ? { ...goal, ...newRange } : goal
-            )
-        );
+        // setMacroGoals(prev => 
+        //     prev.map(goal => 
+        //         goal.id === id ? { ...goal, ...newRange } : goal
+        //     )
+        // );
     };
 
     const handleDeleteMacro = (id: string) => {
-        setMacroGoals(prev => prev.filter(goal => goal.id !== id));
+        // setMacroGoals(prev => prev.filter(goal => goal.id !== id));
     };
 
     const handleAddMacro = () => {
-        const newGoal: MacroGoal = {
-            id: Date.now().toString(),
-            name: 'New Goal',
-            min: 0,
-            max: 0,
-            unit: 'g'
-        };
-        setMacroGoals(prev => [...prev, newGoal]);
-    };
-
-    const handleMealNameChange = (index: number, value: string) => {
-        setMealPreferences(prev => {
-            const newMealNames = [...prev.defaultMealNames];
-            newMealNames[index] = value;
-            return {
-                ...prev,
-                defaultMealNames: newMealNames
-            };
-        });
+        
     };
 
     const handleLogout = async () => {
@@ -77,10 +75,9 @@ export default function Preferences() {
         }
     };
 
-    return (
-        <View style={styles.container}>
+    const renderHeader = () => (
+        <View>
             <Text style={styles.title}>Preferences</Text>
-            
             <View style={styles.section}>
                 <View style={styles.macroContainer}>
                     <View style={styles.sectionHeader}>
@@ -104,26 +101,30 @@ export default function Preferences() {
                     </View>
                 </View>
             </View>
+        </View>
+    );
 
-            {/* <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Default Meal Names</Text>
-                <View style={styles.mealInputs}>
-                    {mealPreferences.defaultMealNames.map((name, index) => (
-                        <MealNameInput
-                            key={index}
-                            value={name}
-                            onChange={(value) => handleMealNameChange(index, value)}
-                        />
-                    ))}
-                </View>
-            </View> */}
-
+    const renderFooter = () => (
+        <View style={styles.footer}>
             <TouchableOpacity 
                 style={styles.logoutButton}
                 onPress={handleLogout}
             >
                 <Text style={styles.logoutText}>Log Out</Text>
             </TouchableOpacity>
+        </View>
+    );
+
+    return (
+        <View style={[styles.container, { paddingTop: insets.top }]}>
+            <FlatList
+                data={[]}
+                renderItem={() => null}
+                ListHeaderComponent={renderHeader}
+                ListFooterComponent={renderFooter}
+                contentContainerStyle={styles.contentContainer}
+                showsVerticalScrollIndicator={false}
+            />
 
             {editingMacro && (
                 <EditMacroModal
@@ -178,9 +179,13 @@ function MealNameInput({ value, onChange }: {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    contentContainer: {
         padding: 20,
-        // backgroundColor: 'transparent',
-        flexGrow: 1,
+        paddingBottom: 50,
+    },
+    footer: {
+        marginTop: 20,
     },
     title: {
         fontSize: 24,
@@ -196,6 +201,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 12,
         backgroundColor: 'transparent',
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.gray,
     },
     sectionTitle: {
         fontSize: 18,

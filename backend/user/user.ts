@@ -75,7 +75,18 @@ export const getUser = async ({email, user_id}: {email?: string, user_id?: numbe
     }
     
     return user;
-};  
+};
+
+export const getUserPreferences = async ({ user_id }: { user_id: number }) => {
+    const preferences = await prisma.userPreference.findMany({
+        where: { user_id },
+        include: {
+            metric: true,
+        },
+    });
+
+    return preferences;
+};
 
 export const deleteUser = async ({ user_id }: { user_id: number }) => {
     const user = await prisma.user.delete({
@@ -83,5 +94,52 @@ export const deleteUser = async ({ user_id }: { user_id: number }) => {
     });
 
     return user;
+};
+
+export const updateUserPreferences = async ({ 
+    user_id, 
+    preferences 
+}: { 
+    user_id: number; 
+    preferences: Array<{
+        metric_id: number;
+        min_value: number | null;
+        max_value: number | null;
+    }>;
+}) => {
+    // First verify the user exists
+    const user = await prisma.user.findUnique({
+        where: { user_id },
+    });
+
+    if (!user) {
+        throw new UserNotFoundError('User not found');
+    }
+
+    // Update or create preferences
+    const updatedPreferences = await Promise.all(
+        preferences.map((pref) =>
+            prisma.userPreference.upsert({
+                where: {
+                    user_id_metric_id: {
+                        user_id,
+                        metric_id: pref.metric_id,
+                    },
+                },
+                update: {
+                    min_value: pref.min_value,
+                    max_value: pref.max_value,
+                },
+                create: {
+                    user_id,
+                    metric_id: pref.metric_id,
+                    min_value: pref.min_value,
+                    max_value: pref.max_value,
+                },
+            })
+        )
+    );
+
+    return updatedPreferences;
 };
 

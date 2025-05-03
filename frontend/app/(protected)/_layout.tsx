@@ -1,7 +1,7 @@
 import { SignedIn, SignedOut, useAuth, useSSO } from '@clerk/clerk-expo'
 import { Redirect } from 'expo-router'
 import { Tabs } from 'expo-router'
-import { View } from 'react-native'
+import { View, Text } from 'react-native'
 import AppHeader from '@/components/AppHeader'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -9,7 +9,11 @@ import useUser from '../hooks/useUser'
 
 export default function Layout() {
   const { signOut } = useAuth();
-  const { clerkUser, needsRegistration, error } = useUser();
+  const { clerkUser, needsRegistration, error, loading} = useUser();
+
+  if (loading) {
+    return <Text>Loading...</Text>
+  }
 
   if (!clerkUser || error) {
     signOut();

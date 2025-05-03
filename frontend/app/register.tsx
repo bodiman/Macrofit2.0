@@ -8,12 +8,12 @@ export default function Register() {
     const [creatingUser, setCreatingUser] = useState(false);
 
     useEffect(() => {
-        if (!clerkUser) {
+        console.log("on register page")
+        if (!clerkUser || error ) {
             router.replace('/landing');
         } else if (appUser) {
             router.replace('/');
         } else if (!creatingUser) {
-            console.log("creating user", creatingUser);
             setCreatingUser(true);
             createUser({
                 email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
@@ -23,15 +23,16 @@ export default function Register() {
     }, [appUser, clerkUser]);
 
 
-    if (loading) {
-        return <Text>Loading...</Text>;
-    }
+    // if (loading) {
+    //     return <Text>Loading...</Text>;
+    // }
 
     return (
         <View>
             <Text>Register you cheapskate fucker</Text>
-            <Text>{JSON.stringify(clerkUser)}</Text>
+            <Text>{clerkUser?.fullName}</Text>
             <Text>{JSON.stringify(appUser)}</Text>
+            <Text>{JSON.stringify(error)}</Text>
         </View>
     )
 }
