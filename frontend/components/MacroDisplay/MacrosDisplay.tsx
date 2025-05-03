@@ -47,7 +47,8 @@ export default function MacrosDisplay({ macroPreferences, macroValues, radius, i
             {item.map((macroPreference) => (
                 <MacroIndicator
                     key={macroPreference.id}
-                    unit={macroPreference.name}
+                    unit={macroPreference.unit}
+                    name={macroPreference.name}
                     value={macroValues[macroPreference.id] || 0}
                     radius={radius}
                     range={macroPreference}

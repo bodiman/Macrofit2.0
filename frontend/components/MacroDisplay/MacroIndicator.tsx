@@ -11,10 +11,11 @@ type Props = {
     value: number, 
     range: Range, 
     radius: number,
-    unit: string
+    unit: string,
+    name: string
 }
 
-export default function MacroIndicator({ value, range, unit, radius }: Props) {
+export default function MacroIndicator({ value, range, unit, radius, name }: Props) {
     const [maxValue, setMaxValue] = useState(0);
     const [displayValue, setDisplayValue] = useState(0);
 
@@ -69,7 +70,7 @@ export default function MacroIndicator({ value, range, unit, radius }: Props) {
                 maxValue={maxValue}
                 titleColor={Colors.black}
                 circleBackgroundColor={Colors.white}
-                title={unit}
+                title={name}
                 activeStrokeWidth={10}
                 inActiveStrokeWidth={10}
                 progressValueStyle={{ fontSize: 3 * radius / (3 + Math.max(String(value.toFixed() + unit).length, 4)) }}
