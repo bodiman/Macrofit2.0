@@ -136,6 +136,9 @@ export const updateUserPreferences = async ({
                     min_value: pref.min_value,
                     max_value: pref.max_value,
                 },
+                include: {
+                    metric: true,
+                },
             })
         )
     );

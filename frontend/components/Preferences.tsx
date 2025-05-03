@@ -30,6 +30,13 @@ export default function Preferences() {
     const tabBarHeight = useBottomTabBarHeight();
 
     function formattedMacroGoals(): MacroGoal[] {
+        // console.log('preferences');
+        // console.log("--------------------------------");
+        // preferences.forEach(pref => {
+        //     console.log(pref);
+        // });
+        // console.log(preferences);
+
         return preferences.map(goal => ({
             id: goal.id.toString(),
             name: goal.metric.name,
@@ -51,12 +58,26 @@ export default function Preferences() {
         setMacroGoals(formattedMacroGoals());
     }, [preferences]);
 
-    const handleMacroChange = (id: string, newRange: { min: number; max: number; unit: string }) => {
-        // setMacroGoals(prev => 
-        //     prev.map(goal => 
-        //         goal.id === id ? { ...goal, ...newRange } : goal
-        //     )
-        // );
+    const handleMacroChange = async (id: string, newRange: { min: number; max: number; unit: string }) => {
+        try {
+            const updatedPreferences = preferences.map(pref => {
+                if (pref.id.toString() === id) {
+                    return {
+                        ...pref,
+                        min_value: newRange.min,
+                        max_value: newRange.max,
+                        metric_id: pref.metric_id,
+                        metric: pref.metric // Preserve the metric information
+                    };
+                }
+                return pref;
+            });
+            
+            await updatePreferences(updatedPreferences);
+            setMacroGoals(formattedMacroGoals());
+        } catch (error) {
+            console.error('Error updating macro preferences:', error);
+        }
     };
 
     const handleDeleteMacro = (id: string) => {

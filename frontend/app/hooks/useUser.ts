@@ -68,7 +68,7 @@ export function useUser() {
     if (!appUser) return;
 
     try {
-      setLoading(true);
+      // setLoading(true);
       const res = await fetch(`${serverAddress}/api/user/preferences`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -83,12 +83,16 @@ export function useUser() {
       }
 
       const updatedPreferences = await res.json();
+      console.log(updatedPreferences);
+      console.log('--------------------------------');
+      console.log('updatedPreferences');
+      
       setPreferences(updatedPreferences);
     } catch (err) {
       console.error('Failed to update preferences:', err);
       setError('Failed to update preferences');
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
