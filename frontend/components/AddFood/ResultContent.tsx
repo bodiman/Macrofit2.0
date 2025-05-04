@@ -103,27 +103,20 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 <MenuTabs tabs={tabs} selected={selected} setSelected={(tab: number)=>setSelected(tab)} />
             </View>
 
-            <View style={{flex: 1}}>
-                {isLoading ? (
-                    <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color={Colors.blue} />
-                    </View>
-                ) : (
-                    <FlatList
-                        data={searchResults}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                            <SearchFoodCard 
-                                food={item} 
-                                onAdd={handleAddFood}
-                            />
-                        )}
-                        contentContainerStyle={styles.resultsList}
+            <FlatList
+                data={searchResults}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <SearchFoodCard 
+                        food={item} 
+                        onAdd={handleAddFood}
                     />
                 )}
-            </View>
+                contentContainerStyle={styles.resultsList}
+            />
 
-            <Pressable style={{width: "100%", height: 5000}} onPress={()=>closeModal()}/>
+            {/* This is a hack to close the modal when the user scrolls. Jank motherfucking solution, I hate it so much */}
+            <Pressable style={{width: "100%", height: 5000 }} onPress={()=>closeModal()}/>
         </Animated.View>
     )
 }
