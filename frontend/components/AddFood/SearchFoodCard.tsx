@@ -1,5 +1,6 @@
 import Colors from '@/styles/colors'
-import { Food, Unit, Portion, servingUnits } from '@/tempdata'
+import { Food, Unit, Portion } from '@shared/types/foodTypes'
+import { servingUnits } from '@/tempdata'
 import { Text, View, StyleSheet, TouchableOpacity, TextInput } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';

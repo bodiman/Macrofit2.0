@@ -2,7 +2,7 @@ import Colors from "@/styles/colors";
 import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity, ScrollView, Platform } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Food, FoodServing, Portion } from "@/tempdata";
+import { FoodServing, Portion } from "@shared/types/foodTypes";
 import { FlatList } from "react-native";
 import FoodCard from "./FoodCard";
 import { useEffect, useState, useRef } from "react";

@@ -12,7 +12,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -22,12 +21,31 @@ model User {
   macroPreferences UserPreference[]
 }
 
+model Food {
+  id          String          @id
+  name        String          @unique
+  description String?
+  macros      FoodMacro[]
+}
+
+model FoodMacro {
+  id          Int              @id @default(autoincrement())
+  food_id     String
+  metric_id   String
+  value       Float
+  food        Food             @relation(fields: [food_id], references: [id])
+  metric      NutritionalMetric @relation(fields: [metric_id], references: [id])
+
+  @@unique([food_id, metric_id])
+}
+
 model NutritionalMetric {
   id          String          @id
   name        String          @unique
   description String?
   unit        String          // e.g., "g", "mg", "kcal"
   preferences UserPreference[]
+  foodMacros  FoodMacro[]
 }
 
 model UserPreference {

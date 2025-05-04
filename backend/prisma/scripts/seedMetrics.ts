@@ -10,6 +10,7 @@ const defaultMetrics = [
   { name: 'Sodium', unit: 'mg', description: 'Sodium content', id: "sodium" },
   { name: 'Cholesterol', unit: 'mg', description: 'Cholesterol content', id: "cholesterol" },
   { name: 'Saturated Fat', unit: 'g', description: 'Saturated fat content', id: "saturated_fat" },
+  { name: 'Potassium', unit: 'mg', description: 'Potassium content', id: "potassium" },
 ];
 
 const defaultPreferences = {

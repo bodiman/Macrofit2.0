@@ -1,3 +1,4 @@
+import foodRoutes from './routes/foodRoutes';
 import userRoutes from './routes/userRoutes';
 
 const express = require('express');
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', userRoutes);
+app.use('/api/foods', foodRoutes);
 
 // Start server
 app.listen(port, () => {

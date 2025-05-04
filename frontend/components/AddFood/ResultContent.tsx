@@ -1,12 +1,13 @@
-import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable } from "react-native"
+import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable, ActivityIndicator } from "react-native"
 import { useEffect, useRef, useState } from "react"
 import Colors from "@/styles/colors"
 import MenuTabs, { type  Tab } from "../Tabs/MenuTabs"
 import { searchFoods } from "@/api/foodSearch/route"
-import { Food, FoodServing, Portion, Unit, servingUnits } from "@/tempdata"
+import { Food, FoodServing, Portion } from "@shared/types/foodTypes"
 import SearchFoodCard from "./SearchFoodCard"
 import storage from "@/app/storage/storage"
 import { v4 as uuidv4 } from 'uuid';
+import { servingUnits } from "@/tempdata"
 
 type Props = {
     visible: boolean,
@@ -19,7 +20,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [selected, setSelected] = useState(0);
     const [searchResults, setSearchResults] = useState<Food[]>([]);
-
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         fadeAnim.setValue(0);
@@ -34,12 +35,24 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
     }, [fadeAnim, visible]);
 
     useEffect(() => {
-        if (searchQuery) {
-            const results = searchFoods(searchQuery);
-            setSearchResults(results);
-        } else {
-            setSearchResults([]);
-        }
+        const fetchFoods = async () => {
+            if (searchQuery) {
+                setIsLoading(true);
+                try {
+                    const results = await searchFoods(searchQuery);
+                    setSearchResults(results);
+                } catch (error) {
+                    console.error('Error searching foods:', error);
+                    setSearchResults([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                setSearchResults([]);
+            }
+        };
+
+        fetchFoods();
     }, [searchQuery]);
 
     const handleAddFood = (food: Food, portion: Portion) => {
@@ -91,28 +104,24 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
             </View>
 
             <View style={{flex: 1}}>
-                
-            </View>
-            
-            <FlatList
-                data={searchResults}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <SearchFoodCard 
-                        food={item} 
-                        onAdd={handleAddFood}
+                {isLoading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={Colors.blue} />
+                    </View>
+                ) : (
+                    <FlatList
+                        data={searchResults}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <SearchFoodCard 
+                                food={item} 
+                                onAdd={handleAddFood}
+                            />
+                        )}
+                        contentContainerStyle={styles.resultsList}
                     />
                 )}
-                contentContainerStyle={styles.resultsList}
-            />
-
-            {
-            /* 
-            Hacked together fucking solution. I don't know why the fuck this works, but it makes it so
-            that the flatlist only takes up as much height as it needs, leaving room for the 
-            modal closer.
-            */
-            }
+            </View>
 
             <Pressable style={{width: "100%", height: 5000}} onPress={()=>closeModal()}/>
         </Animated.View>
@@ -146,5 +155,11 @@ const styles = StyleSheet.create({
     },
     menuTabsContainer: {
         // backgroundColor: "red",
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
     }
 });

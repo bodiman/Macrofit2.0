@@ -6,7 +6,7 @@ import { TextInput } from 'react-native-gesture-handler';
 import UnitSpinner from '../Spinner/UnitSpinner';
 import AnimatedModal from '../AnimatedModal';
 import useMacros from '@/app/hooks/useMacros';
-import { MacroPreference } from '@/types/macroTypes';
+import { MacroPreference } from '@shared/types/macroTypes';
 import useUser from '@/app/hooks/useUser';
 
 type Props = {

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
-import { FoodServing, Macros } from '@/tempdata';
+// import { FoodServing, Macros } from '@/tempdata';
+import { FoodServing } from '@shared/types/foodTypes';
+import { Macros } from '@shared/types/macroTypes';
 import { calculateAdjustedMacros } from '@/components/MacroDisplay/calculateMacros';
 
 export default function useMacros(foodServings: FoodServing[]) {
