@@ -2,20 +2,9 @@
 import { useUser as useClerkUser, useAuth } from '@clerk/clerk-expo';
 import { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
-
-type UserPreference = {
-  id: number;
-  user_id: number;
-  metric_id: number;
-  min_value: number | null;
-  max_value: number | null;
-  metric: {
-    id: number;
-    name: string;
-    unit: string;
-    description: string | null;
-  };
-};
+import { UserPreference } from '@/types/userTypes';
+import { MacroPreferences } from '@/tempdata';
+import { toMacroPreference } from '@/lib/utils/toMacroPreferences';
 
 type AppUser = {
   user_id: number;
@@ -31,6 +20,7 @@ export function useUser() {
 
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [preferences, setPreferences] = useState<UserPreference[]>([]);
+  const [macroPreferences, setMacroPreferences] = useState<MacroPreferences>([]);
   const [loading, setLoading] = useState(true);
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [error, setError] = useState<null | string>(null);
@@ -51,6 +41,7 @@ export function useUser() {
       const data = await res.json();
       setAppUser(data.user);
       setPreferences(data.user.macroPreferences);
+      setMacroPreferences(toMacroPreference(data.user.macroPreferences));
     } catch (err) {
       console.error('Failed to register app user:', err);
       setError('Failed to register user');
@@ -60,21 +51,20 @@ export function useUser() {
     }
   };
 
-  const updatePreferences = async (preferences: Array<{
-    metric_id: number;
+  const updatePreference = async (preference: {
+    metric_id: string;
     min_value: number | null;
     max_value: number | null;
-  }>) => {
+  }) => {
     if (!appUser) return;
 
     try {
-      // setLoading(true);
       const res = await fetch(`${serverAddress}/api/user/preferences`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: appUser.user_id,
-          preferences,
+          preferences: [preference],
         }),
       });
 
@@ -82,17 +72,19 @@ export function useUser() {
         throw new Error('Failed to update preferences');
       }
 
-      const updatedPreferences = await res.json();
-      console.log(updatedPreferences);
-      console.log('--------------------------------');
-      console.log('updatedPreferences');
+      const updatedPreference: UserPreference[] = await res.json();
+      console.log(updatedPreference[0].metric_id);
       
+      // console.log(preferences);
+      const updatedPreferences = preferences.map(p => 
+        p.metric_id === updatedPreference[0].metric_id ? updatedPreference[0] : p
+      );
+
       setPreferences(updatedPreferences);
+      setMacroPreferences(toMacroPreference(updatedPreferences));
     } catch (err) {
       console.error('Failed to update preferences:', err);
       setError('Failed to update preferences');
-    } finally {
-      // setLoading(false);
     }
   };
 
@@ -108,6 +100,7 @@ export function useUser() {
 
       const data = await res.json();
       setPreferences(data);
+      setMacroPreferences(toMacroPreference(data));
     } catch (err) {
       console.error('Failed to fetch preferences:', err);
       setError('Failed to fetch preferences');
@@ -127,12 +120,10 @@ export function useUser() {
           method: 'GET',
         });
 
-        // console.log("res", res);
         if (res.status === 404) {
           setNeedsRegistration(true);
         } else {
           const data = await res.json();
-          // console.log("data", data);
           setAppUser(data);
           if (data.user_id) {
             await fetchPreferences(data.user_id);
@@ -149,7 +140,16 @@ export function useUser() {
     fetchAppUser();
   }, [isLoaded, clerkUser]);
 
-  return { appUser, preferences, loading, needsRegistration, error, clerkUser, createUser, updatePreferences };
+  return { 
+    appUser, 
+    preferences: macroPreferences, 
+    loading, 
+    needsRegistration, 
+    error, 
+    clerkUser, 
+    createUser, 
+    updatePreference 
+  };
 }
 
 export default useUser;

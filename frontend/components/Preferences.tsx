@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import { useEffect, useState } from 'react';
 import Colors from '@/styles/colors';
-import { myMacroPreferences } from '@/tempdata';
+import { MacroPreference, myMacroPreferences } from '@/tempdata';
 import MacrosDisplay from './MacroDisplay/MacrosDisplay';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import PlusIcon from './Icons/PlusIcon';
@@ -11,70 +11,24 @@ import EditMacroModal from './Preferences/EditMacroModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
-type MacroGoal = {
-    id: string;
-    name: string;
-    min: number;
-    max: number;
-    unit: string;
-};
-
 type MealPreferences = {
     defaultMealNames: string[];
 };
 
 export default function Preferences() {
     const { signOut } = useAuth();
-    const { preferences, loading, error, updatePreferences } = useUser();
+    const { preferences, loading, error, updatePreference } = useUser();
     const insets = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
-
-    function formattedMacroGoals(): MacroGoal[] {
-        // console.log('preferences');
-        // console.log("--------------------------------");
-        // preferences.forEach(pref => {
-        //     console.log(pref);
-        // });
-        // console.log(preferences);
-
-        return preferences.map(goal => ({
-            id: goal.id.toString(),
-            name: goal.metric.name,
-            min: goal.min_value ?? 0,
-            max: goal.max_value ?? 0,
-            unit: goal.metric.unit
-        }));
-    }
-    
-    const [macroGoals, setMacroGoals] = useState<MacroGoal[]>(formattedMacroGoals());
 
     const [mealPreferences, setMealPreferences] = useState<MealPreferences>({
         defaultMealNames: ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
     });
-
-    const [editingMacro, setEditingMacro] = useState<MacroGoal | null>(null);
-
-    useEffect(() => {
-        setMacroGoals(formattedMacroGoals());
-    }, [preferences]);
+    const [editingMacro, setEditingMacro] = useState<MacroPreference | null>(null);
 
     const handleMacroChange = async (id: string, newRange: { min: number; max: number; unit: string }) => {
-        try {
-            const updatedPreferences = preferences.map(pref => {
-                if (pref.id.toString() === id) {
-                    return {
-                        ...pref,
-                        min_value: newRange.min,
-                        max_value: newRange.max,
-                        metric_id: pref.metric_id,
-                        metric: pref.metric // Preserve the metric information
-                    };
-                }
-                return pref;
-            });
-            
-            await updatePreferences(updatedPreferences);
-            setMacroGoals(formattedMacroGoals());
+        try {            
+            await updatePreference({metric_id: id, min_value: newRange.min, max_value: newRange.max});
         } catch (error) {
             console.error('Error updating macro preferences:', error);
         }
@@ -111,7 +65,7 @@ export default function Preferences() {
                         </TouchableOpacity>
                     </View>
                     <View style={styles.macroCards}>
-                        {macroGoals.map(goal => (
+                        {preferences.map(goal => (
                             <MacroCard
                                 key={goal.id}
                                 goal={goal}
@@ -152,7 +106,7 @@ export default function Preferences() {
                     visible={!!editingMacro}
                     onClose={() => setEditingMacro(null)}
                     macroName={editingMacro.name}
-                    range={{ min: editingMacro.min, max: editingMacro.max, unit: editingMacro.unit }}
+                    range={{ min: editingMacro.min ?? 0, max: editingMacro.max ?? 0, unit: editingMacro.unit }}
                     onSave={(newRange) => handleMacroChange(editingMacro.id, newRange)}
                 />
             )}
@@ -161,7 +115,7 @@ export default function Preferences() {
 }
 
 function MacroCard({ goal, onDelete, onPress }: { 
-    goal: MacroGoal;
+    goal: MacroPreference;
     onDelete: () => void;
     onPress: () => void;
 }) {

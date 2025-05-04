@@ -83,6 +83,9 @@ export const getUserPreferences = async ({ user_id }: { user_id: number }) => {
         include: {
             metric: true,
         },
+        orderBy: {
+            id: 'asc'
+        }
     });
 
     return preferences;
