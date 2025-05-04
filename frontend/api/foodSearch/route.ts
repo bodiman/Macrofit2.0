@@ -8,7 +8,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 1.65,
             'protein': 0.31,
-            'carbs': 0,
+            'carbohydrates': 0,
             'fat': 0.036,
             'fiber': 0,
             'sodium': 0.74,
@@ -21,7 +21,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 2.16,
             'protein': 0.045,
-            'carbs': 0.45,
+            'carbohydrates': 0.45,
             'fat': 0.018,
             'fiber': 0.035,
             'fodium': 0.1,
@@ -34,7 +34,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 0.55,
             'protein': 0.037,
-            'parbs': 0.11,
+            'carbohydrates': 0.11,
             'fat': 0.006,
             'fiber': 0.026,
             'sodium': 0.33,
@@ -47,7 +47,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 2.08,
             'protein': 0.22,
-            'carbs': 0,
+            'carbohydrates': 0,
             'fat': 0.13,
             'fiber': 0,
             'sodium': 0.59,
@@ -60,7 +60,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 0.86,
             'protein': 0.016,
-            'carbs': 0.2,
+            'carbohydrates': 0.2,
             'fat': 0.001,
             'fiber': 0.03,
             'sodium': 0.55,
@@ -73,7 +73,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 0.86,
             'protein': 0.016,
-            'carbs': 0.2,
+            'carbohydrates': 0.2,
             'fat': 0.001,
             'fiber': 0.03,
             'sodium': 0.55,
@@ -86,7 +86,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 0.86,
             'protein': 0.016,
-            'carbs': 0.2,
+            'carbohydrates': 0.2,
             'fat': 0.001,
             'fiber': 0.03,
             'sodium': 0.55,
@@ -99,7 +99,7 @@ const mockFoods: Food[] = [
         macros: {
             'calories': 0.86,
             'protein': 0.016,
-            'carbs': 0.2,
+            'carbohydrates': 0.2,
             'fat': 0.001,
             'fiber': 0.03,
             'sodium': 0.55,
