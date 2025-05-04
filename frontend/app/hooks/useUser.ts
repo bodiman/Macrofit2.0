@@ -6,6 +6,7 @@ import { UserPreference } from '@/types/userTypes';
 import { MacroPreferences } from '@/tempdata';
 import { toMacroPreference } from '@/lib/utils/toMacroPreferences';
 import storage from '@/app/storage/storage';
+import eventBus from '@/app/storage/eventEmitter';
 
 type AppUser = {
   user_id: number;
@@ -15,6 +16,11 @@ type AppUser = {
 
 const CACHED_PREFERENCES_KEY = 'cached_macro_preferences';
 
+function loadPreferences(): UserPreference[] {
+  const cached = storage.getString(CACHED_PREFERENCES_KEY);
+  return cached ? JSON.parse(cached) : [];
+}
+
 export function useUser() {
   const serverAddress = Constants.expoConfig?.extra?.SERVER_ADDRESS;
 
@@ -22,25 +28,33 @@ export function useUser() {
   const { getToken } = useAuth();
 
   const [appUser, setAppUser] = useState<AppUser | null>(null);
-  const [preferences, setPreferences] = useState<UserPreference[]>([]);
+  const [preferences, setPreferencesState] = useState<UserPreference[]>(loadPreferences());
   const [macroPreferences, setMacroPreferences] = useState<MacroPreferences>([]);
   const [loading, setLoading] = useState(true);
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [error, setError] = useState<null | string>(null);
 
-  // Load cached preferences on mount
+  // Sync preferences when external changes happen
   useEffect(() => {
-    const cached = storage.getString(CACHED_PREFERENCES_KEY);
-    if (cached) {
-      try {
-        const parsedPreferences = JSON.parse(cached);
-        setPreferences(parsedPreferences);
-        setMacroPreferences(toMacroPreference(parsedPreferences));
-      } catch (err) {
-        console.error('Failed to parse cached preferences:', err);
-      }
-    }
+    const handleUpdate = () => {
+      const updated = loadPreferences();
+      setPreferencesState(prev => {
+        const prevStr = JSON.stringify(prev);
+        const nextStr = JSON.stringify(updated);
+        return prevStr === nextStr ? prev : updated;
+      });
+    };
+
+    eventBus.on('preferencesUpdated', handleUpdate);
+    return () => {
+      eventBus.off('preferencesUpdated', handleUpdate);
+    };
   }, []);
+
+  // Update macro preferences when preferences change
+  useEffect(() => {
+    setMacroPreferences(toMacroPreference(preferences));
+  }, [preferences]);
 
   const createUser = async (userData: { email: string; name: string }) => {
     try {
@@ -57,10 +71,9 @@ export function useUser() {
 
       const data = await res.json();
       setAppUser(data.user);
-      setPreferences(data.user.macroPreferences);
-      setMacroPreferences(toMacroPreference(data.user.macroPreferences));
-      // Cache the preferences
+      setPreferencesState(data.user.macroPreferences);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
+      eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to register app user:', err);
       setError('Failed to register user');
@@ -96,10 +109,9 @@ export function useUser() {
         p.metric_id === updatedPreference[0].metric_id ? updatedPreference[0] : p
       );
       
-      setPreferences(updatedPreferences);
-      setMacroPreferences(toMacroPreference(updatedPreferences));
-      // Update cached preferences
+      setPreferencesState(updatedPreferences);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
+      eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to update preferences:', err);
       setError('Failed to update preferences');
@@ -117,10 +129,9 @@ export function useUser() {
       }
 
       const data = await res.json();
-      setPreferences(data);
-      setMacroPreferences(toMacroPreference(data));
-      // Update cached preferences
+      setPreferencesState(data);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data));
+      eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to fetch preferences:', err);
       setError('Failed to fetch preferences');
