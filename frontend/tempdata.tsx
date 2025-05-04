@@ -129,7 +129,7 @@ export type MacroPreferences = Array<MacroPreference>
 export const myMacroPreferences: MacroPreferences = [
     {id: 'calories', name: 'Calories', unit: '', min: 1800, max: 2000},
     {id: 'protein', name: 'Protein', unit: 'g', min: 160, max: 180},
-    {id: 'carbs', name: 'Carbs', unit: 'g', min: 225, max: 275},
+    {id: 'carbohydrates', name: 'Carbs', unit: 'g', min: 225, max: 275},
     {id: 'fat', name: 'Fat', unit: 'g', min: 10, max: 37},
     {id: 'fiber', name: 'Fiber', unit: 'g', min: 28, max: 38},
     {id: 'sugar', name: 'Sugar', unit: 'g', max: 15},

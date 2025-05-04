@@ -14,6 +14,16 @@ export type UserPreference = {
 
 export type Macros = Map<string, number>;
 
+export type MacroPreference = {
+    id: string,
+    name: string,
+    unit: string,
+    min?: number,
+    max?: number
+}
+
+export type MacroPreferences = Array<MacroPreference>
+
 export type Food = {
     id: number,
     name: string,

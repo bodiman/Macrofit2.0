@@ -1,7 +1,5 @@
 import { Animated, View, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { PropsWithChildren, useEffect, useRef } from 'react';
-import MacrosDisplay from './MacroDisplay/MacrosDisplay';
-import { myMacroPreferences, myMacros } from '@/tempdata';
 
 type Props = PropsWithChildren<{
     isVisible: boolean;

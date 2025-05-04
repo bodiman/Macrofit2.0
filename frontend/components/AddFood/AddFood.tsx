@@ -2,7 +2,7 @@ import Colors from "@/styles/colors";
 import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity, ScrollView, Platform } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Food, FoodServing, myMacroPreferences, Portion } from "@/tempdata";
+import { Food, FoodServing, Portion } from "@/tempdata";
 import { FlatList } from "react-native";
 import FoodCard from "./FoodCard";
 import { useEffect, useState, useRef } from "react";
@@ -12,6 +12,7 @@ import ResultContent from "./ResultContent";
 import React from "react";
 import useMacros from "@/app/hooks/useMacros";
 import eventBus from "@/app/storage/eventEmitter";
+import useUser from "@/app/hooks/useUser";
 
 type Props = {
     shoppingCart: FoodServing[],
@@ -23,6 +24,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
     const [searchQuery, setSearchQuery] = useState("");
     const totalMacros = useMacros(shoppingCart);
     const searchBarRef = useRef<TextInput>(null);
+    const { preferences } = useUser();
 
     const handleAddToCart = (foodServing: FoodServing) => {
         setShoppingCart([...shoppingCart, foodServing]);
@@ -55,7 +57,7 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
         <View style={styles.container}>
             <View style={styles.macroContainer}>
                 <MacrosDisplay 
-                    macroPreferences={myMacroPreferences} 
+                    macroPreferences={preferences} 
                     macroValues={totalMacros}
                     indicators={4} 
                     radius={30} 

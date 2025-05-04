@@ -2,15 +2,18 @@ import Colors from "@/styles/colors"
 import { Text, View, StyleSheet } from "react-native"
 import Logo from "./Logo"
 import MacrosDisplay from "./MacroDisplay/MacrosDisplay"
-import { Macros, myMacroPreferences } from "@/tempdata"
+import { Macros } from "@/tempdata"
 import { useEffect, useMemo, useState } from "react"
 import useMacros from "@/app/hooks/useMacros"
 import useMeals from "@/app/hooks/useMeals"
 import storage from "@/app/storage/storage"
 import eventBus from "@/app/storage/eventEmitter"
 import useShoppingCart from "@/app/hooks/useShoppingCart"
+import useUser from "@/app/hooks/useUser"
+
 export default function AppHeader() {
     const { meals } = useMeals();
+    const { preferences } = useUser();
     // const [shoppingCart, setShoppingCart] = useState(() => {
     //     const cachedCart = storage.getString('shoppingCart');
     //     return cachedCart ? JSON.parse(cachedCart) : [];
@@ -69,7 +72,7 @@ export default function AppHeader() {
             <Logo size1={25} size2={25} theme={"dark"} />
             <View style={styles.globalMacroContainer}>
                 <MacrosDisplay 
-                    macroPreferences={myMacroPreferences} 
+                    macroPreferences={preferences} 
                     macroValues={totalMacros}
                     indicators={3} 
                     radius={50} 

@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Pressable, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import { useEffect, useState } from 'react';
 import Colors from '@/styles/colors';
-import { MacroPreference, myMacroPreferences } from '@/tempdata';
+import { MacroPreference } from '@/tempdata';
 import MacrosDisplay from './MacroDisplay/MacrosDisplay';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import PlusIcon from './Icons/PlusIcon';

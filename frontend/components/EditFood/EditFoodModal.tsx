@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FoodServing, Portion, MacroPreferences, myMacroPreferences } from '@/tempdata';
+import { FoodServing, Portion, MacroPreferences } from '@/tempdata';
 import Colors from '@/styles/colors';
 import { useState, useMemo } from 'react';
 import { TextInput } from 'react-native-gesture-handler';
 import UnitSpinner from '../Spinner/UnitSpinner';
 import AnimatedModal from '../AnimatedModal';
 import useMacros from '@/app/hooks/useMacros';
+import { MacroPreference } from '@/types/macroTypes';
+import useUser from '@/app/hooks/useUser';
 
 type Props = {
     food: FoodServing;
@@ -17,7 +19,8 @@ export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props)
     const [unit, setUnit] = useState(food.portion.unit);
     const [quantity, setQuantity] = useState(food.portion.quantity);
     const [stringQuantity, setStringQuantity] = useState(food.portion.quantity.toString());
-
+    const { preferences } = useUser();
+    
     const currentFoodServing = useMemo(() => ({
         ...food,
         portion: {
@@ -50,15 +53,13 @@ export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props)
         });
     };
 
-    const renderMacroRow = (macroKey: keyof MacroPreferences) => {
-        if (!myMacroPreferences[macroKey]) return null;
-        
-        const value = adjustedMacros[macroKey] || 0;
-        const unit = macroKey === 'calories' ? '' : macroKey === 'sodium' || macroKey === 'potassium' ? 'mg' : 'g';
+    const renderMacroRow = (preference: MacroPreference) => {
+        const value = adjustedMacros[preference.id] || 0;
+        const unit = preference.unit;
         
         return (
-            <View style={styles.macroRow} key={macroKey}>
-                <Text style={styles.macroLabel}>{macroKey.charAt(0).toUpperCase() + macroKey.slice(1)}:</Text>
+            <View style={styles.macroRow} key={preference.id}>
+                <Text style={styles.macroLabel}>{preference.name}:</Text>
                 <Text style={styles.macroValue}>{value}{unit}</Text>
             </View>
         );
@@ -85,8 +86,7 @@ export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props)
                         />
                     </View>
                     <View style={styles.macrosContainer}>
-                        {(Object.keys(myMacroPreferences) as Array<keyof MacroPreferences>)
-                            .map(renderMacroRow)}
+                        {preferences.map(renderMacroRow)}
                     </View>
                     <TouchableOpacity 
                         style={styles.closeButton}
