@@ -11,6 +11,13 @@ const defaultMetrics = [
   { name: 'Cholesterol', unit: 'mg', description: 'Cholesterol content', id: "cholesterol" },
   { name: 'Saturated Fat', unit: 'g', description: 'Saturated fat content', id: "saturated_fat" },
   { name: 'Potassium', unit: 'mg', description: 'Potassium content', id: "potassium" },
+  { name: 'Vitamin A', unit: 'iu', description: 'Vitamin A content', id: "vitamin_a" },
+  { name: 'Vitamin C', unit: 'mg', description: 'Vitamin C content', id: "vitamin_c" },
+  { name: 'Calcium', unit: 'mg', description: 'Calcium content', id: "calcium" },
+  { name: 'Iron', unit: 'mg', description: 'Iron content', id: "iron" },
+  { name: 'Water', unit: 'g', description: 'Water content', id: "water" },
+  { name: 'Vitamin D', unit: 'iu', description: 'Vitamin D content', id: "vitamin_d" },
+  { name: 'Trans Fat', unit: 'g', description: 'Trans fat content', id: "trans_fat" },
 ];
 
 const defaultPreferences = {
