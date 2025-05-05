@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import fs from 'fs';
+import Papa from 'papaparse';
 
 const CALDINING_MACRONUTRIENT_NAME_MAP: Record<string, string> = {
     'Calories (kcal):': 'calories',
@@ -134,7 +135,12 @@ export function standardizeRawNutrientTable(rawTable: Record<string, any[]>): Re
         column === 'kitchen' ||
         column === 'meal'
       ) {
-        standardizedTable[column] = rawTable[column];
+
+        // Remove quotes from the string
+        standardizedTable[column] = rawTable[column].map((entry: string) =>
+          String(entry).replace(/['"]/g, '')
+        );
+
       } else {
         standardizedTable[column] = rawTable[column].map((value: number, index: number) => {
           return value / rawTable['serving_size'][index];
@@ -187,21 +193,38 @@ export async function retrieveDiningHallNutritionInfo(payloads: Record<string, a
     rawNutrientTable['meal'] = mealNames;
   
     return rawNutrientTable;
-}
-  
-  
+}  
   
 
-(async () => {
-    const diningHall = 'Clark Kerr Campus';
-    const meal = 'Dinner';
-  
+(async () => {  
     let payloads = await retrieveDiningConfigs();
-    payloads = { [diningHall]: { [meal]: payloads[diningHall][meal] } };
   
-    const rawNutrientTable = await retrieveDiningHallNutritionInfo(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
-    const standardizedNutrientTable = standardizeRawNutrientTable(rawNutrientTable);
+    // const rawNutrientTable = await retrieveDiningHallNutritionInfo(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
+    // const standardizedNutrientTable = standardizeRawNutrientTable(rawNutrientTable);
+    // fs.writeFileSync('nutrient_table.json', JSON.stringify(standardizedNutrientTable, null, 2));
+    
+    // use cached nutrient table
+    const standardizedNutrientTable = JSON.parse(fs.readFileSync('nutrient_table.json', 'utf8'));
+    
 
-    console.log(standardizedNutrientTable);
-  })();
+    // Convert it to a row-wise array of objects
+    const keys = Object.keys(standardizedNutrientTable);
+    const numRows = standardizedNutrientTable[keys[0]].length;
+
+    const rows = Array.from({ length: numRows }, (_, i) =>
+      Object.fromEntries(keys.map((key) => [key, standardizedNutrientTable[key][i]]))
+    );
+
+    // Convert to CSV with NO quotes
+    const csv = Papa.unparse(rows, {
+      quotes: false,
+      quoteChar: '',      // no quote character
+      escapeChar: '',     // disable escaping
+      delimiter: ',',     // use comma
+      header: true,       // include headers
+    });
+
+    // Save to file
+    fs.writeFileSync('scraped_menu.csv', csv);
+})();
   

@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model Kitchen
+ * 
+ */
+export type Kitchen = $Result.DefaultSelection<Prisma.$KitchenPayload>
+/**
  * Model Food
  * 
  */
@@ -173,6 +178,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.kitchen`: Exposes CRUD operations for the **Kitchen** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Kitchens
+    * const kitchens = await prisma.kitchen.findMany()
+    * ```
+    */
+  get kitchen(): Prisma.KitchenDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.food`: Exposes CRUD operations for the **Food** model.
@@ -654,6 +669,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    Kitchen: 'Kitchen',
     Food: 'Food',
     FoodMacro: 'FoodMacro',
     NutritionalMetric: 'NutritionalMetric',
@@ -676,7 +692,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "food" | "foodMacro" | "nutritionalMetric" | "userPreference"
+      modelProps: "user" | "kitchen" | "food" | "foodMacro" | "nutritionalMetric" | "userPreference"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -751,6 +767,80 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      Kitchen: {
+        payload: Prisma.$KitchenPayload<ExtArgs>
+        fields: Prisma.KitchenFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.KitchenFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.KitchenFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>
+          }
+          findFirst: {
+            args: Prisma.KitchenFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.KitchenFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>
+          }
+          findMany: {
+            args: Prisma.KitchenFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>[]
+          }
+          create: {
+            args: Prisma.KitchenCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>
+          }
+          createMany: {
+            args: Prisma.KitchenCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.KitchenCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>[]
+          }
+          delete: {
+            args: Prisma.KitchenDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>
+          }
+          update: {
+            args: Prisma.KitchenUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>
+          }
+          deleteMany: {
+            args: Prisma.KitchenDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.KitchenUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.KitchenUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>[]
+          }
+          upsert: {
+            args: Prisma.KitchenUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$KitchenPayload>
+          }
+          aggregate: {
+            args: Prisma.KitchenAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateKitchen>
+          }
+          groupBy: {
+            args: Prisma.KitchenGroupByArgs<ExtArgs>
+            result: $Utils.Optional<KitchenGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.KitchenCountArgs<ExtArgs>
+            result: $Utils.Optional<KitchenCountAggregateOutputType> | number
           }
         }
       }
@@ -1135,6 +1225,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     user?: UserOmit
+    kitchen?: KitchenOmit
     food?: FoodOmit
     foodMacro?: FoodMacroOmit
     nutritionalMetric?: NutritionalMetricOmit
@@ -1256,6 +1347,37 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountMacroPreferencesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserPreferenceWhereInput
+  }
+
+
+  /**
+   * Count Type KitchenCountOutputType
+   */
+
+  export type KitchenCountOutputType = {
+    foods: number
+  }
+
+  export type KitchenCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    foods?: boolean | KitchenCountOutputTypeCountFoodsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * KitchenCountOutputType without action
+   */
+  export type KitchenCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the KitchenCountOutputType
+     */
+    select?: KitchenCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * KitchenCountOutputType without action
+   */
+  export type KitchenCountOutputTypeCountFoodsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: FoodWhereInput
   }
 
 
@@ -2413,6 +2535,1050 @@ export namespace Prisma {
 
 
   /**
+   * Model Kitchen
+   */
+
+  export type AggregateKitchen = {
+    _count: KitchenCountAggregateOutputType | null
+    _min: KitchenMinAggregateOutputType | null
+    _max: KitchenMaxAggregateOutputType | null
+  }
+
+  export type KitchenMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    description: string | null
+  }
+
+  export type KitchenMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    description: string | null
+  }
+
+  export type KitchenCountAggregateOutputType = {
+    id: number
+    name: number
+    description: number
+    _all: number
+  }
+
+
+  export type KitchenMinAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+  }
+
+  export type KitchenMaxAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+  }
+
+  export type KitchenCountAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    _all?: true
+  }
+
+  export type KitchenAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Kitchen to aggregate.
+     */
+    where?: KitchenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Kitchens to fetch.
+     */
+    orderBy?: KitchenOrderByWithRelationInput | KitchenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: KitchenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Kitchens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Kitchens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Kitchens
+    **/
+    _count?: true | KitchenCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: KitchenMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: KitchenMaxAggregateInputType
+  }
+
+  export type GetKitchenAggregateType<T extends KitchenAggregateArgs> = {
+        [P in keyof T & keyof AggregateKitchen]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateKitchen[P]>
+      : GetScalarType<T[P], AggregateKitchen[P]>
+  }
+
+
+
+
+  export type KitchenGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: KitchenWhereInput
+    orderBy?: KitchenOrderByWithAggregationInput | KitchenOrderByWithAggregationInput[]
+    by: KitchenScalarFieldEnum[] | KitchenScalarFieldEnum
+    having?: KitchenScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: KitchenCountAggregateInputType | true
+    _min?: KitchenMinAggregateInputType
+    _max?: KitchenMaxAggregateInputType
+  }
+
+  export type KitchenGroupByOutputType = {
+    id: string
+    name: string
+    description: string | null
+    _count: KitchenCountAggregateOutputType | null
+    _min: KitchenMinAggregateOutputType | null
+    _max: KitchenMaxAggregateOutputType | null
+  }
+
+  type GetKitchenGroupByPayload<T extends KitchenGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<KitchenGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof KitchenGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], KitchenGroupByOutputType[P]>
+            : GetScalarType<T[P], KitchenGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type KitchenSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    foods?: boolean | Kitchen$foodsArgs<ExtArgs>
+    _count?: boolean | KitchenCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["kitchen"]>
+
+  export type KitchenSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+  }, ExtArgs["result"]["kitchen"]>
+
+  export type KitchenSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+  }, ExtArgs["result"]["kitchen"]>
+
+  export type KitchenSelectScalar = {
+    id?: boolean
+    name?: boolean
+    description?: boolean
+  }
+
+  export type KitchenOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description", ExtArgs["result"]["kitchen"]>
+  export type KitchenInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    foods?: boolean | Kitchen$foodsArgs<ExtArgs>
+    _count?: boolean | KitchenCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type KitchenIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type KitchenIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $KitchenPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Kitchen"
+    objects: {
+      foods: Prisma.$FoodPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      description: string | null
+    }, ExtArgs["result"]["kitchen"]>
+    composites: {}
+  }
+
+  type KitchenGetPayload<S extends boolean | null | undefined | KitchenDefaultArgs> = $Result.GetResult<Prisma.$KitchenPayload, S>
+
+  type KitchenCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<KitchenFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: KitchenCountAggregateInputType | true
+    }
+
+  export interface KitchenDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Kitchen'], meta: { name: 'Kitchen' } }
+    /**
+     * Find zero or one Kitchen that matches the filter.
+     * @param {KitchenFindUniqueArgs} args - Arguments to find a Kitchen
+     * @example
+     * // Get one Kitchen
+     * const kitchen = await prisma.kitchen.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends KitchenFindUniqueArgs>(args: SelectSubset<T, KitchenFindUniqueArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Kitchen that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {KitchenFindUniqueOrThrowArgs} args - Arguments to find a Kitchen
+     * @example
+     * // Get one Kitchen
+     * const kitchen = await prisma.kitchen.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends KitchenFindUniqueOrThrowArgs>(args: SelectSubset<T, KitchenFindUniqueOrThrowArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Kitchen that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KitchenFindFirstArgs} args - Arguments to find a Kitchen
+     * @example
+     * // Get one Kitchen
+     * const kitchen = await prisma.kitchen.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends KitchenFindFirstArgs>(args?: SelectSubset<T, KitchenFindFirstArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Kitchen that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KitchenFindFirstOrThrowArgs} args - Arguments to find a Kitchen
+     * @example
+     * // Get one Kitchen
+     * const kitchen = await prisma.kitchen.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends KitchenFindFirstOrThrowArgs>(args?: SelectSubset<T, KitchenFindFirstOrThrowArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Kitchens that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KitchenFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Kitchens
+     * const kitchens = await prisma.kitchen.findMany()
+     * 
+     * // Get first 10 Kitchens
+     * const kitchens = await prisma.kitchen.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const kitchenWithIdOnly = await prisma.kitchen.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends KitchenFindManyArgs>(args?: SelectSubset<T, KitchenFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Kitchen.
+     * @param {KitchenCreateArgs} args - Arguments to create a Kitchen.
+     * @example
+     * // Create one Kitchen
+     * const Kitchen = await prisma.kitchen.create({
+     *   data: {
+     *     // ... data to create a Kitchen
+     *   }
+     * })
+     * 
+     */
+    create<T extends KitchenCreateArgs>(args: SelectSubset<T, KitchenCreateArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Kitchens.
+     * @param {KitchenCreateManyArgs} args - Arguments to create many Kitchens.
+     * @example
+     * // Create many Kitchens
+     * const kitchen = await prisma.kitchen.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends KitchenCreateManyArgs>(args?: SelectSubset<T, KitchenCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Kitchens and returns the data saved in the database.
+     * @param {KitchenCreateManyAndReturnArgs} args - Arguments to create many Kitchens.
+     * @example
+     * // Create many Kitchens
+     * const kitchen = await prisma.kitchen.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Kitchens and only return the `id`
+     * const kitchenWithIdOnly = await prisma.kitchen.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends KitchenCreateManyAndReturnArgs>(args?: SelectSubset<T, KitchenCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Kitchen.
+     * @param {KitchenDeleteArgs} args - Arguments to delete one Kitchen.
+     * @example
+     * // Delete one Kitchen
+     * const Kitchen = await prisma.kitchen.delete({
+     *   where: {
+     *     // ... filter to delete one Kitchen
+     *   }
+     * })
+     * 
+     */
+    delete<T extends KitchenDeleteArgs>(args: SelectSubset<T, KitchenDeleteArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Kitchen.
+     * @param {KitchenUpdateArgs} args - Arguments to update one Kitchen.
+     * @example
+     * // Update one Kitchen
+     * const kitchen = await prisma.kitchen.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends KitchenUpdateArgs>(args: SelectSubset<T, KitchenUpdateArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Kitchens.
+     * @param {KitchenDeleteManyArgs} args - Arguments to filter Kitchens to delete.
+     * @example
+     * // Delete a few Kitchens
+     * const { count } = await prisma.kitchen.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends KitchenDeleteManyArgs>(args?: SelectSubset<T, KitchenDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Kitchens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KitchenUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Kitchens
+     * const kitchen = await prisma.kitchen.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends KitchenUpdateManyArgs>(args: SelectSubset<T, KitchenUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Kitchens and returns the data updated in the database.
+     * @param {KitchenUpdateManyAndReturnArgs} args - Arguments to update many Kitchens.
+     * @example
+     * // Update many Kitchens
+     * const kitchen = await prisma.kitchen.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Kitchens and only return the `id`
+     * const kitchenWithIdOnly = await prisma.kitchen.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends KitchenUpdateManyAndReturnArgs>(args: SelectSubset<T, KitchenUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Kitchen.
+     * @param {KitchenUpsertArgs} args - Arguments to update or create a Kitchen.
+     * @example
+     * // Update or create a Kitchen
+     * const kitchen = await prisma.kitchen.upsert({
+     *   create: {
+     *     // ... data to create a Kitchen
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Kitchen we want to update
+     *   }
+     * })
+     */
+    upsert<T extends KitchenUpsertArgs>(args: SelectSubset<T, KitchenUpsertArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Kitchens.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KitchenCountArgs} args - Arguments to filter Kitchens to count.
+     * @example
+     * // Count the number of Kitchens
+     * const count = await prisma.kitchen.count({
+     *   where: {
+     *     // ... the filter for the Kitchens we want to count
+     *   }
+     * })
+    **/
+    count<T extends KitchenCountArgs>(
+      args?: Subset<T, KitchenCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], KitchenCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Kitchen.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KitchenAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends KitchenAggregateArgs>(args: Subset<T, KitchenAggregateArgs>): Prisma.PrismaPromise<GetKitchenAggregateType<T>>
+
+    /**
+     * Group by Kitchen.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {KitchenGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends KitchenGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: KitchenGroupByArgs['orderBy'] }
+        : { orderBy?: KitchenGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, KitchenGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetKitchenGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Kitchen model
+   */
+  readonly fields: KitchenFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Kitchen.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__KitchenClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    foods<T extends Kitchen$foodsArgs<ExtArgs> = {}>(args?: Subset<T, Kitchen$foodsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FoodPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Kitchen model
+   */
+  interface KitchenFieldRefs {
+    readonly id: FieldRef<"Kitchen", 'String'>
+    readonly name: FieldRef<"Kitchen", 'String'>
+    readonly description: FieldRef<"Kitchen", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Kitchen findUnique
+   */
+  export type KitchenFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * Filter, which Kitchen to fetch.
+     */
+    where: KitchenWhereUniqueInput
+  }
+
+  /**
+   * Kitchen findUniqueOrThrow
+   */
+  export type KitchenFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * Filter, which Kitchen to fetch.
+     */
+    where: KitchenWhereUniqueInput
+  }
+
+  /**
+   * Kitchen findFirst
+   */
+  export type KitchenFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * Filter, which Kitchen to fetch.
+     */
+    where?: KitchenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Kitchens to fetch.
+     */
+    orderBy?: KitchenOrderByWithRelationInput | KitchenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Kitchens.
+     */
+    cursor?: KitchenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Kitchens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Kitchens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Kitchens.
+     */
+    distinct?: KitchenScalarFieldEnum | KitchenScalarFieldEnum[]
+  }
+
+  /**
+   * Kitchen findFirstOrThrow
+   */
+  export type KitchenFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * Filter, which Kitchen to fetch.
+     */
+    where?: KitchenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Kitchens to fetch.
+     */
+    orderBy?: KitchenOrderByWithRelationInput | KitchenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Kitchens.
+     */
+    cursor?: KitchenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Kitchens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Kitchens.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Kitchens.
+     */
+    distinct?: KitchenScalarFieldEnum | KitchenScalarFieldEnum[]
+  }
+
+  /**
+   * Kitchen findMany
+   */
+  export type KitchenFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * Filter, which Kitchens to fetch.
+     */
+    where?: KitchenWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Kitchens to fetch.
+     */
+    orderBy?: KitchenOrderByWithRelationInput | KitchenOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Kitchens.
+     */
+    cursor?: KitchenWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Kitchens from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Kitchens.
+     */
+    skip?: number
+    distinct?: KitchenScalarFieldEnum | KitchenScalarFieldEnum[]
+  }
+
+  /**
+   * Kitchen create
+   */
+  export type KitchenCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Kitchen.
+     */
+    data: XOR<KitchenCreateInput, KitchenUncheckedCreateInput>
+  }
+
+  /**
+   * Kitchen createMany
+   */
+  export type KitchenCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Kitchens.
+     */
+    data: KitchenCreateManyInput | KitchenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Kitchen createManyAndReturn
+   */
+  export type KitchenCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * The data used to create many Kitchens.
+     */
+    data: KitchenCreateManyInput | KitchenCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Kitchen update
+   */
+  export type KitchenUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Kitchen.
+     */
+    data: XOR<KitchenUpdateInput, KitchenUncheckedUpdateInput>
+    /**
+     * Choose, which Kitchen to update.
+     */
+    where: KitchenWhereUniqueInput
+  }
+
+  /**
+   * Kitchen updateMany
+   */
+  export type KitchenUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Kitchens.
+     */
+    data: XOR<KitchenUpdateManyMutationInput, KitchenUncheckedUpdateManyInput>
+    /**
+     * Filter which Kitchens to update
+     */
+    where?: KitchenWhereInput
+    /**
+     * Limit how many Kitchens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Kitchen updateManyAndReturn
+   */
+  export type KitchenUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * The data used to update Kitchens.
+     */
+    data: XOR<KitchenUpdateManyMutationInput, KitchenUncheckedUpdateManyInput>
+    /**
+     * Filter which Kitchens to update
+     */
+    where?: KitchenWhereInput
+    /**
+     * Limit how many Kitchens to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Kitchen upsert
+   */
+  export type KitchenUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Kitchen to update in case it exists.
+     */
+    where: KitchenWhereUniqueInput
+    /**
+     * In case the Kitchen found by the `where` argument doesn't exist, create a new Kitchen with this data.
+     */
+    create: XOR<KitchenCreateInput, KitchenUncheckedCreateInput>
+    /**
+     * In case the Kitchen was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<KitchenUpdateInput, KitchenUncheckedUpdateInput>
+  }
+
+  /**
+   * Kitchen delete
+   */
+  export type KitchenDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+    /**
+     * Filter which Kitchen to delete.
+     */
+    where: KitchenWhereUniqueInput
+  }
+
+  /**
+   * Kitchen deleteMany
+   */
+  export type KitchenDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Kitchens to delete
+     */
+    where?: KitchenWhereInput
+    /**
+     * Limit how many Kitchens to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Kitchen.foods
+   */
+  export type Kitchen$foodsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Food
+     */
+    select?: FoodSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Food
+     */
+    omit?: FoodOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FoodInclude<ExtArgs> | null
+    where?: FoodWhereInput
+    orderBy?: FoodOrderByWithRelationInput | FoodOrderByWithRelationInput[]
+    cursor?: FoodWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: FoodScalarFieldEnum | FoodScalarFieldEnum[]
+  }
+
+  /**
+   * Kitchen without action
+   */
+  export type KitchenDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Kitchen
+     */
+    select?: KitchenSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Kitchen
+     */
+    omit?: KitchenOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: KitchenInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model Food
    */
 
@@ -2426,18 +3592,21 @@ export namespace Prisma {
     id: string | null
     name: string | null
     description: string | null
+    kitchen_id: string | null
   }
 
   export type FoodMaxAggregateOutputType = {
     id: string | null
     name: string | null
     description: string | null
+    kitchen_id: string | null
   }
 
   export type FoodCountAggregateOutputType = {
     id: number
     name: number
     description: number
+    kitchen_id: number
     _all: number
   }
 
@@ -2446,18 +3615,21 @@ export namespace Prisma {
     id?: true
     name?: true
     description?: true
+    kitchen_id?: true
   }
 
   export type FoodMaxAggregateInputType = {
     id?: true
     name?: true
     description?: true
+    kitchen_id?: true
   }
 
   export type FoodCountAggregateInputType = {
     id?: true
     name?: true
     description?: true
+    kitchen_id?: true
     _all?: true
   }
 
@@ -2537,6 +3709,7 @@ export namespace Prisma {
     id: string
     name: string
     description: string | null
+    kitchen_id: string
     _count: FoodCountAggregateOutputType | null
     _min: FoodMinAggregateOutputType | null
     _max: FoodMaxAggregateOutputType | null
@@ -2560,6 +3733,8 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     description?: boolean
+    kitchen_id?: boolean
+    kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
     macros?: boolean | Food$macrosArgs<ExtArgs>
     _count?: boolean | FoodCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["food"]>
@@ -2568,37 +3743,49 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     description?: boolean
+    kitchen_id?: boolean
+    kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["food"]>
 
   export type FoodSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
     description?: boolean
+    kitchen_id?: boolean
+    kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["food"]>
 
   export type FoodSelectScalar = {
     id?: boolean
     name?: boolean
     description?: boolean
+    kitchen_id?: boolean
   }
 
-  export type FoodOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description", ExtArgs["result"]["food"]>
+  export type FoodOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "kitchen_id", ExtArgs["result"]["food"]>
   export type FoodInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
     macros?: boolean | Food$macrosArgs<ExtArgs>
     _count?: boolean | FoodCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type FoodIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type FoodIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type FoodIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
+  }
+  export type FoodIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
+  }
 
   export type $FoodPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Food"
     objects: {
+      kitchen: Prisma.$KitchenPayload<ExtArgs>
       macros: Prisma.$FoodMacroPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
       description: string | null
+      kitchen_id: string
     }, ExtArgs["result"]["food"]>
     composites: {}
   }
@@ -2993,6 +4180,7 @@ export namespace Prisma {
    */
   export interface Prisma__FoodClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    kitchen<T extends KitchenDefaultArgs<ExtArgs> = {}>(args?: Subset<T, KitchenDefaultArgs<ExtArgs>>): Prisma__KitchenClient<$Result.GetResult<Prisma.$KitchenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     macros<T extends Food$macrosArgs<ExtArgs> = {}>(args?: Subset<T, Food$macrosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FoodMacroPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -3026,6 +4214,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Food", 'String'>
     readonly name: FieldRef<"Food", 'String'>
     readonly description: FieldRef<"Food", 'String'>
+    readonly kitchen_id: FieldRef<"Food", 'String'>
   }
     
 
@@ -3275,6 +4464,10 @@ export namespace Prisma {
      */
     data: FoodCreateManyInput | FoodCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FoodIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -3345,6 +4538,10 @@ export namespace Prisma {
      * Limit how many Foods to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FoodIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -6767,10 +7964,20 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-  export const FoodScalarFieldEnum: {
+  export const KitchenScalarFieldEnum: {
     id: 'id',
     name: 'name',
     description: 'description'
+  };
+
+  export type KitchenScalarFieldEnum = (typeof KitchenScalarFieldEnum)[keyof typeof KitchenScalarFieldEnum]
+
+
+  export const FoodScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    description: 'description',
+    kitchen_id: 'kitchen_id'
   };
 
   export type FoodScalarFieldEnum = (typeof FoodScalarFieldEnum)[keyof typeof FoodScalarFieldEnum]
@@ -6928,6 +8135,51 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"User"> | string
   }
 
+  export type KitchenWhereInput = {
+    AND?: KitchenWhereInput | KitchenWhereInput[]
+    OR?: KitchenWhereInput[]
+    NOT?: KitchenWhereInput | KitchenWhereInput[]
+    id?: StringFilter<"Kitchen"> | string
+    name?: StringFilter<"Kitchen"> | string
+    description?: StringNullableFilter<"Kitchen"> | string | null
+    foods?: FoodListRelationFilter
+  }
+
+  export type KitchenOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    foods?: FoodOrderByRelationAggregateInput
+  }
+
+  export type KitchenWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name?: string
+    AND?: KitchenWhereInput | KitchenWhereInput[]
+    OR?: KitchenWhereInput[]
+    NOT?: KitchenWhereInput | KitchenWhereInput[]
+    description?: StringNullableFilter<"Kitchen"> | string | null
+    foods?: FoodListRelationFilter
+  }, "id" | "name">
+
+  export type KitchenOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    _count?: KitchenCountOrderByAggregateInput
+    _max?: KitchenMaxOrderByAggregateInput
+    _min?: KitchenMinOrderByAggregateInput
+  }
+
+  export type KitchenScalarWhereWithAggregatesInput = {
+    AND?: KitchenScalarWhereWithAggregatesInput | KitchenScalarWhereWithAggregatesInput[]
+    OR?: KitchenScalarWhereWithAggregatesInput[]
+    NOT?: KitchenScalarWhereWithAggregatesInput | KitchenScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Kitchen"> | string
+    name?: StringWithAggregatesFilter<"Kitchen"> | string
+    description?: StringNullableWithAggregatesFilter<"Kitchen"> | string | null
+  }
+
   export type FoodWhereInput = {
     AND?: FoodWhereInput | FoodWhereInput[]
     OR?: FoodWhereInput[]
@@ -6935,6 +8187,8 @@ export namespace Prisma {
     id?: StringFilter<"Food"> | string
     name?: StringFilter<"Food"> | string
     description?: StringNullableFilter<"Food"> | string | null
+    kitchen_id?: StringFilter<"Food"> | string
+    kitchen?: XOR<KitchenScalarRelationFilter, KitchenWhereInput>
     macros?: FoodMacroListRelationFilter
   }
 
@@ -6942,23 +8196,29 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrderInput | SortOrder
+    kitchen_id?: SortOrder
+    kitchen?: KitchenOrderByWithRelationInput
     macros?: FoodMacroOrderByRelationAggregateInput
   }
 
   export type FoodWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    name?: string
+    name_kitchen_id?: FoodNameKitchen_idCompoundUniqueInput
     AND?: FoodWhereInput | FoodWhereInput[]
     OR?: FoodWhereInput[]
     NOT?: FoodWhereInput | FoodWhereInput[]
+    name?: StringFilter<"Food"> | string
     description?: StringNullableFilter<"Food"> | string | null
+    kitchen_id?: StringFilter<"Food"> | string
+    kitchen?: XOR<KitchenScalarRelationFilter, KitchenWhereInput>
     macros?: FoodMacroListRelationFilter
-  }, "id" | "name">
+  }, "id" | "name_kitchen_id">
 
   export type FoodOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrderInput | SortOrder
+    kitchen_id?: SortOrder
     _count?: FoodCountOrderByAggregateInput
     _max?: FoodMaxOrderByAggregateInput
     _min?: FoodMinOrderByAggregateInput
@@ -6971,6 +8231,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Food"> | string
     name?: StringWithAggregatesFilter<"Food"> | string
     description?: StringNullableWithAggregatesFilter<"Food"> | string | null
+    kitchen_id?: StringWithAggregatesFilter<"Food"> | string
   }
 
   export type FoodMacroWhereInput = {
@@ -7186,10 +8447,57 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
   }
 
+  export type KitchenCreateInput = {
+    id: string
+    name: string
+    description?: string | null
+    foods?: FoodCreateNestedManyWithoutKitchenInput
+  }
+
+  export type KitchenUncheckedCreateInput = {
+    id: string
+    name: string
+    description?: string | null
+    foods?: FoodUncheckedCreateNestedManyWithoutKitchenInput
+  }
+
+  export type KitchenUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    foods?: FoodUpdateManyWithoutKitchenNestedInput
+  }
+
+  export type KitchenUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    foods?: FoodUncheckedUpdateManyWithoutKitchenNestedInput
+  }
+
+  export type KitchenCreateManyInput = {
+    id: string
+    name: string
+    description?: string | null
+  }
+
+  export type KitchenUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type KitchenUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
   export type FoodCreateInput = {
     id: string
     name: string
     description?: string | null
+    kitchen: KitchenCreateNestedOneWithoutFoodsInput
     macros?: FoodMacroCreateNestedManyWithoutFoodInput
   }
 
@@ -7197,6 +8505,7 @@ export namespace Prisma {
     id: string
     name: string
     description?: string | null
+    kitchen_id: string
     macros?: FoodMacroUncheckedCreateNestedManyWithoutFoodInput
   }
 
@@ -7204,6 +8513,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    kitchen?: KitchenUpdateOneRequiredWithoutFoodsNestedInput
     macros?: FoodMacroUpdateManyWithoutFoodNestedInput
   }
 
@@ -7211,6 +8521,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    kitchen_id?: StringFieldUpdateOperationsInput | string
     macros?: FoodMacroUncheckedUpdateManyWithoutFoodNestedInput
   }
 
@@ -7218,6 +8529,7 @@ export namespace Prisma {
     id: string
     name: string
     description?: string | null
+    kitchen_id: string
   }
 
   export type FoodUpdateManyMutationInput = {
@@ -7230,6 +8542,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    kitchen_id?: StringFieldUpdateOperationsInput | string
   }
 
   export type FoodMacroCreateInput = {
@@ -7518,6 +8831,39 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type FoodListRelationFilter = {
+    every?: FoodWhereInput
+    some?: FoodWhereInput
+    none?: FoodWhereInput
+  }
+
+  export type FoodOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type KitchenCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+  }
+
+  export type KitchenMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+  }
+
+  export type KitchenMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+  }
+
+  export type KitchenScalarRelationFilter = {
+    is?: KitchenWhereInput
+    isNot?: KitchenWhereInput
+  }
+
   export type FoodMacroListRelationFilter = {
     every?: FoodMacroWhereInput
     some?: FoodMacroWhereInput
@@ -7528,22 +8874,30 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type FoodNameKitchen_idCompoundUniqueInput = {
+    name: string
+    kitchen_id: string
+  }
+
   export type FoodCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrder
+    kitchen_id?: SortOrder
   }
 
   export type FoodMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrder
+    kitchen_id?: SortOrder
   }
 
   export type FoodMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrder
+    kitchen_id?: SortOrder
   }
 
   export type FloatFilter<$PrismaModel = never> = {
@@ -7773,6 +9127,54 @@ export namespace Prisma {
     deleteMany?: UserPreferenceScalarWhereInput | UserPreferenceScalarWhereInput[]
   }
 
+  export type FoodCreateNestedManyWithoutKitchenInput = {
+    create?: XOR<FoodCreateWithoutKitchenInput, FoodUncheckedCreateWithoutKitchenInput> | FoodCreateWithoutKitchenInput[] | FoodUncheckedCreateWithoutKitchenInput[]
+    connectOrCreate?: FoodCreateOrConnectWithoutKitchenInput | FoodCreateOrConnectWithoutKitchenInput[]
+    createMany?: FoodCreateManyKitchenInputEnvelope
+    connect?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+  }
+
+  export type FoodUncheckedCreateNestedManyWithoutKitchenInput = {
+    create?: XOR<FoodCreateWithoutKitchenInput, FoodUncheckedCreateWithoutKitchenInput> | FoodCreateWithoutKitchenInput[] | FoodUncheckedCreateWithoutKitchenInput[]
+    connectOrCreate?: FoodCreateOrConnectWithoutKitchenInput | FoodCreateOrConnectWithoutKitchenInput[]
+    createMany?: FoodCreateManyKitchenInputEnvelope
+    connect?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+  }
+
+  export type FoodUpdateManyWithoutKitchenNestedInput = {
+    create?: XOR<FoodCreateWithoutKitchenInput, FoodUncheckedCreateWithoutKitchenInput> | FoodCreateWithoutKitchenInput[] | FoodUncheckedCreateWithoutKitchenInput[]
+    connectOrCreate?: FoodCreateOrConnectWithoutKitchenInput | FoodCreateOrConnectWithoutKitchenInput[]
+    upsert?: FoodUpsertWithWhereUniqueWithoutKitchenInput | FoodUpsertWithWhereUniqueWithoutKitchenInput[]
+    createMany?: FoodCreateManyKitchenInputEnvelope
+    set?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    disconnect?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    delete?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    connect?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    update?: FoodUpdateWithWhereUniqueWithoutKitchenInput | FoodUpdateWithWhereUniqueWithoutKitchenInput[]
+    updateMany?: FoodUpdateManyWithWhereWithoutKitchenInput | FoodUpdateManyWithWhereWithoutKitchenInput[]
+    deleteMany?: FoodScalarWhereInput | FoodScalarWhereInput[]
+  }
+
+  export type FoodUncheckedUpdateManyWithoutKitchenNestedInput = {
+    create?: XOR<FoodCreateWithoutKitchenInput, FoodUncheckedCreateWithoutKitchenInput> | FoodCreateWithoutKitchenInput[] | FoodUncheckedCreateWithoutKitchenInput[]
+    connectOrCreate?: FoodCreateOrConnectWithoutKitchenInput | FoodCreateOrConnectWithoutKitchenInput[]
+    upsert?: FoodUpsertWithWhereUniqueWithoutKitchenInput | FoodUpsertWithWhereUniqueWithoutKitchenInput[]
+    createMany?: FoodCreateManyKitchenInputEnvelope
+    set?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    disconnect?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    delete?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    connect?: FoodWhereUniqueInput | FoodWhereUniqueInput[]
+    update?: FoodUpdateWithWhereUniqueWithoutKitchenInput | FoodUpdateWithWhereUniqueWithoutKitchenInput[]
+    updateMany?: FoodUpdateManyWithWhereWithoutKitchenInput | FoodUpdateManyWithWhereWithoutKitchenInput[]
+    deleteMany?: FoodScalarWhereInput | FoodScalarWhereInput[]
+  }
+
+  export type KitchenCreateNestedOneWithoutFoodsInput = {
+    create?: XOR<KitchenCreateWithoutFoodsInput, KitchenUncheckedCreateWithoutFoodsInput>
+    connectOrCreate?: KitchenCreateOrConnectWithoutFoodsInput
+    connect?: KitchenWhereUniqueInput
+  }
+
   export type FoodMacroCreateNestedManyWithoutFoodInput = {
     create?: XOR<FoodMacroCreateWithoutFoodInput, FoodMacroUncheckedCreateWithoutFoodInput> | FoodMacroCreateWithoutFoodInput[] | FoodMacroUncheckedCreateWithoutFoodInput[]
     connectOrCreate?: FoodMacroCreateOrConnectWithoutFoodInput | FoodMacroCreateOrConnectWithoutFoodInput[]
@@ -7785,6 +9187,14 @@ export namespace Prisma {
     connectOrCreate?: FoodMacroCreateOrConnectWithoutFoodInput | FoodMacroCreateOrConnectWithoutFoodInput[]
     createMany?: FoodMacroCreateManyFoodInputEnvelope
     connect?: FoodMacroWhereUniqueInput | FoodMacroWhereUniqueInput[]
+  }
+
+  export type KitchenUpdateOneRequiredWithoutFoodsNestedInput = {
+    create?: XOR<KitchenCreateWithoutFoodsInput, KitchenUncheckedCreateWithoutFoodsInput>
+    connectOrCreate?: KitchenCreateOrConnectWithoutFoodsInput
+    upsert?: KitchenUpsertWithoutFoodsInput
+    connect?: KitchenWhereUniqueInput
+    update?: XOR<XOR<KitchenUpdateToOneWithWhereWithoutFoodsInput, KitchenUpdateWithoutFoodsInput>, KitchenUncheckedUpdateWithoutFoodsInput>
   }
 
   export type FoodMacroUpdateManyWithoutFoodNestedInput = {
@@ -8175,6 +9585,73 @@ export namespace Prisma {
     max_value?: FloatNullableFilter<"UserPreference"> | number | null
   }
 
+  export type FoodCreateWithoutKitchenInput = {
+    id: string
+    name: string
+    description?: string | null
+    macros?: FoodMacroCreateNestedManyWithoutFoodInput
+  }
+
+  export type FoodUncheckedCreateWithoutKitchenInput = {
+    id: string
+    name: string
+    description?: string | null
+    macros?: FoodMacroUncheckedCreateNestedManyWithoutFoodInput
+  }
+
+  export type FoodCreateOrConnectWithoutKitchenInput = {
+    where: FoodWhereUniqueInput
+    create: XOR<FoodCreateWithoutKitchenInput, FoodUncheckedCreateWithoutKitchenInput>
+  }
+
+  export type FoodCreateManyKitchenInputEnvelope = {
+    data: FoodCreateManyKitchenInput | FoodCreateManyKitchenInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type FoodUpsertWithWhereUniqueWithoutKitchenInput = {
+    where: FoodWhereUniqueInput
+    update: XOR<FoodUpdateWithoutKitchenInput, FoodUncheckedUpdateWithoutKitchenInput>
+    create: XOR<FoodCreateWithoutKitchenInput, FoodUncheckedCreateWithoutKitchenInput>
+  }
+
+  export type FoodUpdateWithWhereUniqueWithoutKitchenInput = {
+    where: FoodWhereUniqueInput
+    data: XOR<FoodUpdateWithoutKitchenInput, FoodUncheckedUpdateWithoutKitchenInput>
+  }
+
+  export type FoodUpdateManyWithWhereWithoutKitchenInput = {
+    where: FoodScalarWhereInput
+    data: XOR<FoodUpdateManyMutationInput, FoodUncheckedUpdateManyWithoutKitchenInput>
+  }
+
+  export type FoodScalarWhereInput = {
+    AND?: FoodScalarWhereInput | FoodScalarWhereInput[]
+    OR?: FoodScalarWhereInput[]
+    NOT?: FoodScalarWhereInput | FoodScalarWhereInput[]
+    id?: StringFilter<"Food"> | string
+    name?: StringFilter<"Food"> | string
+    description?: StringNullableFilter<"Food"> | string | null
+    kitchen_id?: StringFilter<"Food"> | string
+  }
+
+  export type KitchenCreateWithoutFoodsInput = {
+    id: string
+    name: string
+    description?: string | null
+  }
+
+  export type KitchenUncheckedCreateWithoutFoodsInput = {
+    id: string
+    name: string
+    description?: string | null
+  }
+
+  export type KitchenCreateOrConnectWithoutFoodsInput = {
+    where: KitchenWhereUniqueInput
+    create: XOR<KitchenCreateWithoutFoodsInput, KitchenUncheckedCreateWithoutFoodsInput>
+  }
+
   export type FoodMacroCreateWithoutFoodInput = {
     value: number
     metric: NutritionalMetricCreateNestedOneWithoutFoodMacrosInput
@@ -8194,6 +9671,29 @@ export namespace Prisma {
   export type FoodMacroCreateManyFoodInputEnvelope = {
     data: FoodMacroCreateManyFoodInput | FoodMacroCreateManyFoodInput[]
     skipDuplicates?: boolean
+  }
+
+  export type KitchenUpsertWithoutFoodsInput = {
+    update: XOR<KitchenUpdateWithoutFoodsInput, KitchenUncheckedUpdateWithoutFoodsInput>
+    create: XOR<KitchenCreateWithoutFoodsInput, KitchenUncheckedCreateWithoutFoodsInput>
+    where?: KitchenWhereInput
+  }
+
+  export type KitchenUpdateToOneWithWhereWithoutFoodsInput = {
+    where?: KitchenWhereInput
+    data: XOR<KitchenUpdateWithoutFoodsInput, KitchenUncheckedUpdateWithoutFoodsInput>
+  }
+
+  export type KitchenUpdateWithoutFoodsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type KitchenUncheckedUpdateWithoutFoodsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type FoodMacroUpsertWithWhereUniqueWithoutFoodInput = {
@@ -8226,12 +9726,14 @@ export namespace Prisma {
     id: string
     name: string
     description?: string | null
+    kitchen: KitchenCreateNestedOneWithoutFoodsInput
   }
 
   export type FoodUncheckedCreateWithoutMacrosInput = {
     id: string
     name: string
     description?: string | null
+    kitchen_id: string
   }
 
   export type FoodCreateOrConnectWithoutMacrosInput = {
@@ -8275,12 +9777,14 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    kitchen?: KitchenUpdateOneRequiredWithoutFoodsNestedInput
   }
 
   export type FoodUncheckedUpdateWithoutMacrosInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    kitchen_id?: StringFieldUpdateOperationsInput | string
   }
 
   export type NutritionalMetricUpsertWithoutFoodMacrosInput = {
@@ -8497,6 +10001,32 @@ export namespace Prisma {
     metric_id?: StringFieldUpdateOperationsInput | string
     min_value?: NullableFloatFieldUpdateOperationsInput | number | null
     max_value?: NullableFloatFieldUpdateOperationsInput | number | null
+  }
+
+  export type FoodCreateManyKitchenInput = {
+    id: string
+    name: string
+    description?: string | null
+  }
+
+  export type FoodUpdateWithoutKitchenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    macros?: FoodMacroUpdateManyWithoutFoodNestedInput
+  }
+
+  export type FoodUncheckedUpdateWithoutKitchenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    macros?: FoodMacroUncheckedUpdateManyWithoutFoodNestedInput
+  }
+
+  export type FoodUncheckedUpdateManyWithoutKitchenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type FoodMacroCreateManyFoodInput = {

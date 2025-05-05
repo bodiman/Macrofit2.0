@@ -21,11 +21,22 @@ model User {
   macroPreferences UserPreference[]
 }
 
+model Kitchen {
+  id          String  @id
+  name        String  @unique
+  description String?
+  foods       Food[]
+}
+
 model Food {
   id          String      @id
-  name        String      @unique
+  name        String
   description String?
+  kitchen_id  String
+  kitchen     Kitchen     @relation(fields: [kitchen_id], references: [id])
   macros      FoodMacro[]
+
+  @@unique([name, kitchen_id])
 }
 
 model FoodMacro {

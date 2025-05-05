@@ -126,10 +126,17 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email'
 };
 
-exports.Prisma.FoodScalarFieldEnum = {
+exports.Prisma.KitchenScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description'
+};
+
+exports.Prisma.FoodScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  description: 'description',
+  kitchen_id: 'kitchen_id'
 };
 
 exports.Prisma.FoodMacroScalarFieldEnum = {
@@ -172,6 +179,7 @@ exports.Prisma.NullsOrder = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  Kitchen: 'Kitchen',
   Food: 'Food',
   FoodMacro: 'FoodMacro',
   NutritionalMetric: 'NutritionalMetric',

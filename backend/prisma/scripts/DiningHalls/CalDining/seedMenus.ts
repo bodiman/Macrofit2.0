@@ -1,8 +1,8 @@
-import prisma from '../../../prisma_client';
+import prisma from '../../../../prisma_client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
-
+import { v4 as uuidv4 } from 'uuid';
 
 interface FoodRecord {
     name: string;
@@ -52,14 +52,13 @@ const METRIC_NAME_MAP: Record<string, string> = {
 async function main() {
     try {
         // Read the CSV file
-        const csvFilePath = path.join(__dirname, 'today_menu.csv');
+        const csvFilePath = path.join(__dirname, 'scraped_menu.csv');
         let fileContent = fs.readFileSync(csvFilePath, 'utf-8');
 
         const records = parse(fileContent, {
-            columns: true,      // Use first row as headers
+            columns: true,
             skip_empty_lines: true,
             cast: (value, context) => {
-                // Automatically cast numeric fields if the column name matches a known numeric field
                 const numericFields: (keyof FoodRecord)[] = [
                     'calories', 'total_fat', 'saturated_fat', 'trans_fat',
                     'cholesterol', 'sodium', 'carbohydrates', 'fiber', 'sugar',
@@ -77,7 +76,28 @@ async function main() {
 
         // Get all nutritional metrics
         const metrics = await prisma.nutritionalMetric.findMany();
-        const metricMap = new Map(metrics.map(m => [m.name, m]));
+        const metricMap = new Map(metrics.map(m => [m.id, m]));
+
+        // Create a map of kitchen names to their IDs
+        const kitchenMap = new Map<string, string>();
+        
+        // Get unique kitchen names from records
+        const uniqueKitchens = [...new Set(records.map(r => r.kitchen))];
+        
+        // Create or get existing kitchens
+        for (const kitchenName of uniqueKitchens) {
+            const kitchenId = uuidv4();
+            const kitchen = await prisma.kitchen.upsert({
+                where: { name: kitchenName },
+                update: {},
+                create: {
+                    id: kitchenId,
+                    name: kitchenName,
+                    description: `Dining hall at ${kitchenName}`
+                }
+            });
+            kitchenMap.set(kitchenName, kitchen.id);
+        }
 
         // Process each food record
         for (const record of records) {
@@ -86,30 +106,44 @@ async function main() {
                 .replace(/\s+/g, '-')
                 .replace(/[^a-z0-9-]/g, '');
 
-            // Create or update the food entry
-            await prisma.food.upsert({
-                where: { id: foodId },
-                update: {},
-                create: {
-                    id: foodId,
-                    name: record.name,
-                    description: `${record.name} from ${record.kitchen} (${record.meal})`,
-                    macros: {
-                        create: Object.entries(METRIC_NAME_MAP).map(([csvKey, metricName]) => {
-                            const metric = metricMap.get(metricName);
-                            if (!metric) {
-                                throw new Error(`Metric ${metricName} not found`);
-                            }
-                            return {
-                                metric_id: metric.id,
-                                value: record[csvKey as keyof FoodRecord] as number
-                            };
-                        })
-                    }
-                }
-            });
+            const kitchenId = kitchenMap.get(record.kitchen);
+            if (!kitchenId) {
+                throw new Error(`Kitchen ID not found for ${record.kitchen}`);
+            }
 
-            console.log(`Processed: ${record.name}`);
+            try {
+                // Create or update the food entry
+                await prisma.food.upsert({
+                    where: { id: foodId },
+                    update: {},
+                    create: {
+                        id: foodId,
+                        name: record.name,
+                        kitchen_id: kitchenId,
+                        description: `${record.name} from ${record.kitchen} (${record.meal})`,
+                        macros: {
+                            create: Object.entries(METRIC_NAME_MAP).map(([csvKey, metricName]) => {
+                                const metric = metricMap.get(metricName);
+                                if (!metric) {
+                                    throw new Error(`Metric ${metricName} not found`);
+                                }
+                                return {
+                                    metric_id: metric.id,
+                                    value: record[csvKey as keyof FoodRecord] as number
+                                };
+                            })
+                        }
+                    }
+                });
+
+                console.log(`Processed: ${record.name} from ${record.kitchen}`);
+            } catch (error: any) {
+                if (error?.code === 'P2002') { // Prisma unique constraint violation
+                    console.log(`Skipping duplicate food: ${record.name} from ${record.kitchen}`);
+                    continue;
+                }
+                throw error; // Re-throw other errors
+            }
         }
 
         console.log('🌱 Today\'s menu seeded successfully');
