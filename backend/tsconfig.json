@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "ES2020",                  // or higher
         "module": "commonjs",
-        "lib": ["ES2020"],                   // <--- add this
+        "lib": ["ES2020", "DOM"],                   // <--- add this
         "types": ["node", "jest"],                   // <--- and this
         "moduleResolution": "node",
         "esModuleInterop": true,

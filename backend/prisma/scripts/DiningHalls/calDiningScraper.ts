@@ -1,28 +1,10 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import prisma from '../../../prisma_client';
-
-interface DiningConfig {
-    [diningHall: string]: {
-        [meal: string]: {
-            [food: string]: {
-                action: string;
-                menu_id: string;
-                id: string;
-                location: string;
-            };
-        };
-    };
-}
-
-interface NutrientInfo {
-    serving_size: string;
-    [key: string]: string | number;
-}
+import fs from 'fs';
 
 const CALDINING_MACRONUTRIENT_NAME_MAP: Record<string, string> = {
     'Calories (kcal):': 'calories',
-    'Total Lipid/Fat (g):': 'fat',
+    'Total Lipid/Fat (g):': 'total_fat',
     'Saturated fatty acid (g):': 'saturated_fat',
     'Trans Fat (g):': 'trans_fat',
     'Cholesterol (mg):': 'cholesterol',
@@ -38,128 +20,188 @@ const CALDINING_MACRONUTRIENT_NAME_MAP: Record<string, string> = {
     'Water (g):': 'water',
     'Potassium (mg):': 'potassium',
     'Vitamin D(iu):': 'vitamin_d'
-};
+  };
 
-async function retrieveDiningConfigs(): Promise<DiningConfig> {
-    const configs: DiningConfig = {};
-    
-    const response = await axios.get('https://dining.berkeley.edu/menus/');
-    const $ = cheerio.load(response.data);
-    
-    $('ul.cafe-location').each((_, location) => {
-        const diningHallName = $(location).find('span.cafe-title').text().trim();
-        console.log(diningHallName);
-        configs[diningHallName] = {};
-        
-        $(location).find('ul.meal-period li').each((_, meal) => {
-            const mealName = $(meal).attr('class')?.split(' ').pop() || '';
-            configs[diningHallName][mealName] = {};
-            
-            $(meal).find('li').each((_, recipe) => {
-                const recipeName = $(recipe).find('a').text().trim();
-                configs[diningHallName][mealName][recipeName] = {
-                    action: 'get_recipe_details',
-                    menu_id: $(recipe).attr('data-menuid') || '',
-                    id: $(recipe).attr('data-id') || '',
-                    location: $(recipe).attr('data-location') || ''
-                };
-            });
+
+export async function retrieveDiningConfigs(): Promise<Record<string, any>> {
+  const response = await axios.get('https://dining.berkeley.edu/menus/');
+  const $ = cheerio.load(response.data);
+  const configs: Record<string, any> = {};
+
+  const allLocations = $('ul.cafe-location');
+
+  allLocations.each((_, locationTag) => {
+    $(locationTag).children().each((_, tag) => {
+      const diningHallName = $(tag).find('span.cafe-title').text().trim();
+      const meals = $(tag).find('ul.meal-period');
+
+      configs[diningHallName] = {};
+
+      meals.children().each((_, mealTag) => {
+        const $mealTag = $(mealTag);
+        const mealName = $mealTag.attr('class')?.split(' ').pop();
+        const recipes = $mealTag.find('li');
+
+        configs[diningHallName][mealName!] = {};
+
+        recipes.each((_, recipe) => {
+          const recipeName = $(recipe).children().first().text().trim();
+          configs[diningHallName][mealName!][recipeName] = {
+            action: 'get_recipe_details',
+            menu_id: $(recipe).attr('data-menuid'),
+            id: $(recipe).attr('data-id'),
+            location: $(recipe).attr('data-location'),
+          };
         });
+      });
     });
-    
-    return configs;
+  });
+
+  return configs;
 }
 
-async function retrieveNutrientInfo(payload: any): Promise<NutrientInfo> {
-    const response = await axios.post('https://dining.berkeley.edu/wp-admin/admin-ajax.php', payload);
+
+export async function retrieveNutrientInfo(payload: Record<string, string>): Promise<Record<string, any>> {
+    const response = await axios.post(
+      'https://dining.berkeley.edu/wp-admin/admin-ajax.php',
+      new URLSearchParams(payload),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+  
     const $ = cheerio.load(response.data);
-    
-    const servingSize = $('span.serving-size').text().replace('Serving Size: ', '');
-    const nutrientInfo: NutrientInfo = { serving_size: servingSize };
-    
-    $('li').each((_, element) => {
-        const nutrientName = $(element).find('span').first().text();
-        const nutrientValue = $(element).find('span').last().text();
-        
-        if (nutrientName in CALDINING_MACRONUTRIENT_NAME_MAP) {
-            const mappedName = CALDINING_MACRONUTRIENT_NAME_MAP[nutrientName];
-            nutrientInfo[mappedName] = parseFloat(nutrientValue) || 0;
-        }
+  
+    // Parse serving size
+    const servingSizeRaw = $('span.serving-size').first().text();
+    const servingSize = servingSizeRaw.slice(14).trim(); // Remove "Serving Size: "
+  
+    const nutrientInfo: Record<string, any> = {
+      serving_size: servingSize,
+    };
+  
+    // Find all <li> elements under the .nutration-details section
+    $('div.nutration-details li').each((_, el) => {
+      const span = $(el).find('span').first();
+      const label = span.text().trim();
+      const value = $(el).contents().filter((i, node) => node.type === 'text').text().trim();
+  
+      if (CALDINING_MACRONUTRIENT_NAME_MAP.hasOwnProperty(label)) {
+        nutrientInfo[CALDINING_MACRONUTRIENT_NAME_MAP[label]] = value;
+      }
     });
-    
+  
     return nutrientInfo;
+  }
+
+  
+export function splitServingSize(servingSize: string): [number, string] {
+    const [size, unit] = servingSize.split(' ');
+    return [parseFloat(size), unit];
+}
+  
+
+export function buildRawNutrientTable(nutrientInfo: Record<string, any>[], columns: string[]): Record<string, any[]> {
+    const foodDict: Record<string, any[]> = {};
+    const allColumns = [...columns, 'serving_unit'];
+  
+    allColumns.forEach(column => {
+      foodDict[column] = [];
+    });
+  
+    nutrientInfo.forEach(nutrientDict => {
+      const [size, unit] = splitServingSize(nutrientDict.serving_size);
+      nutrientDict.serving_size = size;
+      nutrientDict.serving_unit = unit;
+  
+      allColumns.forEach(column => {
+        foodDict[column].push(nutrientDict[column]);
+      });
+    });
+  
+    return foodDict;
 }
 
-function splitServingSize(servingSize: string): { amount: number; unit: string } {
-    const [amount, unit] = servingSize.split(' ');
-    return { amount: parseFloat(amount), unit };
+export function standardizeRawNutrientTable(rawTable: Record<string, any[]>): Record<string, any[]> {
+    const standardizedTable: Record<string, any[]> = {};
+  
+    Object.keys(rawTable).forEach(column => {
+      if (
+        column === 'serving_unit' ||
+        column === 'name' ||
+        column === 'kitchen' ||
+        column === 'meal'
+      ) {
+        standardizedTable[column] = rawTable[column];
+      } else {
+        standardizedTable[column] = rawTable[column].map((value: number, index: number) => {
+          return value / rawTable['serving_size'][index];
+        });
+      }
+    });
+  
+    return standardizedTable;
 }
 
-async function standardizeNutrientInfo(nutrientInfo: NutrientInfo): Promise<Record<string, number>> {
-    const { amount } = splitServingSize(nutrientInfo.serving_size);
-    const standardized: Record<string, number> = {};
-    
-    for (const [key, value] of Object.entries(nutrientInfo)) {
-        if (key !== 'serving_size' && typeof value === 'number') {
-            standardized[key] = value / amount;
-        }
+
+export async function retrieveDiningHallNutritionInfo(payloads: Record<string, any>, columns: string[]): Promise<Record<string, any[]>> {
+    if (!columns.includes('serving_size')) {
+      columns.push('serving_size');
     }
-    
-    return standardized;
-}
-
-async function seedDiningHallFoods() {
-    try {
-        const configs = await retrieveDiningConfigs();
-        const metricMap = new Map(
-            (await prisma.nutritionalMetric.findMany()).map(m => [m.name, m])
-        );
-
-        for (const [diningHall, meals] of Object.entries(configs)) {
-            console.log(diningHall);
-            for (const [meal, foods] of Object.entries(meals)) {
-                for (const [foodName, payload] of Object.entries(foods)) {
-                    console.log(`Processing ${diningHall} - ${meal} - ${foodName}`);
-                    
-                    console.log(payload);
-                    const nutrientInfo = await retrieveNutrientInfo(payload);
-                    const standardizedMacros = await standardizeNutrientInfo(nutrientInfo);
-                    
-                    // Create or update food in database
-                    await prisma.food.upsert({
-                        where: { 
-                            id: `${diningHall}-${meal}-${foodName}`.toLowerCase().replace(/\s+/g, '-')
-                        },
-                        update: {},
-                        create: {
-                            id: `${diningHall}-${meal}-${foodName}`.toLowerCase().replace(/\s+/g, '-'),
-                            name: foodName,
-                            description: `${foodName} from ${diningHall} (${meal})`,
-                            macros: {
-                                create: Object.entries(standardizedMacros).map(([metricName, value]) => {
-                                    const metric = metricMap.get(metricName);
-                                    if (!metric) {
-                                        throw new Error(`Metric ${metricName} not found`);
-                                    }
-                                    return {
-                                        metric_id: metric.id,
-                                        value
-                                    };
-                                })
-                            }
-                        }
-                    });
-                }
-            }
+  
+    const foodNames: string[] = [];
+    const kitchenNames: string[] = [];
+    const mealNames: string[] = [];
+    const nutrientInfoPromises: Promise<Record<string, any>>[] = [];
+  
+    // Collect all promises
+    for (const kitchen in payloads) {
+      for (const meal in payloads[kitchen]) {
+        for (const food in payloads[kitchen][meal]) {
+          console.log(`Queueing request for ${kitchen}, ${meal}, ${food}`);
+          const payload = payloads[kitchen][meal][food];
+          
+          // Store the promise and track the associated metadata
+          const promise = retrieveNutrientInfo(payload).then(info => {
+            foodNames.push(food);
+            mealNames.push(meal);
+            kitchenNames.push(kitchen);
+            return info;
+          });
+          
+          nutrientInfoPromises.push(promise);
         }
-        
-        console.log('🌱 Dining hall foods seeded successfully');
-    } catch (error) {
-        console.error('❌ Error seeding dining hall foods:', error);
-        throw error;
-    } finally {
-        await prisma.$disconnect();
+      }
     }
+  
+    // Execute all requests in parallel
+    console.log(`Executing ${nutrientInfoPromises.length} requests in parallel...`);
+    const nutrientInfo = await Promise.all(nutrientInfoPromises);
+  
+    const rawNutrientTable = buildRawNutrientTable(nutrientInfo, columns);
+  
+    rawNutrientTable['name'] = foodNames;
+    rawNutrientTable['kitchen'] = kitchenNames;
+    rawNutrientTable['meal'] = mealNames;
+  
+    return rawNutrientTable;
 }
+  
+  
+  
 
-seedDiningHallFoods(); 
+(async () => {
+    const diningHall = 'Clark Kerr Campus';
+    const meal = 'Dinner';
+  
+    let payloads = await retrieveDiningConfigs();
+    payloads = { [diningHall]: { [meal]: payloads[diningHall][meal] } };
+  
+    const rawNutrientTable = await retrieveDiningHallNutritionInfo(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
+    const standardizedNutrientTable = standardizeRawNutrientTable(rawNutrientTable);
+
+    console.log(standardizedNutrientTable);
+  })();
+  
