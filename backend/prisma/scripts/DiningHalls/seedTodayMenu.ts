@@ -77,9 +77,7 @@ async function main() {
 
         // Get all nutritional metrics
         const metrics = await prisma.nutritionalMetric.findMany();
-        const metricMap = new Map(metrics.map(m => [m.id, m]));
-
-        console.log(metricMap);
+        const metricMap = new Map(metrics.map(m => [m.name, m]));
 
         // Process each food record
         for (const record of records) {

@@ -22,11 +22,13 @@ export default function FoodCard({ food, onUpdatePortion, onRemove }: Props) {
         setStringQuantity(val);
         try {
             const newQuantity = parseFloat(val);
-            setQuantity(newQuantity);
+            const displayQuantity = newQuantity.toString() !== "NaN" ? newQuantity : 0;
+            
+            setQuantity(displayQuantity);
             if (onUpdatePortion) {
                 onUpdatePortion({
                     unit,
-                    quantity: newQuantity
+                    quantity: displayQuantity
                 });
             }
         } catch {

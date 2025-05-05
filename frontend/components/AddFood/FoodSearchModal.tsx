@@ -17,6 +17,7 @@ type Props = PropsWithChildren<{
 
 export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUpdateMeal }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
+
     // const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
     useEffect(() => {
         if (activeMeal !== null) {
