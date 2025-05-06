@@ -1,3 +1,4 @@
+import menuRoutes from './routes/menuRoutes';
 import foodRoutes from './routes/foodRoutes';
 import userRoutes from './routes/userRoutes';
 
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', userRoutes);
 app.use('/api/foods', foodRoutes);
+app.use('/api/menus', menuRoutes);
 
 // Start server
 app.listen(port, () => {

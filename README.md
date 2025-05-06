@@ -1,0 +1,5 @@
+Yesterday, I overhauled the scripts responsible for scraping the cal dining menus so that the foods can be loaded into the database. Now, I must integrate the concept of "kitchens" into the database, so that users can more easily browse and search for foods. 
+
+Each food already corresponds to a kitchen. It must now have an attribute that marks whether it is active in the menu. The menu seeding script for the cal dining hall will need to be updated to choose the active meal based on the time of day. More likely, we'll do a manual input for now.
+
+When a user searches for a food, there is currently a menu selection option that doesn't actually do anything. By the end of today, these menu tabs are going to filter foods down to their active menus. Any food can still be accessed from the "all" tab. Every single food will be returned if there is no search query, allowing users to scroll through and browse the foods. 

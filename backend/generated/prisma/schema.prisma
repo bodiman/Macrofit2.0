@@ -33,6 +33,7 @@ model Food {
   name        String
   description String?
   kitchen_id  String
+  active      Boolean
   kitchen     Kitchen     @relation(fields: [kitchen_id], references: [id])
   macros      FoodMacro[]
 

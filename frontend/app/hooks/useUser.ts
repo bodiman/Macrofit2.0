@@ -2,7 +2,7 @@
 import { useUser as useClerkUser, useAuth } from '@clerk/clerk-expo';
 import { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
-import { UserPreference } from '@shared/types/userTypes';
+import { UserPreference } from '@shared/types/databaseTypes';
 import { MacroPreferences } from '@/tempdata';
 import { toMacroPreference } from '@/lib/utils/toMacroPreferences';
 import storage from '@/app/storage/storage';

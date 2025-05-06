@@ -1,4 +1,4 @@
-import { UserPreference } from '@shared/types/userTypes';
+import { UserPreference } from '@shared/types/databaseTypes';
 import { MacroPreference, MacroPreferences } from '@/tempdata';
 
 export function toMacroPreference(userPreferences: UserPreference[]): MacroPreferences {

@@ -1,4 +1,4 @@
-import prisma from '../../../../prisma_client';
+import prisma from '../../prisma_client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
@@ -49,37 +49,7 @@ const METRIC_NAME_MAP: Record<string, string> = {
     'vitamin_d': 'vitamin_d'
 };
 
-// for weekdays
-// if it is before 10am, it is breakfast
-// if it is between 10am and 4:30pm, it is lunch
-// if it is after 4:30pm and 9:30pm, it is dinner
-// if it is after 9:30pm, it is breakfast tomorrow
-// for weekends
-// if it is before 3:30pm, it is brunch
-// if it is between 10am and 4:30pm, it is lunch
-// if it is after 4:30pm and 9:30pm, it is dinner
-// if it is after 9:30pm, it is brunch tomorrow
-
 async function main() {
-    const now = new Date();
-    let meal;
-
-    if (now.getDay() === 0 || now.getDay() === 6) {
-        if (now.getHours() < 15.5) {
-            meal = 'Brunch';
-        } else {
-            meal = 'Dinner';
-        }
-    } else {
-        if (now.getHours() >= 10 && now.getHours() < 16.5) {
-            meal = 'Lunch';
-        } else if (now.getHours() >= 16.5 && now.getHours() < 21.5) {
-            meal = 'Dinner';
-        } else {
-            meal = 'Breakfast';
-        }
-    }
-
     try {
         // Read the CSV file
         const csvFilePath = path.join(__dirname, 'scraped_menu.csv');
@@ -145,14 +115,11 @@ async function main() {
                 // Create or update the food entry
                 await prisma.food.upsert({
                     where: { id: foodId },
-                    update: {
-                        active: record.meal === meal
-                    },
+                    update: {},
                     create: {
                         id: foodId,
                         name: record.name,
                         kitchen_id: kitchenId,
-                        active: record.meal === meal,
                         description: `${record.name} from ${record.kitchen} (${record.meal})`,
                         macros: {
                             create: Object.entries(METRIC_NAME_MAP).map(([csvKey, metricName]) => {
@@ -162,7 +129,7 @@ async function main() {
                                 }
                                 return {
                                     metric_id: metric.id,
-                                    value: (record[csvKey as keyof FoodRecord] as number)
+                                    value: record[csvKey as keyof FoodRecord] as number
                                 };
                             })
                         }
@@ -188,4 +155,4 @@ async function main() {
     }
 }
 
-main();
+main(); 

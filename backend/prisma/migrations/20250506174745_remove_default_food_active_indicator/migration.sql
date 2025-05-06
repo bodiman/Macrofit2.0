@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Food" ALTER COLUMN "active" DROP DEFAULT;

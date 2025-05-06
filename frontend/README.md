@@ -8,6 +8,11 @@ At Macrofit, we don't believe in documentation. This README is used to track bug
 2. This is really fucking annoying me, but the current solution for closing the result content is incredibly fucking jank. I have a random ass block 5000 pixels tall extending down the screen to be clicked on. It's so fucking stupid and hardcoded but it works for now. I just worry it's going to cause some insufferable bugs sometime down the road. Fix this if you ever get the chance.
 
 
+### Refactoring Backlog
+
+1. Right now, a lot of the frontend app's types are in shared/types. The frontend should have its types, the backend should have its types, and there should be a set of data transfer functions to go back and forth between them. The solution right now is too messy and very confusing.
+
+
 
 # Comments on Data Terminology
 

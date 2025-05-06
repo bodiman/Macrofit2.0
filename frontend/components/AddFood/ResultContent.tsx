@@ -1,13 +1,14 @@
 import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable, ActivityIndicator } from "react-native"
 import { useEffect, useRef, useState } from "react"
 import Colors from "@/styles/colors"
-import MenuTabs, { type  Tab } from "../Tabs/MenuTabs"
 import { searchFoods } from "@/api/foodSearch/route"
 import { Food, FoodServing, Portion } from "@shared/types/foodTypes"
 import SearchFoodCard from "./SearchFoodCard"
 import storage from "@/app/storage/storage"
 import { v4 as uuidv4 } from 'uuid';
 import { servingUnits } from "@/tempdata"
+import { useMenu } from "@/app/hooks/useMenu"
+import MenuSpinner from "../Spinner/MenuSpinner"
 
 type Props = {
     visible: boolean,
@@ -18,9 +19,10 @@ type Props = {
 
 export default function ResultContent({ visible, searchQuery, onAddToCart, closeModal }: Props) {
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const [selected, setSelected] = useState(0);
+    const [selectedMenuId, setSelectedMenuId] = useState<string>('');
     const [searchResults, setSearchResults] = useState<Food[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const { menus, loading: menusLoading, searchMenuFoods, error } = useMenu();
 
     useEffect(() => {
         fadeAnim.setValue(0);
@@ -36,10 +38,10 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
 
     useEffect(() => {
         const fetchFoods = async () => {
-            if (searchQuery) {
+            if (searchQuery && selectedMenuId) {
                 setIsLoading(true);
                 try {
-                    const results = await searchFoods(searchQuery);
+                    const results = await searchMenuFoods(selectedMenuId, searchQuery);
                     setSearchResults(results);
                 } catch (error) {
                     console.error('Error searching foods:', error);
@@ -53,7 +55,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
         };
 
         fetchFoods();
-    }, [searchQuery]);
+    }, [searchQuery, selectedMenuId]);
 
     const handleAddFood = (food: Food, portion: Portion) => {
         const foodServing: FoodServing = {
@@ -66,56 +68,39 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
         closeModal();
     };
 
-    const tabs: Tab[] = [
-        {
-            id: 0,
-            name: "All",
-        },
-        {
-            id: 1,
-            name: "Clark Kerr Campus",
-        },
-        {
-            id: 2,
-            name: "Crossroads",
-        },
-        {
-            id: 3,
-            name: "Foothill",
-        },
-        {
-            id: 4,
-            name: "Cafe 3",
-        },
-        {
-            id: 5,
-            name: "+ Add Menu",
-        }
-    ]
-
     return (
         <Animated.View style={[styles.resultContent, {display: visible ? "flex": "none", opacity: fadeAnim}]}>
             <Text style={styles.resultsDescription}>
                 {searchQuery ? `Showing Results for "${searchQuery}"` : "Search for foods to add"}
             </Text>
             
-            <View style={styles.menuTabsContainer}>
-                <MenuTabs tabs={tabs} selected={selected} setSelected={(tab: number)=>setSelected(tab)} />
+            <View style={styles.menuPickerContainer}>
+                <MenuSpinner
+                    menus={menus}
+                    selectedMenuId={selectedMenuId}
+                    onSelect={setSelectedMenuId}
+                    loading={menusLoading}
+                />
             </View>
 
-            <FlatList
-                data={searchResults}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <SearchFoodCard 
-                        food={item} 
-                        onAdd={handleAddFood}
-                    />
-                )}
-                contentContainerStyle={styles.resultsList}
-            />
+            {isLoading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={Colors.calgold} />
+                </View>
+            ) : (
+                <FlatList
+                    data={searchResults}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                        <SearchFoodCard 
+                            food={item} 
+                            onAdd={handleAddFood}
+                        />
+                    )}
+                    contentContainerStyle={styles.resultsList}
+                />
+            )}
 
-            {/* This is a hack to close the modal when the user scrolls. Jank motherfucking solution, I hate it so much */}
             <Pressable style={{width: "100%", height: 5000 }} onPress={()=>closeModal()}/>
         </Animated.View>
     )
@@ -144,10 +129,13 @@ const styles = StyleSheet.create({
     resultsList: {
         padding: 10,
         gap: 10,
+        paddingBottom: 40,
         backgroundColor: Colors.white,
     },
-    menuTabsContainer: {
-        // backgroundColor: "red",
+    menuPickerContainer: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        backgroundColor: Colors.white,
     },
     loadingContainer: {
         flex: 1,
