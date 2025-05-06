@@ -169,14 +169,22 @@ export async function retrieveDiningHallNutritionInfo(payloads: Record<string, a
           console.log(`Queueing request for ${kitchen}, ${meal}, ${food}`);
           const payload = payloads[kitchen][meal][food];
           
-          // Store the promise and track the associated metadata
-          const promise = retrieveNutrientInfo(payload).then(info => {
-            foodNames.push(food);
-            mealNames.push(meal);
-            kitchenNames.push(kitchen);
-            return info;
-          });
+          // // Store the promise and track the associated metadata
+          // const promise = retrieveNutrientInfo(payload).then(info => {
+          //   foodNames.push(food);
+          //   mealNames.push(meal);
+          //   kitchenNames.push(kitchen);
+          //   return info;
+          // });
           
+          // nutrientInfoPromises.push(promise);
+          const i = nutrientInfoPromises.length;
+
+          foodNames[i] = food;
+          mealNames[i] = meal;
+          kitchenNames[i] = kitchen;
+
+          const promise = retrieveNutrientInfo(payload).then(info => info);
           nutrientInfoPromises.push(promise);
         }
       }
@@ -199,12 +207,12 @@ export async function retrieveDiningHallNutritionInfo(payloads: Record<string, a
 (async () => {  
     let payloads = await retrieveDiningConfigs();
   
-    // const rawNutrientTable = await retrieveDiningHallNutritionInfo(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
-    // const standardizedNutrientTable = standardizeRawNutrientTable(rawNutrientTable);
-    // fs.writeFileSync('nutrient_table.json', JSON.stringify(standardizedNutrientTable, null, 2));
+    const rawNutrientTable = await retrieveDiningHallNutritionInfo(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
+    const standardizedNutrientTable = standardizeRawNutrientTable(rawNutrientTable);
+    fs.writeFileSync('nutrient_table.json', JSON.stringify(standardizedNutrientTable, null, 2));
     
     // use cached nutrient table
-    const standardizedNutrientTable = JSON.parse(fs.readFileSync('nutrient_table.json', 'utf8'));
+    // const standardizedNutrientTable = JSON.parse(fs.readFileSync('nutrient_table.json', 'utf8'));
     
 
     // Convert it to a row-wise array of objects
@@ -214,6 +222,8 @@ export async function retrieveDiningHallNutritionInfo(payloads: Record<string, a
     const rows = Array.from({ length: numRows }, (_, i) =>
       Object.fromEntries(keys.map((key) => [key, standardizedNutrientTable[key][i]]))
     );
+
+    // console.log(rows);
 
     // Convert to CSV with NO quotes
     const csv = Papa.unparse(rows, {

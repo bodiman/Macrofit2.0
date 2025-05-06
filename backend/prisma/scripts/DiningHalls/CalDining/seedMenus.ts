@@ -129,7 +129,7 @@ async function main() {
                                 }
                                 return {
                                     metric_id: metric.id,
-                                    value: record[csvKey as keyof FoodRecord] as number
+                                    value: (record[csvKey as keyof FoodRecord] as number)
                                 };
                             })
                         }
