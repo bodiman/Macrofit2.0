@@ -38,7 +38,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
 
     useEffect(() => {
         const fetchFoods = async () => {
-            if (searchQuery && selectedMenuId) {
+            if (selectedMenuId) {
                 setIsLoading(true);
                 try {
                     const results = await searchMenuFoods(selectedMenuId, searchQuery);
