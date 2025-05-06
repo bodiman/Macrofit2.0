@@ -12,7 +12,14 @@ export default function Layout() {
   const { clerkUser, needsRegistration, error, loading} = useUser();
 
   if (loading) {
-    return <Text>Loading...</Text>
+
+    return (<Text>
+        Loading...
+
+        {JSON.stringify(clerkUser)}
+
+        {JSON.stringify(error)}
+      </Text>)
   }
 
   if (!clerkUser || error) {

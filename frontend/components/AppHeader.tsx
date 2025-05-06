@@ -74,8 +74,8 @@ export default function AppHeader() {
                 <MacrosDisplay 
                     macroPreferences={preferences} 
                     macroValues={totalMacros}
-                    indicators={3} 
-                    radius={50} 
+                    indicators={4} 
+                    radius={30} 
                 />
             </View>  
         </View>        

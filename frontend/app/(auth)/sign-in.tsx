@@ -51,12 +51,7 @@ export default function SignInPage() {
     try {
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy: 'oauth_google',
-        // redirectUrl: 'macrofit://sso-callback'
         redirectUrl: Linking.createURL('sso-callback'),
-        // redirectUrl: AuthSession.makeRedirectUri(),
-        // redirectUrl: Platform.OS === 'web' 
-        //   ? 'http://localhost:8081/sso-callback'
-        //   : Linking.createURL('sso-callback'),
       })
 
       if (createdSessionId) {

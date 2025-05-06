@@ -41,7 +41,7 @@ export default function Page() {
             )}
             ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{ paddingBottom: 40, paddingTop: 40 }}
           />
           <FoodSearchModal 
             activeMeal={activeMeal} 
