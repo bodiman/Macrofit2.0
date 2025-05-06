@@ -41,6 +41,7 @@ export default function Page() {
             )}
             ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 40 }}
           />
           <FoodSearchModal 
             activeMeal={activeMeal} 
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
 
   },
   mealContent: {
-    paddingVertical: 20,
+    // paddingVertical: 200,
     width: "90%",
     marginLeft: "auto",
     marginRight: "auto",
