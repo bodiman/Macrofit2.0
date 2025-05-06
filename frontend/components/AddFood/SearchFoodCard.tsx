@@ -5,6 +5,7 @@ import { Text, View, StyleSheet, TouchableOpacity, TextInput } from 'react-nativ
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import UnitSpinner from '../Spinner/UnitSpinner';
+import useUser from '@/app/hooks/useUser';
 
 type Props = {
     food: Food,
@@ -13,13 +14,12 @@ type Props = {
 
 export default function SearchFoodCard({ food, onAdd }: Props) {
     const [unit, setUnit] = useState<Unit>(servingUnits[0]);
-    const [quantity, setQuantity] = useState(0);
-    const [stringQuantity, setStringQuantity] = useState('0');
+    const { preferences } = useUser();
 
     const handleAdd = () => {
         const portion: Portion = {
             unit,
-            quantity: parseFloat(stringQuantity) || 0
+            quantity: 0
         };
         onAdd(food, portion);
     };
@@ -35,9 +35,15 @@ export default function SearchFoodCard({ food, onAdd }: Props) {
                 </Text>
             </View>
             <View style={styles.macrosContainer}>
-                <Text>
-                    {JSON.stringify(food.macros)}
-                </Text>
+                {
+                    preferences.map((preference) => {
+                        return (
+                            <Text style={styles.macroText} key={preference.id}>
+                                {preference.name}: {(food.macros[preference.id] || 0).toFixed(2)}
+                            </Text>
+                        )
+                    })
+                }
             </View>
         </TouchableOpacity>
     )

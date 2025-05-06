@@ -234,6 +234,8 @@ export async function retrieveDiningHallNutritionInfo(payloads: Record<string, a
       header: true,       // include headers
     });
 
+    console.log(csv);
+
     // Save to file
     fs.writeFileSync('scraped_menu.csv', csv);
 })();

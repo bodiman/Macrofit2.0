@@ -18,7 +18,6 @@ type Props = PropsWithChildren<{
 export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUpdateMeal }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
 
-    // const [shoppingCart, setShoppingCart] = useState<FoodServing[]>([]);
     useEffect(() => {
         if (activeMeal !== null) {
             eventBus.emit('foodSearchModalOpen');
@@ -77,7 +76,7 @@ const styles = StyleSheet.create({
       height: '100%',
       width: '100%',
     //   backgroundColor: "red",
-      paddingHorizontal: 20,
+    //   paddingHorizontal: 20,
       borderTopRightRadius: 18,
       borderTopLeftRadius: 18,
       position: 'absolute',

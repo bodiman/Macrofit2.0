@@ -1,7 +1,7 @@
 import prisma from '../../prisma_client';
 
 const defaultMetrics = [
-  { name: 'Calories', unit: 'kcal', description: 'Total energy content', id: "calories" },
+  { name: 'Calories', unit: '', description: 'Total energy content', id: "calories" },
   { name: 'Protein', unit: 'g', description: 'Protein content', id: "protein" },
   { name: 'Carbohydrates', unit: 'g', description: 'Total carbohydrates', id: "carbohydrates" },
   { name: 'Fat', unit: 'g', description: 'Total fat content', id: "fat" },
