@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
-        maxHeight: '80%',
+        // maxHeight: '80%',
     },
     buttonContainer: {
         width: "100%",

@@ -34,6 +34,7 @@ model Food {
   description String?
   kitchen_id  String
   active      Boolean
+  updated     DateTime    @default(now()) @updatedAt
   kitchen     Kitchen     @relation(fields: [kitchen_id], references: [id])
   macros      FoodMacro[]
 

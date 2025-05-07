@@ -137,7 +137,8 @@ exports.Prisma.FoodScalarFieldEnum = {
   name: 'name',
   description: 'description',
   kitchen_id: 'kitchen_id',
-  active: 'active'
+  active: 'active',
+  updated: 'updated'
 };
 
 exports.Prisma.FoodMacroScalarFieldEnum = {

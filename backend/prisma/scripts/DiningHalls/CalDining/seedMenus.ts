@@ -129,9 +129,23 @@ async function main() {
             kitchenMap.set(kitchenName, kitchen.id);
         }
 
+        // Set foods as inactive if they haven't been updated in the last 14 hours
+        const fourteenHoursAgo = new Date(now.getTime() - (14 * 60 * 60 * 1000));
+        await prisma.food.updateMany({
+            where: {
+                updated: {
+                    lt: fourteenHoursAgo
+                },
+                active: true
+            },
+            data: {
+                active: false
+            }
+        });
+
         // Process each food record
         for (const record of records) {
-            const foodId = `${record.kitchen}-${record.meal}-${record.name}`
+            const foodId = `${record.kitchen}-${record.name}`
                 .toLowerCase()
                 .replace(/\s+/g, '-')
                 .replace(/[^a-z0-9-]/g, '');
