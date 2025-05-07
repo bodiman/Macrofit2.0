@@ -1,5 +1,5 @@
 import Colors from "@/styles/colors"
-import { Text, View, StyleSheet } from "react-native"
+import { Text, View, StyleSheet, TouchableOpacity } from "react-native"
 import Logo from "./Logo"
 import MacrosDisplay from "./MacroDisplay/MacrosDisplay"
 import { Macros } from "@/tempdata"
@@ -10,16 +10,38 @@ import storage from "@/app/storage/storage"
 import eventBus from "@/app/storage/eventEmitter"
 import useShoppingCart from "@/app/hooks/useShoppingCart"
 import useUser from "@/app/hooks/useUser"
+import Svg, { Polygon } from "react-native-svg"
+
+// Wide Up Arrow
+export function WideUpArrow({ width = 15, height = 10, color = 'black' }) {
+    return (
+      <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        <Polygon
+          points={`${width / 2},0 0,${height} ${width},${height}`}
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+  
+  // Wide Down Arrow
+  export function WideDownArrow({ width = 15, height = 10, color = 'black' }) {
+    return (
+      <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        <Polygon
+          points={`0,0 ${width},0 ${width / 2},${height}`}
+          fill={color}
+        />
+      </Svg>
+    );
+  }
 
 export default function AppHeader() {
     const { meals } = useMeals();
     const { preferences } = useUser();
-    // const [shoppingCart, setShoppingCart] = useState(() => {
-    //     const cachedCart = storage.getString('shoppingCart');
-    //     return cachedCart ? JSON.parse(cachedCart) : [];
-    // });
     const { shoppingCart, setShoppingCart } = useShoppingCart();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showMacros, setShowMacros] = useState(true);
 
     useEffect(() => {
         const handleCartUpdate = () => {
@@ -56,7 +78,6 @@ export default function AppHeader() {
             combined[key] = (combined[key] || 0) + value;
         }
     
-        
         // Only include cart macros when modal is open
         if (isModalOpen) {
             for (const [key, value] of Object.entries(cartMacros)) {
@@ -69,15 +90,27 @@ export default function AppHeader() {
 
     return (
         <View style={styles.header}>
-            <Logo size1={25} size2={25} theme={"dark"} />
+            <View style={styles.toggleContainer}>
+                <Logo size1={25} size2={25} theme={"dark"} />
+
+                <TouchableOpacity 
+                    style={styles.toggleButton}
+                    onPress={() => setShowMacros(!showMacros)}
+                >
+                    {showMacros ? <WideUpArrow /> : <WideDownArrow />}
+                </TouchableOpacity>
+            </View>
+
             <View style={styles.globalMacroContainer}>
-                <MacrosDisplay 
-                    macroPreferences={preferences} 
-                    macroValues={totalMacros}
-                    indicators={4} 
-                    radius={30} 
-                />
-            </View>  
+                {showMacros && (
+                    <MacrosDisplay 
+                        macroPreferences={preferences} 
+                        macroValues={totalMacros}
+                        indicators={4} 
+                        radius={30} 
+                    />
+                )}
+            </View>
         </View>        
     )
 }
@@ -85,9 +118,9 @@ export default function AppHeader() {
 const styles = StyleSheet.create({
     header: {
         backgroundColor: Colors.white,
-        padding: 10,
+        // padding: 10,
         paddingHorizontal: 20,
-        paddingBottom: 10,
+        // paddingBottom: 10,
         borderBottomColor: 'rgba(0, 0, 0, 0.25)',
         borderBottomWidth: 2,
         borderBottomLeftRadius: 5,
@@ -98,6 +131,26 @@ const styles = StyleSheet.create({
         width: "100%",
         marginLeft: "auto",
         marginRight: "auto",
-        marginTop: 10,
+        alignItems: 'center',
+        paddingBottom: 5,
     },
-})
+    toggleButton: {
+        // borderWidth: 1,
+        borderBottomWidth: 0,
+        borderColor: Colors.gray,
+        borderRadius: 2,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        paddingVertical: 2,
+        paddingHorizontal: 5,
+    },
+    toggleButtonText: {
+        color: Colors.gray,
+        fontSize: 12,
+        // alignSelf: 'center',
+    },
+    toggleContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+});
