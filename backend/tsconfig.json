@@ -10,6 +10,7 @@
         "skipLibCheck": true,
         "baseUrl": ".",
         "paths": {
+            "@utils/*": ["./utils/*"],
             "@shared/*": ["./../shared/*"]
         }
     }

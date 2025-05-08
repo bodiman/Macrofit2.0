@@ -1,6 +1,7 @@
 import prisma from '../../prisma_client';
+import nutritionixTable from '../../utils/nutritionix_table';
 
-const defaultMetrics = [
+const specificMetrics = [
   { name: 'Calories', unit: '', description: 'Total energy content', id: "calories" },
   { name: 'Protein', unit: 'g', description: 'Protein content', id: "protein" },
   { name: 'Carbohydrates', unit: 'g', description: 'Total carbohydrates', id: "carbohydrates" },
@@ -20,21 +21,35 @@ const defaultMetrics = [
   { name: 'Trans Fat', unit: 'g', description: 'Trans fat content', id: "trans_fat" },
 ];
 
-const defaultPreferences = {
-  Calories: { min: 1500, max: 2500 },
-  Protein: { min: 120, max: 200 },
-  Carbohydrates: { min: 100, max: 300 },
-  Fat: { min: 10, max: 75 },
-  Fiber: { min: 25, max: 40 },
-  Sugar: { min: 0, max: 50 },
-  Sodium: { min: 0, max: 2300 },
-  Cholesterol: { min: 0, max: 300 },
-  'Saturated Fat': { min: 0, max: 20 },
-};
+const specificMetricIds = specificMetrics.map((metric) => metric.id);
+
+type TableEntry = {
+  attr_id: number,
+  '2018 NFP': number,
+  name: string,
+  unit: string,
+  id: string,
+}
+
+const defaultMetrics = nutritionixTable.map((metric) => {
+  const metricEntry = metric as TableEntry;
+  return {
+    name: metricEntry.name,
+    unit: metricEntry.unit,
+    description: "",
+    id: metricEntry.id,
+  }
+}).filter((metric) => {
+  // filter out speficifMetrics
+  return !specificMetricIds.includes(metric.id);
+});
+
+const allMetrics = [...specificMetrics, ...defaultMetrics];
+// const allMetrics = specificMetrics;
 
 async function main() {
   // Create default metrics if they don't exist
-  for (const metric of defaultMetrics) {
+  for (const metric of allMetrics) {
     await prisma.nutritionalMetric.upsert({
       where: { name: metric.name },
       update: {},

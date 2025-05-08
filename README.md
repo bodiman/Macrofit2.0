@@ -1,3 +1,9 @@
+May 8
+-----
+
+Yesterday I got started with the all menus section, but need to integrate the nutritionix api. Then, integrate the meal preferences as previously stated.
+
+
 May 7
 -----
 
