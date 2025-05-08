@@ -80,7 +80,6 @@ router.get('/search-all', async (req: Request, res: Response) => {
                     contains: query,
                     mode: 'insensitive'
                 },
-                active: true
             },
             include: {
                 macros: {
@@ -94,10 +93,10 @@ router.get('/search-all', async (req: Request, res: Response) => {
         // Transform the database results to match the Food type using the toMacros function
         
         // add on to the search, no caching for now
-        if (query.length >= 3) {
-            const nutritionixData = await getNutritionixData(query);
-            foods = [...foods, ...nutritionixData];
-        }
+        // if (query.length >= 3) {
+        //     const nutritionixData = await getNutritionixData(query);
+        //     foods = [...foods, ...nutritionixData];
+        // }
 
         const transformedFoods: Food[] = foods.map((food: FoodWithMacros) => ({
             id: food.id,

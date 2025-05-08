@@ -136,20 +136,6 @@ async function main() {
             kitchenMap.set(kitchenName, kitchen.id);
         }
 
-        // Set foods as inactive if they haven't been updated in the last 14 hours
-        const fourteenHoursAgo = new Date(now.getTime() - (14 * 60 * 60 * 1000));
-        await prisma.food.updateMany({
-            where: {
-                updated: {
-                    lt: fourteenHoursAgo
-                },
-                active: true
-            },
-            data: {
-                active: false
-            }
-        });
-
         // Process each food record
         for (const record of records) {
             const foodId = `${record.kitchen}-${record.name}`
@@ -167,7 +153,8 @@ async function main() {
                 await prisma.food.upsert({
                     where: { id: foodId },
                     update: {
-                        active: record.meal === meal
+                        active: true,
+                        updated: new Date()
                     },
                     create: {
                         id: foodId,
@@ -199,6 +186,21 @@ async function main() {
                 throw error; // Re-throw other errors
             }
         }
+
+        // Set foods as inactive if they haven't been updated in the last 14 hours
+        const fourteenHoursAgo = new Date(now.getTime() - (14 * 60 * 60 * 1000));
+        await prisma.food.updateMany({
+            where: {
+                updated: {
+                    // more than 14 hours ago
+                    lt: fourteenHoursAgo
+                },
+                active: true
+            },
+            data: {
+                active: false
+            }
+        });
 
         console.log('🌱 Today\'s menu seeded successfully');
     } catch (error) {

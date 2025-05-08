@@ -51,6 +51,7 @@ export async function getNutritionixData(query: string) {
             });
 
             const result = await response.json()
+
             const foodData = result['foods'][0];
             return {
                 name: foodData['food_name'],
