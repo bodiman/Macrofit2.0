@@ -20,4 +20,10 @@ export async function searchFoods(query: string): Promise<Food[]> {
         console.error('Error searching foods:', error);
         return [];
     }
+}
+
+export async function searchAllFoods(query: string): Promise<Food[]> {
+    const response = await fetch(`${serverAddress}/api/foods/search-all?query=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Failed to fetch foods');
+    return response.json();
 } 

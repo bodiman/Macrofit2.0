@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMenus, getMenuFoods } from '@/api/menu/route';
 import { Food } from '@shared/types/foodTypes';
-import { toMacros } from '@/lib/utils/toMacros';
 
 interface Menu {
     id: string;

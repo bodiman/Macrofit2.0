@@ -13,7 +13,14 @@ interface Props {
 export default function MenuSpinner({ menus, selectedMenuId, onSelect, loading = false }: Props) {
     const [modalVisible, setModalVisible] = useState(false);
 
-    const selectedMenu = menus.find(menu => menu.id === selectedMenuId);
+    const selectedMenu = selectedMenuId === 'all' 
+        ? { id: 'all', name: 'All Dining Halls' }
+        : menus.find(menu => menu.id === selectedMenuId);
+
+    const allMenus = [
+        { id: 'all', name: 'All Dining Halls' },
+        ...menus
+    ];
 
     return (
         <View style={styles.container}>
@@ -43,7 +50,7 @@ export default function MenuSpinner({ menus, selectedMenuId, onSelect, loading =
                         </View>
                         
                         <FlatList
-                            data={menus}
+                            data={allMenus}
                             keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity

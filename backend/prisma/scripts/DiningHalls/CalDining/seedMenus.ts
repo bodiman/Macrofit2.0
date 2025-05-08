@@ -76,7 +76,14 @@ async function main() {
         } else if (now.getHours() >= 16.5 && now.getHours() < 21.5) {
             meal = 'Dinner';
         } else {
-            meal = 'Breakfast';
+            // meal = 'Breakfast';
+            meal = 'Lunch'; // I don't eat breakfast. 
+            
+            // The fact that I'm doing this probably indicates I should
+            // track all published menus, and allow users to select which one they want to use.
+            // Concievably, I could have menus be a table separate from kitchens, and each menu
+            // would have an associated kitchen and date / time range. Then, users could select
+            // both a kitchen and a menu for their meal plan.
         }
     }
 

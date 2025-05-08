@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable, ActivityIndicator } from "react-native"
 import { useEffect, useRef, useState } from "react"
 import Colors from "@/styles/colors"
-import { searchFoods } from "@/api/foodSearch/route"
+import { searchFoods, searchAllFoods } from "@/api/foodSearch/route"
 import { Food, FoodServing, Portion } from "@shared/types/foodTypes"
 import SearchFoodCard from "./SearchFoodCard"
 import storage from "@/app/storage/storage"
@@ -19,7 +19,7 @@ type Props = {
 
 export default function ResultContent({ visible, searchQuery, onAddToCart, closeModal }: Props) {
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const [selectedMenuId, setSelectedMenuId] = useState<string>('');
+    const [selectedMenuId, setSelectedMenuId] = useState<string>('all');
     const [searchResults, setSearchResults] = useState<Food[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { menus, loading: menusLoading, searchMenuFoods, error } = useMenu();
@@ -38,7 +38,18 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
 
     useEffect(() => {
         const fetchFoods = async () => {
-            if (selectedMenuId) {
+            if (selectedMenuId === 'all' && searchQuery) {
+                setIsLoading(true);
+                try {
+                    const results = await searchAllFoods(searchQuery);
+                    setSearchResults(results);
+                } catch (error) {
+                    console.error('Error searching foods:', error);
+                    setSearchResults([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else if (selectedMenuId) {
                 setIsLoading(true);
                 try {
                     const results = await searchMenuFoods(selectedMenuId, searchQuery);
