@@ -1,5 +1,5 @@
 import prisma from '../../prisma_client';
-import nutritionixTable from '../../utils/nutritionix_table';
+import nutritionixTable from '../../utils/Nutritionix/nutritionix_table';
 
 const specificMetrics = [
   { name: 'Calories', unit: '', description: 'Total energy content', id: "calories" },
