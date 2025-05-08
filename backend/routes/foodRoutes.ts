@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../prisma_client';
+import { getNutritionixData } from '../utils/Nutritionix/nutritionix';
 
 interface Food {
     id: string;
@@ -73,7 +74,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
             return;
         }
 
-        const foods = await prisma.food.findMany({
+        let foods = await prisma.food.findMany({
             where: {
                 name: {
                     contains: query,
@@ -91,9 +92,20 @@ router.get('/search-all', async (req: Request, res: Response) => {
         });
 
         // Transform the database results to match the Food type using the toMacros function
+        
+        // add on to the search, no caching for now
+        if (query.length >= 3) {
+            const nutritionixData = await getNutritionixData(query);
+            foods = [...foods, ...nutritionixData];
+        }
+
         const transformedFoods: Food[] = foods.map((food: FoodWithMacros) => ({
             id: food.id,
             name: food.name,
+            description: `${food.name} from Common Foods`,
+            kitchen_id: "common_foods",
+            active: false,
+            updated_at: new Date(),
             macros: Object.fromEntries(
                 food.macros.map(macro => [
                     macro.metric.id,

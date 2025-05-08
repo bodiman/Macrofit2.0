@@ -38,7 +38,7 @@ async function getNutritionixCommonNames(query: string) {
     return uniqueFoods.map((food: any) => food.food_name).slice(0, 5);
 }
 
-async function getNutritionixData(query: string) {
+export async function getNutritionixData(query: string) {
     const commonFoods = await getNutritionixCommonNames(query);
 
     // asynchronously gather data for each common food
@@ -54,32 +54,24 @@ async function getNutritionixData(query: string) {
             const foodData = result['foods'][0];
             return {
                 name: foodData['food_name'],
+                id: `common-${foodData['food_name'].toLowerCase().replace(/ /g, '-')}`,
                 serving_size: foodData['serving_weight_grams'],
                 macros: foodData['full_nutrients']
             }
         })
     );
 
-    const formattedData = {
-        ...data[0],
-        macros: data[0].macros.map((macro: any) => {
-            return {
-                name: nutrient_map[macro.attr_id],
-                value: macro.value / data[0].serving_size,
-            }
-        })
-    }
-
-    return formattedData; // array of nutrition data for each food
+    return data.map((food: any) => {
+        return {
+            ...food,
+            macros: food.macros.map((macro: any) => {
+                return {
+                    metric: {
+                        id: nutrient_map[macro.attr_id],
+                    },
+                    value: macro.value / food.serving_size,
+                }
+            })
+        }
+    });
 }
-
-
-
-async function main() {
-    const data = await getNutritionixData("apple");
-    
-    console.log(data);
-
-}
-
-main();
