@@ -4,7 +4,7 @@
   "description": "Backend server for MacroFit application",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "ts-node server.ts",
     "dev": "nodemon server.js"
   },
   "dependencies": {
