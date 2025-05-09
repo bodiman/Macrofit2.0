@@ -13,7 +13,7 @@ import useUser from "@/app/hooks/useUser"
 import Svg, { Polygon } from "react-native-svg"
 
 // Wide Up Arrow
-export function WideUpArrow({ width = 15, height = 10, color = 'black' }) {
+export function WideUpArrow({ width = 10, height = 10, color = 'black' }) {
     return (
       <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <Polygon
@@ -25,7 +25,7 @@ export function WideUpArrow({ width = 15, height = 10, color = 'black' }) {
   }
   
   // Wide Down Arrow
-  export function WideDownArrow({ width = 15, height = 10, color = 'black' }) {
+  export function WideDownArrow({ width = 10, height = 10, color = 'black' }) {
     return (
       <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <Polygon
@@ -95,9 +95,10 @@ export default function AppHeader() {
                     style={styles.toggleContainer}
                     onPress={() => setShowMacros(!showMacros)}
                 >   
-                    {showMacros ? <WideUpArrow /> : <WideDownArrow />}
-
                     <Logo size1={25} size2={25} theme={"dark"} />
+                    <View style={[{transform: showMacros ? [{ translateY: 9 }] : [{ translateY: -5 }]}]}>
+                        {!showMacros ? <WideUpArrow /> : <WideDownArrow />}
+                    </View>
                 </TouchableOpacity>
             {/* </View> */}
 
@@ -107,7 +108,7 @@ export default function AppHeader() {
                         macroPreferences={preferences} 
                         macroValues={totalMacros}
                         indicators={4} 
-                        radius={30} 
+                        radius={40} 
                     />
                 )}
             </View>
@@ -152,6 +153,12 @@ const styles = StyleSheet.create({
     toggleContainer: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 5,
+        gap: 3,
+        paddingVertical: 2,
+        // transform: [{ translateX: -15 }],
+    },
+    toggleIcon: {
+        // width: 15,
+        // height: 15,
     },
 });

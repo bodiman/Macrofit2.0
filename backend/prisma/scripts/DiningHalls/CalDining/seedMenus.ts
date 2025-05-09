@@ -153,7 +153,8 @@ async function main() {
                 await prisma.food.upsert({
                     where: { id: foodId },
                     update: {
-                        active: record.meal === meal,
+                        // If you update it like this, right now, foods that appear in both lunch and dinner will become deactivated
+                        // active: record.meal === meal,
                         updated: new Date()
                     },
                     create: {
@@ -190,18 +191,18 @@ async function main() {
 
         // Set foods as inactive if they haven't been updated in the last 14 hours
         const fourteenHoursAgo = new Date(now.getTime() - (14 * 60 * 60 * 1000));
-        await prisma.food.updateMany({
-            where: {
-                updated: {
-                    // more than 14 hours ago
-                    lt: fourteenHoursAgo
-                },
-                active: true
-            },
-            data: {
-                active: false
-            }
-        });
+        // await prisma.food.updateMany({
+        //     where: {
+        //         updated: {
+        //             // more than 14 hours ago
+        //             lt: fourteenHoursAgo
+        //         },
+        //         active: true
+        //     },
+        //     data: {
+        //         active: false
+        //     }
+        // });
 
         console.log('🌱 Today\'s menu seeded successfully');
     } catch (error) {
