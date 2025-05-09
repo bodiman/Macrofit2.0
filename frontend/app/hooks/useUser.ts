@@ -30,7 +30,7 @@ export function useUser() {
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [preferences, setPreferencesState] = useState<UserPreference[]>(loadPreferences());
   const [macroPreferences, setMacroPreferences] = useState<MacroPreferences>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [error, setError] = useState<null | string>(null);
 

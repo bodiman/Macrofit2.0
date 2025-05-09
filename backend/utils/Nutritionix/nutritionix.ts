@@ -27,7 +27,7 @@ function getUniqueFoods(commonFoods: any[]) {
     return uniqueFoods;
 }
 
-async function getNutritionixCommonNames(query: string) {    
+export async function getNutritionixCommonNames(query: string) {    
     const response = await fetch(`https://trackapi.nutritionix.com/v2/search/instant/?query=${query}`, {
         headers: headers,
     });
@@ -35,12 +35,10 @@ async function getNutritionixCommonNames(query: string) {
     const commonFoods = data['common'];
     const uniqueFoods = getUniqueFoods(commonFoods);
 
-    return uniqueFoods.map((food: any) => food.food_name).slice(0, 5);
+    return uniqueFoods.map((food: any) => food.food_name);
 }
 
-export async function getNutritionixData(query: string) {
-    const commonFoods = await getNutritionixCommonNames(query);
-
+export async function getNutritionixData(commonFoods: string[]) {
     // asynchronously gather data for each common food
     const data = await Promise.all(
         commonFoods.map(async (food: string) => {
@@ -67,9 +65,7 @@ export async function getNutritionixData(query: string) {
             ...food,
             macros: food.macros.map((macro: any) => {
                 return {
-                    metric: {
-                        id: nutrient_map[macro.attr_id],
-                    },
+                    metric_id: nutrient_map[macro.attr_id],
                     value: macro.value / food.serving_size,
                 }
             })

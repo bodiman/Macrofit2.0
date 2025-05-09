@@ -50,11 +50,17 @@ const allMetrics = [...specificMetrics, ...defaultMetrics];
 async function main() {
   // Create default metrics if they don't exist
   for (const metric of allMetrics) {
-    await prisma.nutritionalMetric.upsert({
-      where: { name: metric.name },
-      update: {},
-      create: metric,
-    });
+    console.log("seeding metric", metric.id);
+    try {
+      await prisma.nutritionalMetric.upsert({
+        where: { name: metric.name },
+        update: {},
+        create: metric,
+      });
+    } catch (error) {
+      console.log("error seeding metric", metric.id);
+      // console.error(`Error creating metric ${metric.name}:`, error);
+    }
   }
 }
 

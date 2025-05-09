@@ -3584,8 +3584,18 @@ export namespace Prisma {
 
   export type AggregateFood = {
     _count: FoodCountAggregateOutputType | null
+    _avg: FoodAvgAggregateOutputType | null
+    _sum: FoodSumAggregateOutputType | null
     _min: FoodMinAggregateOutputType | null
     _max: FoodMaxAggregateOutputType | null
+  }
+
+  export type FoodAvgAggregateOutputType = {
+    serving_size: number | null
+  }
+
+  export type FoodSumAggregateOutputType = {
+    serving_size: number | null
   }
 
   export type FoodMinAggregateOutputType = {
@@ -3594,6 +3604,7 @@ export namespace Prisma {
     description: string | null
     kitchen_id: string | null
     active: boolean | null
+    serving_size: number | null
     updated: Date | null
   }
 
@@ -3603,6 +3614,7 @@ export namespace Prisma {
     description: string | null
     kitchen_id: string | null
     active: boolean | null
+    serving_size: number | null
     updated: Date | null
   }
 
@@ -3612,10 +3624,19 @@ export namespace Prisma {
     description: number
     kitchen_id: number
     active: number
+    serving_size: number
     updated: number
     _all: number
   }
 
+
+  export type FoodAvgAggregateInputType = {
+    serving_size?: true
+  }
+
+  export type FoodSumAggregateInputType = {
+    serving_size?: true
+  }
 
   export type FoodMinAggregateInputType = {
     id?: true
@@ -3623,6 +3644,7 @@ export namespace Prisma {
     description?: true
     kitchen_id?: true
     active?: true
+    serving_size?: true
     updated?: true
   }
 
@@ -3632,6 +3654,7 @@ export namespace Prisma {
     description?: true
     kitchen_id?: true
     active?: true
+    serving_size?: true
     updated?: true
   }
 
@@ -3641,6 +3664,7 @@ export namespace Prisma {
     description?: true
     kitchen_id?: true
     active?: true
+    serving_size?: true
     updated?: true
     _all?: true
   }
@@ -3683,6 +3707,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: FoodAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: FoodSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: FoodMinAggregateInputType
@@ -3713,6 +3749,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: FoodCountAggregateInputType | true
+    _avg?: FoodAvgAggregateInputType
+    _sum?: FoodSumAggregateInputType
     _min?: FoodMinAggregateInputType
     _max?: FoodMaxAggregateInputType
   }
@@ -3723,8 +3761,11 @@ export namespace Prisma {
     description: string | null
     kitchen_id: string
     active: boolean
+    serving_size: number
     updated: Date
     _count: FoodCountAggregateOutputType | null
+    _avg: FoodAvgAggregateOutputType | null
+    _sum: FoodSumAggregateOutputType | null
     _min: FoodMinAggregateOutputType | null
     _max: FoodMaxAggregateOutputType | null
   }
@@ -3749,6 +3790,7 @@ export namespace Prisma {
     description?: boolean
     kitchen_id?: boolean
     active?: boolean
+    serving_size?: boolean
     updated?: boolean
     kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
     macros?: boolean | Food$macrosArgs<ExtArgs>
@@ -3761,6 +3803,7 @@ export namespace Prisma {
     description?: boolean
     kitchen_id?: boolean
     active?: boolean
+    serving_size?: boolean
     updated?: boolean
     kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["food"]>
@@ -3771,6 +3814,7 @@ export namespace Prisma {
     description?: boolean
     kitchen_id?: boolean
     active?: boolean
+    serving_size?: boolean
     updated?: boolean
     kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["food"]>
@@ -3781,10 +3825,11 @@ export namespace Prisma {
     description?: boolean
     kitchen_id?: boolean
     active?: boolean
+    serving_size?: boolean
     updated?: boolean
   }
 
-  export type FoodOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "kitchen_id" | "active" | "updated", ExtArgs["result"]["food"]>
+  export type FoodOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "kitchen_id" | "active" | "serving_size" | "updated", ExtArgs["result"]["food"]>
   export type FoodInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     kitchen?: boolean | KitchenDefaultArgs<ExtArgs>
     macros?: boolean | Food$macrosArgs<ExtArgs>
@@ -3809,6 +3854,7 @@ export namespace Prisma {
       description: string | null
       kitchen_id: string
       active: boolean
+      serving_size: number
       updated: Date
     }, ExtArgs["result"]["food"]>
     composites: {}
@@ -4240,6 +4286,7 @@ export namespace Prisma {
     readonly description: FieldRef<"Food", 'String'>
     readonly kitchen_id: FieldRef<"Food", 'String'>
     readonly active: FieldRef<"Food", 'Boolean'>
+    readonly serving_size: FieldRef<"Food", 'Float'>
     readonly updated: FieldRef<"Food", 'DateTime'>
   }
     
@@ -8005,6 +8052,7 @@ export namespace Prisma {
     description: 'description',
     kitchen_id: 'kitchen_id',
     active: 'active',
+    serving_size: 'serving_size',
     updated: 'updated'
   };
 
@@ -8107,20 +8155,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'DateTime'
-   */
-  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
-    
-
-
-  /**
-   * Reference to a field of type 'DateTime[]'
-   */
-  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -8131,6 +8165,20 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
     
   /**
    * Deep Input Types
@@ -8238,6 +8286,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Food"> | string | null
     kitchen_id?: StringFilter<"Food"> | string
     active?: BoolFilter<"Food"> | boolean
+    serving_size?: FloatFilter<"Food"> | number
     updated?: DateTimeFilter<"Food"> | Date | string
     kitchen?: XOR<KitchenScalarRelationFilter, KitchenWhereInput>
     macros?: FoodMacroListRelationFilter
@@ -8249,6 +8298,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     kitchen_id?: SortOrder
     active?: SortOrder
+    serving_size?: SortOrder
     updated?: SortOrder
     kitchen?: KitchenOrderByWithRelationInput
     macros?: FoodMacroOrderByRelationAggregateInput
@@ -8264,6 +8314,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Food"> | string | null
     kitchen_id?: StringFilter<"Food"> | string
     active?: BoolFilter<"Food"> | boolean
+    serving_size?: FloatFilter<"Food"> | number
     updated?: DateTimeFilter<"Food"> | Date | string
     kitchen?: XOR<KitchenScalarRelationFilter, KitchenWhereInput>
     macros?: FoodMacroListRelationFilter
@@ -8275,10 +8326,13 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     kitchen_id?: SortOrder
     active?: SortOrder
+    serving_size?: SortOrder
     updated?: SortOrder
     _count?: FoodCountOrderByAggregateInput
+    _avg?: FoodAvgOrderByAggregateInput
     _max?: FoodMaxOrderByAggregateInput
     _min?: FoodMinOrderByAggregateInput
+    _sum?: FoodSumOrderByAggregateInput
   }
 
   export type FoodScalarWhereWithAggregatesInput = {
@@ -8290,6 +8344,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Food"> | string | null
     kitchen_id?: StringWithAggregatesFilter<"Food"> | string
     active?: BoolWithAggregatesFilter<"Food"> | boolean
+    serving_size?: FloatWithAggregatesFilter<"Food"> | number
     updated?: DateTimeWithAggregatesFilter<"Food"> | Date | string
   }
 
@@ -8557,6 +8612,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     active: boolean
+    serving_size: number
     updated?: Date | string
     kitchen: KitchenCreateNestedOneWithoutFoodsInput
     macros?: FoodMacroCreateNestedManyWithoutFoodInput
@@ -8568,6 +8624,7 @@ export namespace Prisma {
     description?: string | null
     kitchen_id: string
     active: boolean
+    serving_size: number
     updated?: Date | string
     macros?: FoodMacroUncheckedCreateNestedManyWithoutFoodInput
   }
@@ -8577,6 +8634,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
     kitchen?: KitchenUpdateOneRequiredWithoutFoodsNestedInput
     macros?: FoodMacroUpdateManyWithoutFoodNestedInput
@@ -8588,6 +8646,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     kitchen_id?: StringFieldUpdateOperationsInput | string
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
     macros?: FoodMacroUncheckedUpdateManyWithoutFoodNestedInput
   }
@@ -8598,6 +8657,7 @@ export namespace Prisma {
     description?: string | null
     kitchen_id: string
     active: boolean
+    serving_size: number
     updated?: Date | string
   }
 
@@ -8606,6 +8666,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -8615,6 +8676,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     kitchen_id?: StringFieldUpdateOperationsInput | string
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -8937,6 +8999,17 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
+  export type FloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -8974,7 +9047,12 @@ export namespace Prisma {
     description?: SortOrder
     kitchen_id?: SortOrder
     active?: SortOrder
+    serving_size?: SortOrder
     updated?: SortOrder
+  }
+
+  export type FoodAvgOrderByAggregateInput = {
+    serving_size?: SortOrder
   }
 
   export type FoodMaxOrderByAggregateInput = {
@@ -8983,6 +9061,7 @@ export namespace Prisma {
     description?: SortOrder
     kitchen_id?: SortOrder
     active?: SortOrder
+    serving_size?: SortOrder
     updated?: SortOrder
   }
 
@@ -8992,7 +9071,12 @@ export namespace Prisma {
     description?: SortOrder
     kitchen_id?: SortOrder
     active?: SortOrder
+    serving_size?: SortOrder
     updated?: SortOrder
+  }
+
+  export type FoodSumOrderByAggregateInput = {
+    serving_size?: SortOrder
   }
 
   export type BoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -9001,6 +9085,22 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedFloatFilter<$PrismaModel>
+    _min?: NestedFloatFilter<$PrismaModel>
+    _max?: NestedFloatFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -9015,17 +9115,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
-  export type FloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type FoodScalarRelationFilter = {
@@ -9072,22 +9161,6 @@ export namespace Prisma {
   export type FoodMacroSumOrderByAggregateInput = {
     id?: SortOrder
     value?: SortOrder
-  }
-
-  export type FloatWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedFloatFilter<$PrismaModel>
-    _min?: NestedFloatFilter<$PrismaModel>
-    _max?: NestedFloatFilter<$PrismaModel>
   }
 
   export type NutritionalMetricCountOrderByAggregateInput = {
@@ -9310,6 +9383,14 @@ export namespace Prisma {
     set?: boolean
   }
 
+  export type FloatFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
@@ -9360,14 +9441,6 @@ export namespace Prisma {
     create?: XOR<NutritionalMetricCreateWithoutFoodMacrosInput, NutritionalMetricUncheckedCreateWithoutFoodMacrosInput>
     connectOrCreate?: NutritionalMetricCreateOrConnectWithoutFoodMacrosInput
     connect?: NutritionalMetricWhereUniqueInput
-  }
-
-  export type FloatFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
   }
 
   export type FoodUpdateOneRequiredWithoutMacrosNestedInput = {
@@ -9641,20 +9714,6 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
-  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | FloatFieldRefInput<$PrismaModel>
     in?: number[] | ListFloatFieldRefInput<$PrismaModel>
@@ -9669,6 +9728,20 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type NestedFloatNullableFilter<$PrismaModel = never> = {
@@ -9753,6 +9826,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     active: boolean
+    serving_size: number
     updated?: Date | string
     macros?: FoodMacroCreateNestedManyWithoutFoodInput
   }
@@ -9762,6 +9836,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     active: boolean
+    serving_size: number
     updated?: Date | string
     macros?: FoodMacroUncheckedCreateNestedManyWithoutFoodInput
   }
@@ -9801,6 +9876,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Food"> | string | null
     kitchen_id?: StringFilter<"Food"> | string
     active?: BoolFilter<"Food"> | boolean
+    serving_size?: FloatFilter<"Food"> | number
     updated?: DateTimeFilter<"Food"> | Date | string
   }
 
@@ -9896,6 +9972,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     active: boolean
+    serving_size: number
     updated?: Date | string
     kitchen: KitchenCreateNestedOneWithoutFoodsInput
   }
@@ -9906,6 +9983,7 @@ export namespace Prisma {
     description?: string | null
     kitchen_id: string
     active: boolean
+    serving_size: number
     updated?: Date | string
   }
 
@@ -9951,6 +10029,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
     kitchen?: KitchenUpdateOneRequiredWithoutFoodsNestedInput
   }
@@ -9961,6 +10040,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     kitchen_id?: StringFieldUpdateOperationsInput | string
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -10185,6 +10265,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     active: boolean
+    serving_size: number
     updated?: Date | string
   }
 
@@ -10193,6 +10274,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
     macros?: FoodMacroUpdateManyWithoutFoodNestedInput
   }
@@ -10202,6 +10284,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
     macros?: FoodMacroUncheckedUpdateManyWithoutFoodNestedInput
   }
@@ -10211,6 +10294,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     active?: BoolFieldUpdateOperationsInput | boolean
+    serving_size?: FloatFieldUpdateOperationsInput | number
     updated?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

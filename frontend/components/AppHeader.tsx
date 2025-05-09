@@ -90,16 +90,16 @@ export default function AppHeader() {
 
     return (
         <View style={styles.header}>
-            <View style={styles.toggleContainer}>
-                <Logo size1={25} size2={25} theme={"dark"} />
-
+            {/* <View style={styles.toggleContainer}> */}
                 <TouchableOpacity 
-                    style={styles.toggleButton}
+                    style={styles.toggleContainer}
                     onPress={() => setShowMacros(!showMacros)}
-                >
+                >   
                     {showMacros ? <WideUpArrow /> : <WideDownArrow />}
+
+                    <Logo size1={25} size2={25} theme={"dark"} />
                 </TouchableOpacity>
-            </View>
+            {/* </View> */}
 
             <View style={styles.globalMacroContainer}>
                 {showMacros && (
@@ -152,5 +152,6 @@ const styles = StyleSheet.create({
     toggleContainer: {
         flexDirection: "row",
         alignItems: "center",
+        gap: 5,
     },
 });

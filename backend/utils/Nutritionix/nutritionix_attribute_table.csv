@@ -13,12 +13,12 @@ attr_id,2018 NFP,usda_tag,name,unit,id
 203,1,PROCNT,Protein,g,protein
 269,1,SUGAR,"Sugars, total",g,sugar
 539,1,SUGAR_ADD,"Sugars, added",g,added_sugar
-324,1,VITD,Vitamin D,IU,vitamin_d
+324,1,VITD,Vitamin D (IU),IU,vitamin_d_iu
 513,0,ALA_G,Alanine,g,alanine
 221,0,ALC,"Alcohol, ethyl",g,alcohol
 511,0,ARG_G,Arginine,g,arginine
 207,0,ASH,Ash,g,ash
-514,0,ASP_G,Aspartic acid,g,aspartic acid
+514,0,ASP_G,Aspartic acid,g,aspartic_acid
 454,0,BETN,Betaine,mg,betaine
 262,0,CAFFN,Caffeine,mg,caffeine
 639,0,CAMD5,Campesterol,mg,campesterol
@@ -84,8 +84,8 @@ attr_id,2018 NFP,usda_tag,name,unit,id
 313,0,FLD,"Fluoride, F",µg,fluoride
 417,0,FOL,"Folate, total",µg,folate
 431,0,FOLAC,Folic acid,µg,folic_acid
-435,0,FOLDFE,"Folate, DFE",µg,folate
-432,0,FOLFD,"Folate, food",µg,folate
+435,0,FOLDFE,"Folate, DFE",µg,folate_dfe
+432,0,FOLFD,"Folate, food",µg,folate_food
 212,0,FRUS,Fructose,g,fructose
 287,0,GALS,Galactose,g,galactose
 515,0,GLU_G,Glutamic acid,g,glutamic_acid
@@ -136,7 +136,7 @@ attr_id,2018 NFP,usda_tag,name,unit,id
 501,0,TRP_G,Tryptophan,g,tryptophan
 509,0,TYR_G,Tyrosine,g,tyrosine
 510,0,VAL_G,Valine,g,valine
-318,0,VITA_IU,"Vitamin A, IU",IU,vitamin_a
+318,0,VITA_IU,"Vitamin A, IU",IU,vitamin_a_iu
 320,0,VITA_RAE,"Vitamin A, RAE",µg,vitamin_a
 418,0,VITB12,Vitamin B-12,µg,vitamin_b12
 415,0,VITB6A,Vitamin B-6,mg,vitamin_b6

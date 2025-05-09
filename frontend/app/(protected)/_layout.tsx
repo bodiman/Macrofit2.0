@@ -16,6 +16,8 @@ export default function Layout() {
     return (<Text>
         Loading...
 
+        { loading ? "loading" : "not loading"}
+
         {JSON.stringify(clerkUser)}
 
         {JSON.stringify(error)}

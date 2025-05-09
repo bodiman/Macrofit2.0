@@ -153,11 +153,12 @@ async function main() {
                 await prisma.food.upsert({
                     where: { id: foodId },
                     update: {
-                        active: true,
+                        active: record.meal === meal,
                         updated: new Date()
                     },
                     create: {
                         id: foodId,
+                        serving_size: record.serving_size * 28.35,
                         name: record.name,
                         kitchen_id: kitchenId,
                         active: record.meal === meal,
