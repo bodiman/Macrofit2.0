@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable, ActivityIndicator } from "react-native"
 import { useEffect, useRef, useState } from "react"
 import Colors from "@/styles/colors"
-import { searchFoods, searchAllFoods } from "@/api/foodSearch/route"
+import { searchAllFoods } from "@/api/foodSearch/route"
 import { Food, FoodServing, Portion } from "@shared/types/foodTypes"
 import SearchFoodCard from "./SearchFoodCard"
 import storage from "@/app/storage/storage"

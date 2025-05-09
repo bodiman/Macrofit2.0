@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "ts-node server.ts",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "postinstall": "psql \"$DATABASE_URL\" < macrofit.sql"
   },
   "dependencies": {
     "@prisma/client": "^6.7.0",
