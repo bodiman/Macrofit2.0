@@ -200,11 +200,12 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": "postgresql://bodi@localhost:5432/macrofit?schema=public"
+        "value": null
       }
     }
   },
