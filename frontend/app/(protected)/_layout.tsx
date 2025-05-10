@@ -33,7 +33,7 @@ export default function Layout() {
     // signOut();
     // return <Redirect href="/landing" />
     return <Text>
-      No clerk user or error
+      {error ? error : "No clerk user"}
     </Text>
   }
 
