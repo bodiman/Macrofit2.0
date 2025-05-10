@@ -88,6 +88,16 @@ async function main() {
     }
 
     try {
+        // Set all foods to inactive
+        await prisma.food.updateMany({
+            where: {
+                active: true
+            },
+            data: {
+                active: false
+            }
+        });
+
         // Read the CSV file
         const csvFilePath = path.join(__dirname, 'scraped_menu.csv');
         let fileContent = fs.readFileSync(csvFilePath, 'utf-8');
@@ -136,6 +146,8 @@ async function main() {
             kitchenMap.set(kitchenName, kitchen.id);
         }
 
+        const foodIds: string[] = [];
+
         // Process each food record
         for (const record of records) {
             const foodId = `${record.kitchen}-${record.name}`
@@ -153,8 +165,6 @@ async function main() {
                 await prisma.food.upsert({
                     where: { id: foodId },
                     update: {
-                        // If you update it like this, right now, foods that appear in both lunch and dinner will become deactivated
-                        // active: record.meal === meal,
                         updated: new Date()
                     },
                     create: {
@@ -180,6 +190,7 @@ async function main() {
                 });
 
                 console.log(`Processed: ${record.name} from ${record.kitchen}`);
+                foodIds.push(foodId);
             } catch (error: any) {
                 if (error?.code === 'P2002') { // Prisma unique constraint violation
                     console.log(`Skipping duplicate food: ${record.name} from ${record.kitchen}`);
@@ -189,20 +200,13 @@ async function main() {
             }
         }
 
-        // Set foods as inactive if they haven't been updated in the last 14 hours
-        const fourteenHoursAgo = new Date(now.getTime() - (14 * 60 * 60 * 1000));
-        // await prisma.food.updateMany({
-        //     where: {
-        //         updated: {
-        //             // more than 14 hours ago
-        //             lt: fourteenHoursAgo
-        //         },
-        //         active: true
-        //     },
-        //     data: {
-        //         active: false
-        //     }
-        // });
+        // Set foods in foodIds to active
+        await prisma.food.updateMany({
+            where: {
+                id: { in: foodIds }
+            },
+            data: { active: true }
+        });
 
         console.log('🌱 Today\'s menu seeded successfully');
     } catch (error) {
