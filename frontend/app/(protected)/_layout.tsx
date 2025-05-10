@@ -27,8 +27,14 @@ export default function Layout() {
 
   if (!clerkUser || error) {
     console.log("no clerk user or error")
-    signOut();
-    return <Redirect href="/landing" />
+    if (error) {
+      console.log("error", error)
+    }
+    // signOut();
+    // return <Redirect href="/landing" />
+    return <Text>
+      No clerk user or error
+    </Text>
   }
 
   if (needsRegistration) {
