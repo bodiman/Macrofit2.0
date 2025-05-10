@@ -73,7 +73,7 @@ export default function SignInPage() {
         <Text style={styles.googleButtonText}>Continue with Google</Text>
       </TouchableOpacity>
 
-      <View style={styles.divider}>
+      {/* <View style={styles.divider}>
         <View style={styles.dividerLine} />
         <Text style={styles.dividerText}>or</Text>
         <View style={styles.dividerLine} />
@@ -98,7 +98,7 @@ export default function SignInPage() {
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push('/sign-up')}>
         <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   )
 }
