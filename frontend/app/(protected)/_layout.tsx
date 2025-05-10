@@ -26,18 +26,9 @@ export default function Layout() {
   }
 
   if (!clerkUser || error) {
-    return (<Text>
-      Loading...
-
-      { loading ? "loading" : "not loading"}
-
-      {JSON.stringify(clerkUser)}
-
-      {JSON.stringify(error)}
-    </Text>)
-    // console.log("no clerk user or error")
-    // signOut();
-    // return <Redirect href="/landing" />
+    console.log("no clerk user or error")
+    signOut();
+    return <Redirect href="/landing" />
   }
 
   if (needsRegistration) {
