@@ -132,7 +132,9 @@ export function useUser() {
         if (e.message && e.message.includes('404')) {
           setNeedsRegistration(true);
         } else {
-          console.error('Failed to fetch app user:', e);
+          console.log("this is the error you are looking for")
+          console.log(e)
+          // console.error('Failed to fetch app user:', e);
           setError('Failed to fetch user');
         }
       } finally {
