@@ -21,12 +21,23 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
-// CORS configuration
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:8081')
+  .split(',')
+  .map(origin => origin.trim());
+
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:8081',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+  origin: function (origin: string, callback: (err: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'), false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 // Middleware
