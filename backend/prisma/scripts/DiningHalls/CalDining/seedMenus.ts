@@ -146,10 +146,8 @@ async function main() {
             kitchenMap.set(kitchenName, kitchen.id);
         }
 
-        const foodIds: string[] = [];
-
-        // Process each food record
-        for (const record of records) {
+        // Process each food record in parallel
+        const upsertPromises = records.map(async (record) => {
             const foodId = `${record.kitchen}-${record.name}`
                 .toLowerCase()
                 .replace(/\s+/g, '-')
@@ -190,20 +188,26 @@ async function main() {
                 });
 
                 console.log(`Processed: ${record.name} from ${record.kitchen}`);
-                foodIds.push(foodId);
+                if (record.meal === meal) {
+                    return foodId; // Return foodId for active foods
+                }
             } catch (error: any) {
                 if (error?.code === 'P2002') { // Prisma unique constraint violation
                     console.log(`Skipping duplicate food: ${record.name} from ${record.kitchen}`);
-                    continue;
+                    return null;
                 }
                 throw error; // Re-throw other errors
             }
-        }
+            return null;
+        });
 
-        // Set foods in foodIds to active
+        const results = await Promise.all(upsertPromises);
+        const activeFoodIds = results.filter((id): id is string => !!id);
+
+        // Set foods in activeFoodIds to active
         await prisma.food.updateMany({
             where: {
-                id: { in: foodIds }
+                id: { in: activeFoodIds }
             },
             data: { active: true }
         });
