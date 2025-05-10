@@ -45,7 +45,7 @@ export const useApi = () => {
                     statusText: response.statusText,
                     error
                 });
-                throw new Error(error.message || 'API request failed');
+                throw new Error(`${response.status} Error: ${error.error}`);
             }
 
             return response.json();
