@@ -48,7 +48,8 @@ const config: ExpoConfig = {
         "eas": {
             "projectId": "97579ad2-aa7e-4571-a57d-6b201f31c0f0"
         },
-        "SERVER_ADDRESS": process.env.SERVER_ADDRESS
+        "SERVER_ADDRESS": process.env.SERVER_ADDRESS,
+        "CLERK_PUBLISHABLE_KEY": process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
     }
 }
 
