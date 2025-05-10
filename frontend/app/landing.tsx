@@ -30,11 +30,11 @@ export default function Landing() {
                         </Link>
                     </Pressable>
 
-                    <Pressable style={styles.button}>
+                    {/* <Pressable style={styles.button}>
                         <Link href="../(auth)/sign-up" style={styles.buttonText}>
                             Sign Up
                         </Link>
-                    </Pressable>
+                    </Pressable> */}
                 </View>
             </SignedOut>
         </LinearGradient>
