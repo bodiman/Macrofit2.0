@@ -129,11 +129,16 @@ export function useUser() {
           await fetchPreferences(res.user_id);
         }
       } catch (e: any) {
+
+        console.log("this is the error you are looking for, failed to fetch app user")
+        console.log(e)
+
         if (e.message && e.message.includes('404')) {
+          console.log("setting needs registration to true")
           setNeedsRegistration(true);
         } else {
-          console.log("this is the error you are looking for")
-          console.log(e)
+          // console.log("this is the error you are looking for")
+          // console.log(e)
           // console.error('Failed to fetch app user:', e);
           setError('Failed to fetch user');
         }
