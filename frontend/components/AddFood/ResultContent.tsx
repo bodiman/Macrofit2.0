@@ -99,17 +99,23 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                     <ActivityIndicator size="large" color={Colors.calgold} />
                 </View>
             ) : (
-                <FlatList
-                    data={searchResults}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <SearchFoodCard 
-                            food={item} 
-                            onAdd={handleAddFood}
-                        />
-                    )}
-                    contentContainerStyle={styles.resultsList}
-                />
+                <View style={{width: "100%", height: "100%",}}>
+                    <FlatList
+                        data={searchResults}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <SearchFoodCard 
+                                food={item} 
+                                onAdd={handleAddFood}
+                            />
+                        )}
+                        contentContainerStyle={{backgroundColor: Colors.white, gap: 10, paddingBottom: 120}}
+                        style={{flexGrow: 1}}
+                        scrollEnabled={true}
+                    />
+                </View>
+
+                
             )}
 
             <Pressable style={{width: "100%", height: 5000 }} onPress={()=>closeModal()}/>
@@ -119,9 +125,17 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
 
 const styles = StyleSheet.create({
     resultContent: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        top: 0,
+        // backgroundColor: "pink",
+        height: "100%",
         backgroundColor: Colors.white,
         width: "100%",
-        zIndex: 0,
+        zIndex: 10,
+        elevation: 10,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
         shadowColor: Colors.black,
@@ -141,7 +155,8 @@ const styles = StyleSheet.create({
         padding: 10,
         gap: 10,
         paddingBottom: 40,
-        backgroundColor: Colors.white,
+        // backgroundColor: Colors.white,
+        backgroundColor: "red",
     },
     menuPickerContainer: {
         paddingHorizontal: 20,

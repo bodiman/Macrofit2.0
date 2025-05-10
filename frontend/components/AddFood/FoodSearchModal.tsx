@@ -99,23 +99,31 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
+        zIndex: 1,
+        // bottom: 0
+        // paddingBottom: 110,
         // maxHeight: '80%',
     },
     buttonContainer: {
         width: "100%",
         margin: "auto",
         gap: 20,
-        paddingVertical: 20,
+        // paddingVertical: 20,
         flexDirection: "row",
         justifyContent: "space-between",
         backgroundColor: Colors.white,
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 0,
+        // elevation: 0,
     },
     button: {
         backgroundColor: Colors.blue,
         padding: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
-        width: "80%",
         marginHorizontal: "auto",
     },
     buttonDisabled: {
