@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getMenus, getMenuFoods } from '@/api/menu/route';
+import { useMenuApi } from '@/lib/api/menu';
 import { Food } from '@shared/types/foodTypes';
 
 interface Menu {
@@ -13,7 +13,7 @@ export function useMenu() {
     const [menus, setMenus] = useState<Menu[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
+    const { getMenus, getMenuFoods } = useMenuApi();
     useEffect(() => {
         fetchMenus();
     }, []);

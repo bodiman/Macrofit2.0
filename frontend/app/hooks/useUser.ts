@@ -7,6 +7,7 @@ import { MacroPreferences } from '@/tempdata';
 import { toMacroPreference } from '@/lib/utils/toMacroPreferences';
 import storage from '@/app/storage/storage';
 import eventBus from '@/app/storage/eventEmitter';
+import { useApi } from '@/lib/api';
 
 type AppUser = {
   user_id: number;
@@ -26,7 +27,7 @@ export function useUser() {
   // console.log("server Address", serverAddress)
 
   const { user: clerkUser, isLoaded } = useClerkUser();
-  const { getToken } = useAuth();
+  const api = useApi();
 
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [preferences, setPreferencesState] = useState<UserPreference[]>(loadPreferences());
@@ -61,18 +62,7 @@ export function useUser() {
   const createUser = async (userData: { email: string; name: string }) => {
     try {
       setLoading(true);
-      const res = await fetch(`${serverAddress}/api/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to create user');
-      }
-
-      const data = await res.json();
-      console.log("data", data.user)
+      const data = await api.post('/api/register', userData);
       setAppUser(data.user);
       setPreferencesState(data.user.macroPreferences);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
@@ -94,24 +84,13 @@ export function useUser() {
     if (!appUser) return;
 
     try {
-      const res = await fetch(`${serverAddress}/api/user/preferences`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: appUser.user_id,
-          preferences: [preference],
-        }),
+      const updatedPreference: UserPreference[] = await api.put('/api/user/preferences', {
+        user_id: appUser.user_id,
+        preferences: [preference],
       });
-
-      if (!res.ok) {
-        throw new Error('Failed to update preferences');
-      }
-
-      const updatedPreference: UserPreference[] = await res.json();
       const updatedPreferences = preferences.map(p => 
         p.metric_id === updatedPreference[0].metric_id ? updatedPreference[0] : p
       );
-      
       setPreferencesState(updatedPreferences);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('preferencesUpdated');
@@ -123,15 +102,7 @@ export function useUser() {
 
   const fetchPreferences = async (userId: number) => {
     try {
-      const res = await fetch(`${serverAddress}/api/user/preferences?user_id=${userId}`, {
-        method: 'GET',
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to fetch preferences');
-      }
-
-      const data = await res.json();
+      const data = await api.get(`/api/user/preferences?user_id=${userId}`);
       setPreferencesState(data);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data));
       eventBus.emit('preferencesUpdated');
@@ -142,9 +113,6 @@ export function useUser() {
   };
 
   useEffect(() => {
-    console.log("fetching app user")
-    console.log(isLoaded, clerkUser)
-
     if (!isLoaded || !clerkUser) {
       setLoading(false);
       return;
@@ -155,24 +123,18 @@ export function useUser() {
         const params = new URLSearchParams({
           email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
         });
-        
-        console.log("fetching app user", `${serverAddress}/api/user?${params.toString()}`)
-        const res = await fetch(`${serverAddress}/api/user?${params.toString()}`, {
-          method: 'GET',
-        });
-
-        if (res.status === 404) {
+        const res = await api.get(`/api/user?${params.toString()}`);
+        setAppUser(res);
+        if (res.user_id) {
+          await fetchPreferences(res.user_id);
+        }
+      } catch (e: any) {
+        if (e.message && e.message.includes('404')) {
           setNeedsRegistration(true);
         } else {
-          const data = await res.json();
-          setAppUser(data);
-          if (data.user_id) {
-            await fetchPreferences(data.user_id);
-          }
+          console.error('Failed to fetch app user:', e);
+          setError('Failed to fetch user');
         }
-      } catch (e) {
-        console.error('Failed to fetch app user:', e);
-        setError('Failed to fetch user');
       } finally {
         setLoading(false);
       }

@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable, ActivityIndicator } from "react-native"
 import { useEffect, useRef, useState } from "react"
 import Colors from "@/styles/colors"
-import { searchAllFoods } from "@/api/foodSearch/route"
+import { useFoodSearchApi } from "@/lib/api/foodSearch"
 import { Food, FoodServing, Portion } from "@shared/types/foodTypes"
 import SearchFoodCard from "./SearchFoodCard"
 import storage from "@/app/storage/storage"
@@ -23,7 +23,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
     const [searchResults, setSearchResults] = useState<Food[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { menus, loading: menusLoading, searchMenuFoods, error } = useMenu();
-
+    const { searchAllFoods } = useFoodSearchApi();
     useEffect(() => {
         fadeAnim.setValue(0);
 
@@ -118,7 +118,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 
             )}
 
-            <Pressable style={{width: "100%", height: 5000 }} onPress={()=>closeModal()}/>
+            {/* <Pressable style={{width: "100%", height: 5000 }} onPress={()=>closeModal()}/> */}
         </Animated.View>
     )
 }
