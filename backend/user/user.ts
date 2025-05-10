@@ -34,7 +34,7 @@ export const createUser = async (email: string, name?: string) => {
     const metrics = await prisma.nutritionalMetric.findMany({
         where: {
             name: {
-            in: Object.keys(defaultPreferences),
+                in: Object.keys(defaultPreferences),
             },
         },
     });
@@ -51,7 +51,19 @@ export const createUser = async (email: string, name?: string) => {
         skipDuplicates: true,
     });
 
-    return { user };
+    // Fetch the user again with preferences to return
+    const userWithPreferences = await prisma.user.findUnique({
+        where: { user_id: user.user_id },
+        include: {
+            macroPreferences: {
+                include: {
+                    metric: true,
+                },
+            },
+        },
+    });
+
+    return { user: userWithPreferences };
 };
 
 export const getUser = async ({email, user_id}: {email?: string, user_id?: number}) => {

@@ -39,7 +39,7 @@ export function useUser() {
   useEffect(() => {
     const handleUpdate = () => {
       const updated = loadPreferences();
-      
+
       setPreferencesState(prev => {
         const prevStr = JSON.stringify(prev);
         const nextStr = JSON.stringify(updated);
@@ -72,6 +72,7 @@ export function useUser() {
       }
 
       const data = await res.json();
+      console.log("data", data.user)
       setAppUser(data.user);
       setPreferencesState(data.user.macroPreferences);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
