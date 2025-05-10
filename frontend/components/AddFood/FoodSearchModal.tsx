@@ -55,16 +55,8 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
                     <AddFood
                         shoppingCart={shoppingCart}
                         setShoppingCart={setShoppingCart}
+                        handleLog={handleLog}
                     />
-                </View>
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity 
-                        style={[styles.button, shoppingCart.length === 0 && styles.buttonDisabled]} 
-                        onPress={handleLog}
-                        disabled={shoppingCart.length === 0}
-                    >
-                        <Text style={styles.buttonText}>Log</Text>
-                    </TouchableOpacity>
                 </View>
             </View>
         </AnimatedModal>
@@ -99,10 +91,11 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
-        zIndex: 1,
+        zIndex: 2,
         // bottom: 0
         // paddingBottom: 110,
         // maxHeight: '80%',
+        // backgroundColor: "red",
     },
     buttonContainer: {
         width: "100%",
@@ -116,7 +109,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        zIndex: 0,
+        zIndex: 1,
         // elevation: 0,
     },
     button: {

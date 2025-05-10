@@ -17,9 +17,10 @@ import useUser from "@/app/hooks/useUser";
 type Props = {
     shoppingCart: FoodServing[],
     setShoppingCart: (cart: FoodServing[]) => void
+    handleLog: () => void
 }
 
-export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
+export default function AddFood({ shoppingCart, setShoppingCart, handleLog }: Props) {
     const [displayResults, setDisplayResults] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const totalMacros = useMacros(shoppingCart);
@@ -108,6 +109,15 @@ export default function AddFood({ shoppingCart, setShoppingCart }: Props) {
                     contentContainerStyle={styles.cartContent}
                 />
             </View>
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity 
+                    style={[styles.button, shoppingCart.length === 0 && styles.buttonDisabled]} 
+                    onPress={handleLog}
+                    disabled={shoppingCart.length === 0}
+                >
+                    <Text style={styles.buttonText}>Log</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     )
 }
@@ -116,6 +126,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.white,
+        // backgroundColor: "red",
     },
     macroContainer: {
         padding: 10,
@@ -162,6 +173,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1000,
+        // backgroundColor: "red",
     },
     shoppingCart: {
         flex: 1,
@@ -174,5 +186,37 @@ const styles = StyleSheet.create({
     cartContent: {
         padding: 10,
         gap: 10,
+    },
+
+    buttonContainer: {
+        width: "100%",
+        margin: "auto",
+        gap: 20,
+        // paddingVertical: 20,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        backgroundColor: Colors.white,
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1,
+        // elevation: 0,
+    },
+    button: {
+        backgroundColor: Colors.blue,
+        padding: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        width: "100%",
+    },
+    buttonDisabled: {
+        opacity: 0.5,
+    },
+    buttonText: {
+        fontSize: 18,
+        fontWeight: 600,
+        color: Colors.white,
+        margin: "auto"
     },
 });
