@@ -40,7 +40,7 @@ export default function SignInPage() {
       })
 
       // if (completeSignIn.status === 'complete') {
-      //   router.replace('/redirect')
+      //   router.replace('/(protected)/home')
       // }
     } catch (err) {
       console.error(JSON.stringify(err, null, 2))
@@ -56,7 +56,7 @@ export default function SignInPage() {
 
       if (createdSessionId) {
         setActive?.({ session: createdSessionId })
-        // router.replace('/redirect')
+        // router.replace('/(protected)/home')
       }
     } catch (err) {
       console.error('OAuth error', err)

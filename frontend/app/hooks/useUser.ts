@@ -23,6 +23,7 @@ function loadPreferences(): UserPreference[] {
 
 export function useUser() {
   const serverAddress = Constants.expoConfig?.extra?.SERVER_ADDRESS;
+  // console.log("server Address", serverAddress)
 
   const { user: clerkUser, isLoaded } = useClerkUser();
   const { getToken } = useAuth();
@@ -38,6 +39,7 @@ export function useUser() {
   useEffect(() => {
     const handleUpdate = () => {
       const updated = loadPreferences();
+      
       setPreferencesState(prev => {
         const prevStr = JSON.stringify(prev);
         const nextStr = JSON.stringify(updated);
@@ -139,14 +141,21 @@ export function useUser() {
   };
 
   useEffect(() => {
-    if (!isLoaded || !clerkUser) return;
+    console.log("fetching app user")
+    console.log(isLoaded, clerkUser)
+
+    if (!isLoaded || !clerkUser) {
+      setLoading(false);
+      return;
+    }
 
     const fetchAppUser = async () => {
       try {
         const params = new URLSearchParams({
           email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
         });
-
+        
+        console.log("fetching app user", `${serverAddress}/api/user?${params.toString()}`)
         const res = await fetch(`${serverAddress}/api/user?${params.toString()}`, {
           method: 'GET',
         });

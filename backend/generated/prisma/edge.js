@@ -199,12 +199,11 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {
         "fromEnvVar": "DATABASE_URL",
-        "value": null
+        "value": "postgresql://postgres:bChCZwGeAXZxsfBYDjhpqhUanFWcQAun@trolley.proxy.rlwy.net:17262/railway?sslmode=require"
       }
     }
   },

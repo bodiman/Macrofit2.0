@@ -42,15 +42,14 @@ const config: ExpoConfig = {
     "typedRoutes": true
     },
     "extra": {
-    "router": {
-        "origin": false
-    },
-    "eas": {
-        "projectId": "97579ad2-aa7e-4571-a57d-6b201f31c0f0"
-    },
-    "SERVER_ADDRESS": process.env.SERVER_ADDRESS
-    // }
-}
+        "router": {
+            "origin": false
+        },
+        "eas": {
+            "projectId": "97579ad2-aa7e-4571-a57d-6b201f31c0f0"
+        },
+        "SERVER_ADDRESS": process.env.SERVER_ADDRESS
+    }
 }
 
 export default config;

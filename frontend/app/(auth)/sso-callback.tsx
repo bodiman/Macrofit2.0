@@ -15,5 +15,5 @@ export default function SSOCallback() {
     })();
   }, []);
 
-  return <Redirect href="/"/>;
+  return <Redirect href="/(protected)/home"/>;
 }

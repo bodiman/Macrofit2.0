@@ -6,6 +6,7 @@ import AppHeader from '@/components/AppHeader'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import useUser from '../hooks/useUser'
+import { useEffect } from 'react';
 
 export default function Layout() {
   const { signOut } = useAuth();
@@ -25,8 +26,18 @@ export default function Layout() {
   }
 
   if (!clerkUser || error) {
-    signOut();
-    return <Redirect href="/landing" />
+    return (<Text>
+      Loading...
+
+      { loading ? "loading" : "not loading"}
+
+      {JSON.stringify(clerkUser)}
+
+      {JSON.stringify(error)}
+    </Text>)
+    // console.log("no clerk user or error")
+    // signOut();
+    // return <Redirect href="/landing" />
   }
 
   if (needsRegistration) {
@@ -43,7 +54,7 @@ export default function Layout() {
             title: "Menus",
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="map" color={color} />,
           }} />
-          <Tabs.Screen name='index' options={{
+          <Tabs.Screen name='home' options={{
             title: "Home",
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
           }} />
