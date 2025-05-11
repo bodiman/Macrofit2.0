@@ -100,6 +100,7 @@ const styles = StyleSheet.create({
         gap: 10,
         flexShrink: 1,   // Allow the text to shrink when space is tight
         flexGrow: 1,
+        width: "100%",
     },
     foodTitle: {
         textTransform: "capitalize",
@@ -113,6 +114,10 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
+        // backgroundColor: "red",
+        marginLeft: 25,
+        // marginRight: 20,
+        // width: "100%",
     },
     portionBox: {
         backgroundColor: "white",

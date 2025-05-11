@@ -51,7 +51,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
                   styles.menu,
                   {
                     top: position.y,
-                    left: position.x + position.width - dropdownWidth,
+                    left: position.x + position.width / 2,
                     width: dropdownWidth,
                   },
                 ]}>
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
     },
     menu: {
-        position: 'absolute',
+        position: 'relative',
         width: 80,
         backgroundColor: 'white',
         borderRadius: 5,
