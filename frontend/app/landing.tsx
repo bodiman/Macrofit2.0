@@ -20,7 +20,7 @@ export default function Landing() {
             <SignedOut>
                 <View style={styles.logoContainer}>
                     <Logo size1={60} size2={60} theme={"dark"} />
-                    <Text style={styles.subtitle}>Lock The Fuck In</Text>
+                    <Text style={styles.subtitle}>Lock In</Text>
                 </View>
                 
                 <View style={styles.buttonContainer}>
