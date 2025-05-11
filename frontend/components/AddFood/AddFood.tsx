@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
         flex: 1,
         width: "100%",
         backgroundColor: Colors.white,
+        paddingBottom: 40,
     },
     cartList: {
         flex: 1,
