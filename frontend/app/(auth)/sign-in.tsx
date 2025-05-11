@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback} from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { View, StyleSheet, TextInput, TouchableOpacity, Text, Platform } from 'react-native'
 import Colors from '@/styles/colors'
 import { router } from 'expo-router'
 import { FontAwesome } from '@expo/vector-icons'
 import { useSignIn, useSSO } from '@clerk/clerk-expo'
 import * as Linking from 'expo-linking';
+import { useClerk } from '@clerk/clerk-expo';
 
 import * as WebBrowser from 'expo-web-browser'
 import * as AuthSession from 'expo-auth-session'
@@ -27,6 +28,7 @@ WebBrowser.maybeCompleteAuthSession()
 export default function SignInPage() {
   const { signIn, isLoaded } = useSignIn()
   const { startSSOFlow } = useSSO()
+  const { redirectToSignIn } = useClerk();
   const [emailAddress, setEmailAddress] = useState('')
   const [password, setPassword] = useState('')
 
@@ -47,21 +49,29 @@ export default function SignInPage() {
     }
   }
 
-  const onGoogleSignIn = useCallback(async () => {
-    try {
-      const { createdSessionId, setActive } = await startSSOFlow({
+  const onGoogleSignIn = useCallback(() => {
+    // conditionally handle platform stuff to circumvent web browser popup blocking issues
+    if (Platform.OS === 'web') {
+      redirectToSignIn({
+        redirectUrl: Linking.createURL('sso-callback'),
+      });
+    } else {
+      startSSOFlow({
         strategy: 'oauth_google',
         redirectUrl: Linking.createURL('sso-callback'),
       })
-
-      if (createdSessionId) {
-        setActive?.({ session: createdSessionId })
-        router.replace('/(protected)/home')
-      }
-    } catch (err) {
-      console.error('OAuth error', err)
+        .then(({ createdSessionId, setActive }) => {
+          if (createdSessionId) {
+            setActive?.({ session: createdSessionId });
+            router.replace('/(protected)/home');
+          }
+        })
+        .catch((err) => {
+          console.error('OAuth error', err);
+        });
     }
-  }, [startSSOFlow])
+  }, [redirectToSignIn, startSSOFlow]);
+  
 
   return (
     <View style={styles.container}>

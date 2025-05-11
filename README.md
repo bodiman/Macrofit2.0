@@ -1,3 +1,21 @@
+May 10
+------
+
+Over the next few days, I am going to need to take a break from developing MacroFit, since I have some finals I should probably study for. However, when I return, I intend to hit the ground running. There are a few things I would like to address as soon as possible.
+
+1. Registration bug: Very urgent, some Iphone users are unable to sign up. It seems like Clerk signup is failing. I Need to work with people to understand what is going wrong so that people are actually able to use the app.
+
+2. More flexible macros: Users need to be able to add and delete macronutrients from their preferences for better specificity. This should be relatively simple to implement. Perhaps not a high-priority feature though.
+
+3. Meal preferences: Users should be able to choose the number of meals they want to eat each day their preferred macros for each meal. Ultimately, people should be able to edit the distributions of individual macros, perhaps in the same place they specify the preferences. For now, it will make more sense to just assume an even distribution of macros in all meals. 
+
+4. Meal Planning: It is about time I should implement the meal planning feature. Users should be able to construct a meal plan by selecting the foods they want to eat for a meal, then fine tuning the food quantities through the slider interface.
+
+5. Plan to Log transition: This is a feature that is very central to Macrofit's vision. I believe that a seamless transition from a meal someone has planned to a log of what they actually eat is not currently addressed by any other app. When a user creates a meal plan, the foods should appear in their log, but highlighted as a different color, and not counting towards their macro tally. When they click on these foods, they will have the option to add a serving amount, and see a list of their prior servings. This way, they can tally up what they are eating as they eat.
+
+I would say these features constitute roughly a week's worth of work, and should be finished by the time I start at Acelot.
+
+
 May 8
 -----
 
