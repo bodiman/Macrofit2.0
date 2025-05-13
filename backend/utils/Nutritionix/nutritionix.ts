@@ -12,6 +12,7 @@ function getUniqueFoods(commonFoods: any[]) {
     const uniqueFoods: any[] = [];
     let i = 0;
 
+    console.log("common foods");
     console.log(commonFoods);
     for (const food of commonFoods) {
         if (!tagIds.includes(food.tag_id)) {
