@@ -114,6 +114,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
 
         // Add common foods to database if they don't exist
         if (query.length >= 3) {
+            console.log("this is being called", query)
             if (timeout) clearTimeout(timeout);
 
             timeout = setTimeout(async () => {
