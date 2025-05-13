@@ -16,8 +16,6 @@ const port = process.env.PORT || 5050;
 
 // Basic request logging middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`${req.method} ${req.url}`);
-    console.log('Headers:', req.headers);
     next();
 });
 

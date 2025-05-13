@@ -202,12 +202,53 @@ export async function retrieveDiningHallNutritionInfo(payloads: Record<string, a
   
     return rawNutrientTable;
 }  
+
+
+export async function retrieveDiningHallNutritionInfoSync(payloads: Record<string, any>, columns: string[]): Promise<Record<string, any[]>> {
+  if (!columns.includes('serving_size')) {
+    columns.push('serving_size');
+  }
+
+  const foodNames: string[] = [];
+  const kitchenNames: string[] = [];
+  const mealNames: string[] = [];
+  const nutrientInfo: Record<string, any>[] = [];
+
+  let i = 0;
+  for (const kitchen in payloads) {
+    for (const meal in payloads[kitchen]) {
+      for (const food in payloads[kitchen][meal]) {
+        console.log(`Requesting (sequential) for ${kitchen}, ${meal}, ${food}`);
+        const payload = payloads[kitchen][meal][food];
+
+        foodNames[i] = food;
+        mealNames[i] = meal;
+        kitchenNames[i] = kitchen;
+
+        // Await each request one at a time
+        const info = await retrieveNutrientInfo(payload);
+        nutrientInfo.push(info);
+
+        i++;
+      }
+    }
+  }
+
+  const rawNutrientTable = buildRawNutrientTable(nutrientInfo, columns);
+
+  rawNutrientTable['name'] = foodNames;
+  rawNutrientTable['kitchen'] = kitchenNames;
+  rawNutrientTable['meal'] = mealNames;
+
+  return rawNutrientTable;
+}
   
 
 (async () => {  
     let payloads = await retrieveDiningConfigs();
   
-    const rawNutrientTable = await retrieveDiningHallNutritionInfo(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
+    // const rawNutrientTable = await retrieveDiningHallNutritionInfo(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
+    const rawNutrientTable = await retrieveDiningHallNutritionInfoSync(payloads, Object.values(CALDINING_MACRONUTRIENT_NAME_MAP));
     const standardizedNutrientTable = standardizeRawNutrientTable(rawNutrientTable);
     fs.writeFileSync('nutrient_table.json', JSON.stringify(standardizedNutrientTable, null, 2));
     
