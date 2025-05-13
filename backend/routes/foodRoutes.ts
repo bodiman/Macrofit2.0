@@ -3,6 +3,7 @@ import prisma from '../prisma_client';
 import { getNutritionixData, getNutritionixCommonNames } from '../utils/Nutritionix/nutritionix';
 import { v4 as uuidv4 } from 'uuid';
 import { FoodTable } from '../prisma_client';
+import { Prisma } from '@prisma/client';
 
 interface Food {
     id: string;
@@ -70,6 +71,8 @@ router.get('/search', async (req: Request, res: Response) => {
 
 
 let timeout: NodeJS.Timeout | null = null;
+let writing = false;
+
 router.get('/search-all', async (req: Request, res: Response) => {
     try {
         const { query } = req.query;
@@ -113,11 +116,12 @@ router.get('/search-all', async (req: Request, res: Response) => {
         }));
 
         // Add common foods to database if they don't exist
-        if (query.length >= 3) {
-            console.log("this is being called", query)
+        if (query.length >= 3 && !writing) {
             if (timeout) clearTimeout(timeout);
 
             timeout = setTimeout(async () => {
+                writing = true;
+
                 const names = await getNutritionixCommonNames(query);
                 console.log("names", names);
 
@@ -136,40 +140,66 @@ router.get('/search-all', async (req: Request, res: Response) => {
                     });
                 }
 
+                // retrieve all foods from database
+                let foods = await prisma.food.findMany({
+                    where: {
+                        name: {
+                            contains: query,
+                            mode: 'insensitive'
+                        },
+                    }
+                });
+
+                console.log("retrieved foods", foods.map((food) => food.name));
                 
                 // filter out names that are already in the database under the common_foods kitchen
                 const newNames = names.filter((name: string) => !foods.some((food) => (food.name === name && food.kitchen_id === commonFoodsKitchen.id)))
                     .slice(0, 1);
-                const nutritionixData = await getNutritionixData(newNames);
-                const food = nutritionixData[0];
 
-                // write data to database  
-                console.log(`Writing Food ${food.name} to database`);              
-                await prisma.food.create({
-                    data: {
-                        id: food.id,
-                        name: food.name,
-                        description: `${food.name} from Common Foods`,
-                        active: false,
-                        kitchen_id: commonFoodsKitchen.id,
-                        serving_size: food.serving_size,
-                        macros: {
-                            create: food.macros.map((macro: any) => ({
-                                value: macro.value,
-                                metric: {
-                                    connect: { id: macro.metric_id }
+                console.log("newNames", newNames);
+                const nutritionixData = await getNutritionixData(newNames);
+
+                if (nutritionixData.length > 0) {
+                    const food = nutritionixData[0];
+                    if (food) {
+
+                        try {
+                            // write data to database  
+                            console.log(`Writing Food ${food.name} to database`);              
+                            await prisma.food.create({
+                                data: {
+                                    id: food.id,
+                                    name: food.name,
+                                    description: `${food.name} from Common Foods`,
+                                    active: false,
+                                    kitchen_id: commonFoodsKitchen.id,
+                                    serving_size: food.serving_size,
+                                    macros: {
+                                        create: food.macros.map((macro: any) => ({
+                                            value: macro.value,
+                                            metric: {
+                                                connect: { id: macro.metric_id }
+                                            }
+                                        }))
+                                    }
                                 }
-                            }))
+                            });
+                            console.log("food written to database");
+                        } catch (error) {
+                            console.error('Error writing food to database:', error);
                         }
                     }
-                });
-                
+                }
+
+                console.log("writing set to false");
+                writing = false;
+
             }, 1000);
         }
 
         res.json(transformedFoods);
-    } catch (error) {
-        console.error('Error searching all foods:', error);
+    } catch (error: any) {
+        console.error('Error writing food to database:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

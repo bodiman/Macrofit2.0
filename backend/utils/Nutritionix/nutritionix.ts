@@ -44,6 +44,8 @@ export async function getNutritionixCommonNames(query: string) {
     const commonFoods = data['common'];
     const uniqueFoods = getUniqueFoods(commonFoods);
 
+
+
     return uniqueFoods.map((food: any) => food.food_name);
 }
 
@@ -59,6 +61,17 @@ export async function getNutritionixData(commonFoods: string[]) {
 
             const result = await response.json()
 
+            console.log("result", result);
+            console.log("result['message']", result.message);
+
+            if (result.message == "We couldn't match any of your foods") {
+                return null;
+            } else {
+                console.log("the result was ")
+                console.log(result);
+            }
+
+
             const foodData = result['foods'][0];
             return {
                 name: foodData['food_name'],
@@ -70,6 +83,10 @@ export async function getNutritionixData(commonFoods: string[]) {
     );
 
     return data.map((food: any) => {
+        if (!food) {
+            return null;
+        }
+        
         return {
             ...food,
             macros: food.macros.map((macro: any) => {

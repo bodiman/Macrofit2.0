@@ -15,12 +15,12 @@ declare global {
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        console.log('Auth headers:', req.headers); // Debug log
+        // console.log('Auth headers:', req.headers); // Debug log
         const sessionToken = req.headers.authorization?.split(' ')[1];
-        console.log('Session token:', sessionToken); // Debug log
+        // console.log('Session token:', sessionToken); // Debug log
         
         if (!sessionToken) {
-            console.log('No token provided'); // Debug log
+            // console.log('No token provided'); // Debug log
             return res.status(401).json({ error: 'No token provided' });
         }
 
@@ -29,7 +29,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
             secretKey: process.env.CLERK_SECRET_KEY!,
             issuer: process.env.CLERK_ISSUER!,
         });
-        console.log('Verified session:', String(sessionId), 'user:', String(userId)); // Debug log
+        // console.log('Verified session:', String(sessionId), 'user:', String(userId)); // Debug log
 
         // Add auth info to request object
         req.auth = {
@@ -39,7 +39,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 
         next();
     } catch (error) {
-        console.error('Auth middleware error:', error);
+        // console.error('Auth middleware error:', error);
         return res.status(401).json({ error: 'Authentication failed' });
     }
 }; 
