@@ -113,6 +113,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
 
             timeout = setTimeout(async () => {
                 const names = await getNutritionixCommonNames(query);
+                console.log(names);
                 // get common foods kitchen id, create if it doesn't exist
                 let commonFoodsKitchen = await prisma.kitchen.findFirst({
                     where: {

@@ -6,14 +6,21 @@ const headers = {
     'Content-Type': "application/json"
 }
 
-function getUniqueFoods(commonFoods: any[]) {
+type CommonFood = {
+    tag_id: number;
+
+}
+
+function getUniqueFoods(commonFoods: CommonFood[]) {
+    if (commonFoods === undefined) {
+        return [];
+    }
+
     // get first 5 foods with unique tag ids
     const tagIds: number[] = [];
     const uniqueFoods: any[] = [];
     let i = 0;
 
-    console.log("common foods");
-    console.log(commonFoods);
     for (const food of commonFoods) {
         if (!tagIds.includes(food.tag_id)) {
             tagIds.push(food.tag_id);
