@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import prisma from '../prisma_client';
 import { getNutritionixData, getNutritionixCommonNames } from '../utils/Nutritionix/nutritionix';
 import { v4 as uuidv4 } from 'uuid';
+import { FoodTable } from '../prisma_client';
 
 interface Food {
     id: string;
@@ -12,6 +13,8 @@ interface Food {
 interface FoodWithMacros {
     id: string;
     name: string;
+    description: string;
+    kitchen_id: string;
     macros: Array<{
         metric: {
             id: string;
@@ -47,17 +50,15 @@ router.get('/search', async (req: Request, res: Response) => {
             }
         });
 
-        // Transform the database results to match the Food type using the toMacros function
-        const transformedFoods: Food[] = foods.map((food: FoodWithMacros) => ({
-            id: food.id,
-            name: food.name,
-            macros: Object.fromEntries(
-                food.macros.map(macro => [
-                    macro.metric.id,
-                    macro.value
-                ])
-            )
-        }));
+        // Transform the database results into flat object type
+        const transformedFoods = foods.map((food) => {
+            return {
+                id: food.id,
+                name: food.name,
+                macros: food.macros,
+            }
+        });
+
 
         res.json(transformedFoods);
     } catch (error) {
@@ -65,6 +66,8 @@ router.get('/search', async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+
 
 let timeout: NodeJS.Timeout | null = null;
 router.get('/search-all', async (req: Request, res: Response) => {
@@ -76,6 +79,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
             return;
         }
 
+        // retrieve all foods from database
         let foods = await prisma.food.findMany({
             where: {
                 name: {
@@ -92,11 +96,12 @@ router.get('/search-all', async (req: Request, res: Response) => {
             }
         });
 
-        const transformedFoods: Food[] = foods.map((food: FoodWithMacros) => ({
+        // convert foods from database into Food type
+        const transformedFoods: Food[] = foods.map((food) => ({
             id: food.id,
             name: food.name,
-            description: `${food.name} from Common Foods`,
-            kitchen_id: "common_foods",
+            description: food.description,
+            kitchen_id: food.kitchen_id,
             active: false,
             updated_at: new Date(),
             macros: Object.fromEntries(
@@ -107,13 +112,14 @@ router.get('/search-all', async (req: Request, res: Response) => {
             )
         }));
 
-        // add on to the search, no caching for now
+        // Add common foods to database if they don't exist
         if (query.length >= 3) {
             if (timeout) clearTimeout(timeout);
 
             timeout = setTimeout(async () => {
                 const names = await getNutritionixCommonNames(query);
-                console.log(names);
+                console.log("names", names);
+
                 // get common foods kitchen id, create if it doesn't exist
                 let commonFoodsKitchen = await prisma.kitchen.findFirst({
                     where: {
@@ -134,38 +140,10 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 const newNames = names.filter((name: string) => !foods.some((food) => (food.name === name && food.kitchen_id === commonFoodsKitchen.id)))
                     .slice(0, 1);
                 const nutritionixData = await getNutritionixData(newNames);
+                const food = nutritionixData[0];
 
-                // console.log(nutritionixData[0].macros);
-
-            //    console.log(nutritionixData[0].macros);
-               const food = nutritionixData[0];
-
-                // write data to database
-                // assert that every metric_id exists in the database
-                // const metricIds = food.macros.map((macro: any) => macro.metric.id);
-                const metrics = await prisma.nutritionalMetric.findMany({
-
-                });
-                const metricIds = metrics.map((metric) => metric.id);
-                const existingMetricIds = food.macros.map((macro: any) => macro.metric_id);
-
-                for (const metricId of existingMetricIds) {
-                    if (!metricIds.includes(metricId)) {
-                        console.log(`Metric ${metricId} does not exist in the database`);
-                    }
-                }
-
-                // console.log(food.macros.map((macro: any) => ({
-                //     value: macro.value,
-                //     metric: macro.metric_id
-                // })));
-
-                // console.log("creating food", food.name);
-                // const allMacros = food.macros.map((food: any) => food.metric_id);
-                // //print duplicates
-                // const duplicates = allMacros.filter((macro: string, index: number) => allMacros.indexOf(macro) !== index);
-                // console.log(duplicates);
-                
+                // write data to database  
+                console.log(`Writing Food ${food.name} to database`);              
                 await prisma.food.create({
                     data: {
                         id: food.id,
