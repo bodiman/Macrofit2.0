@@ -112,19 +112,41 @@ export function useUser() {
     }
   };
 
-  const deletePreference = async (metric_id: string) => {
-    if (!appUser) return;
-    try {
-      await api.delete(`/api/user/preferences?user_id=${appUser.user_id}&metric_id=${metric_id}`);
-      const updatedPreferences = preferences.filter(p => p.metric_id !== metric_id);
-      setPreferencesState(updatedPreferences);
-      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
-      eventBus.emit('preferencesUpdated');
-    } catch (err) {
-      console.error('Failed to delete preference:', err);
-      setError('Failed to delete preference');
-    }
-  };
+  // const deletePreference = async (metric_id: string) => {
+  //   if (!appUser) return;
+  //   try {
+  //     await api.delete(`/api/user/preferences?user_id=${appUser.user_id}&metric_id=${metric_id}`);
+  //     const updatedPreferences = preferences.filter(p => p.metric_id !== metric_id);
+  //     setPreferencesState(updatedPreferences);
+  //     storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
+  //     eventBus.emit('preferencesUpdated');
+  //   } catch (err) {
+  //     console.error('Failed to delete preference:', err);
+  //     setError('Failed to delete preference');
+  //   }
+  // };
+
+  // const addPreference = async (preference: {
+  //   metric_id: string;
+  //   min_value: number | null;
+  //   max_value: number | null;
+  // }) => {
+  //   if (!appUser) return;
+
+  //   try {
+  //     const updatedPreferences = [...preferences, preference];
+  //     const data = await api.post('/api/user/preferences', {
+  //       user_id: appUser.user_id,
+  //       preferences: updatedPreferences,
+  //     });
+  //     setPreferencesState(data.user.macroPreferences);
+  //     storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
+  //     eventBus.emit('preferencesUpdated');
+  //   } catch (err) {
+  //     console.error('Failed to add preference:', err);
+  //     setError('Failed to add preference');
+  //   }
+  // };
 
   useEffect(() => {
     if (!isLoaded || !clerkUser) {
@@ -143,15 +165,10 @@ export function useUser() {
           await fetchPreferences(res.user_id);
         }
       } catch (e: any) {
-
-        console.error('Failed to fetch app user:', e);
-
         if (e.message && e.message.includes('404')) {
           setNeedsRegistration(true);
         } else {
-          // console.log("this is the error you are looking for")
-          // console.log(e)
-          // console.error('Failed to fetch app user:', e);
+          console.error('Failed to fetch app user:', e);
           setError('Failed to fetch user');
         }
       } finally {
@@ -171,7 +188,6 @@ export function useUser() {
     clerkUser, 
     createUser, 
     updatePreference, 
-    deletePreference
   };
 }
 

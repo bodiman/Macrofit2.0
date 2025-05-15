@@ -1,8 +1,10 @@
 import menuRoutes from './routes/menuRoutes';
 import foodRoutes from './routes/foodRoutes';
 import userRoutes from './routes/userRoutes';
+import metricsRoutes from './routes/metricsRoutes';
 import { requireAuth } from './middleware/auth';
 import { Request, Response, NextFunction } from 'express';
+
 
 const express = require('express');
 const cors = require('cors');
@@ -50,6 +52,7 @@ app.use('/api', requireAuth);
 app.use('/api', userRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/menus', menuRoutes);
+app.use('/api/metrics', metricsRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
