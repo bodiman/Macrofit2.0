@@ -17,7 +17,7 @@ type MealPreferences = {
 
 export default function Preferences() {
     const { signOut } = useAuth();
-    const { preferences, loading, error, updatePreference } = useUser();
+    const { preferences, loading, error, updatePreference, deletePreference } = useUser();
     const insets = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
 
@@ -34,8 +34,12 @@ export default function Preferences() {
         }
     };
 
-    const handleDeleteMacro = (id: string) => {
-        // setMacroGoals(prev => prev.filter(goal => goal.id !== id));
+    const handleDeleteMacro = async (id: string) => {
+        try {
+            await deletePreference(id);
+        } catch (error) {
+            console.error('Error deleting macro preference:', error);
+        }
     };
 
     const handleAddMacro = () => {

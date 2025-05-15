@@ -112,6 +112,20 @@ export function useUser() {
     }
   };
 
+  const deletePreference = async (metric_id: string) => {
+    if (!appUser) return;
+    try {
+      await api.delete(`/api/user/preferences?user_id=${appUser.user_id}&metric_id=${metric_id}`);
+      const updatedPreferences = preferences.filter(p => p.metric_id !== metric_id);
+      setPreferencesState(updatedPreferences);
+      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
+      eventBus.emit('preferencesUpdated');
+    } catch (err) {
+      console.error('Failed to delete preference:', err);
+      setError('Failed to delete preference');
+    }
+  };
+
   useEffect(() => {
     if (!isLoaded || !clerkUser) {
       setLoading(false);
@@ -130,11 +144,9 @@ export function useUser() {
         }
       } catch (e: any) {
 
-        console.log("this is the error you are looking for, failed to fetch app user")
-        console.log(e)
+        console.error('Failed to fetch app user:', e);
 
         if (e.message && e.message.includes('404')) {
-          console.log("setting needs registration to true")
           setNeedsRegistration(true);
         } else {
           // console.log("this is the error you are looking for")
@@ -158,7 +170,8 @@ export function useUser() {
     error, 
     clerkUser, 
     createUser, 
-    updatePreference 
+    updatePreference, 
+    deletePreference
   };
 }
 
