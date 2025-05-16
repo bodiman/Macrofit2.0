@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Pressable, TextInput, TouchableOpacity, FlatList, Modal } from 'react-native';
 import { useEffect, useState } from 'react';
 import Colors from '@/styles/colors';
 import { MacroPreference } from '@/tempdata';
@@ -10,6 +10,10 @@ import { useUser } from '@/app/hooks/useUser';
 import EditMacroModal from './Preferences/EditMacroModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import storage from '@/app/storage/storage';
+import eventBus from '@/app/storage/eventEmitter';
+import { useApi } from '@/lib/api';
+import { useMetrics } from '@/lib/api/metrics';
 
 type MealPreferences = {
     defaultMealNames: string[];
@@ -17,14 +21,32 @@ type MealPreferences = {
 
 export default function Preferences() {
     const { signOut } = useAuth();
-    const { preferences, loading, error, updatePreference } = useUser();
+    const { preferences, loading: userLoading, error: userError, updatePreference, appUser, addPreference, deletePreference } = useUser();
+    const { metrics, loading: metricsLoading, error: metricsError } = useMetrics();
     const insets = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
+    const api = useApi();
 
     const [mealPreferences, setMealPreferences] = useState<MealPreferences>({
         defaultMealNames: ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
     });
     const [editingMacro, setEditingMacro] = useState<MacroPreference | null>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [availableMacros, setAvailableMacros] = useState<Array<{ id: string; name: string; unit: string }>>([]);
+    const [selectedMacro, setSelectedMacro] = useState<{ id: string; name: string; unit: string } | null>(null);
+    const [newMacroRange, setNewMacroRange] = useState({ min: 0, max: 0 });
+    const [filter, setFilter] = useState('');
+
+    useEffect(() => {
+        if (metrics) {
+            setAvailableMacros(metrics);
+        }
+    }, [metrics]);
+
+    // useEffect(() => {
+    //     // not showing the updated preferences after adding new macro
+    //     // console.log("preferences", preferences)
+    // }, [preferences]);
 
     const handleMacroChange = async (id: string, newRange: { min: number; max: number; unit: string }) => {
         try {            
@@ -34,12 +56,31 @@ export default function Preferences() {
         }
     };
 
-    const handleDeleteMacro = (id: string) => {
-        // setMacroGoals(prev => prev.filter(goal => goal.id !== id));
+    const handleDeleteMacro = async (id: string) => {
+        if (!appUser) return;
+        try {
+            await deletePreference(id);
+        } catch (error) {
+            console.error('Error deleting macro preference:', error);
+        }
     };
 
     const handleAddMacro = () => {
-        
+        setShowAddModal(true);
+    };
+
+    const handleAddNewMacro = async () => {
+        if (!selectedMacro || !appUser) return;
+        try {
+            await addPreference({
+                metric_id: selectedMacro.id,
+                min_value: newMacroRange.min,
+                max_value: newMacroRange.max,
+            });
+            setShowAddModal(false);
+        } catch (err) {
+            console.error('Failed to add new macro preference:', err);
+        }
     };
 
     const handleLogout = async () => {
@@ -110,6 +151,83 @@ export default function Preferences() {
                     onSave={(newRange) => handleMacroChange(editingMacro.id, newRange)}
                 />
             )}
+
+            <Modal
+                visible={showAddModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowAddModal(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Add New Macro</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Filter macros..."
+                            value={filter}
+                            onChangeText={setFilter}
+                        />
+                        <FlatList
+                            data={availableMacros
+                                .filter(macro => macro.name.toLowerCase().includes(filter.toLowerCase()))
+                                .filter(macro => !preferences.some(pref => pref.id === macro.id))
+                            }
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    style={styles.macroOption}
+                                    onPress={async () => {
+                                        if (!appUser) return;
+                                        try {
+                                            await addPreference({
+                                                metric_id: item.id,
+                                                min_value: 0,
+                                                max_value: 0,
+                                            });
+                                            setShowAddModal(false);
+                                            setEditingMacro({
+                                                ...item,
+                                                min: 0,
+                                                max: 0,
+                                                unit: item.unit
+                                            });
+                                        } catch (err) {
+                                            console.error('Failed to add new macro preference:', err);
+                                        }
+                                    }}
+                                >
+                                    <Text>{item.name}</Text>
+                                </TouchableOpacity>
+                            )}
+                            style={{ maxHeight: 200 }}
+                        />
+                        {selectedMacro && (
+                            <View style={styles.inputContainer}>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Min Value"
+                                    keyboardType="numeric"
+                                    onChangeText={(text) => setNewMacroRange({ ...newMacroRange, min: Number(text) })}
+                                />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Max Value"
+                                    keyboardType="numeric"
+                                    onChangeText={(text) => setNewMacroRange({ ...newMacroRange, max: Number(text) })}
+                                />
+                            </View>
+                        )}
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity style={styles.button} onPress={handleAddNewMacro}>
+                                <Text style={styles.buttonText}>Add</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.button} onPress={() => setShowAddModal(false)}>
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -261,5 +379,46 @@ const styles = StyleSheet.create({
         color: Colors.white,
         fontSize: 16,
         fontWeight: '600',
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 20,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 20,
+    },
+    macroOption: {
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+        width: '100%',
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+        marginTop: 20,
+    },
+    button: {
+        backgroundColor: Colors.orange,
+        padding: 10,
+        borderRadius: 5,
+        width: '40%',
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 }); 
