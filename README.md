@@ -23,6 +23,16 @@ These events need to also update the database in the places they currently updat
 Finally, it is important to note that the rendering of meals CANNOT be dependent on the user's meal preferences, once that is implemented. For instance, if a user decides they no longer have breakfast in their meal template, they should still be able to see the breakfasts they ate in the past.
 
 
+Consideration
+-------------
+Sould the app header's preferences always correspond to the user's stated preferences? What if they make a meal plan that deviates from their stated preferences? Should that override the defaults?
+
+I think it should. Adaptability of logging is a core to Macrofit's mission. Especially for an athlete, the number of calories / carbs / protein consumed might vary drastically between active days and inactive days. When the user goes to construct a meal plan, they should be able to adjust the macro distribution for each meal, as well as the overall targets. These values should default to the user's preferences, since a lot of the time, people will just do the same meal plan every day. But, you can quickly edit the range for each macro. Then, the color-coded feedback you receive on the app header and in the meal planning sections will be based on the meal plan you have set out for that day (or the default preferences if you haven't planned your meals.)
+
+
+But then what if a user makes a plan for just a single meal? The user's "defaul preferences" will have defaults for each meal. The preferences for the whole day are just given by the sum of the preferences for each meal, default or custom, depending on whether a user has actually made a plan.
+
+
 
 
 May 10
