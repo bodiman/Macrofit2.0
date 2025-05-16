@@ -59,8 +59,8 @@ export function useUser() {
   // Update macro preferences when preferences change
   useEffect(() => {
     setMacroPreferences(toMacroPreference(preferences));
-    // console.log("preferences", preferences)
-    // console.log(toMacroPreference(preferences))
+    storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(preferences));
+    eventBus.emit('preferencesUpdated');
   }, [preferences]);
 
   useEffect(() => {
@@ -74,8 +74,8 @@ export function useUser() {
       const data = await api.post('/api/register', userData);
       setAppUser(data.user);
       setPreferencesState(data.user.macroPreferences);
-      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
-      eventBus.emit('preferencesUpdated');
+      // storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
+      // eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to register app user:', err);
       setError('Failed to register user');
@@ -101,7 +101,7 @@ export function useUser() {
         p.metric_id === updatedPreference[0].metric_id ? updatedPreference[0] : p
       );
       setPreferencesState(updatedPreferences);
-      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
+      // storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       // eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to update preferences:', err);
@@ -113,7 +113,7 @@ export function useUser() {
     try {
       const data = await api.get(`/api/user/preferences?user_id=${userId}`);
       setPreferencesState(data);
-      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data));
+      // storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data));
       // eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to fetch preferences:', err);
@@ -127,7 +127,7 @@ export function useUser() {
       await api.delete(`/api/user/preferences?user_id=${appUser.user_id}&metric_id=${metric_id}`);
       const updatedPreferences = preferences.filter(p => p.metric_id !== metric_id);
       setPreferencesState(updatedPreferences);
-      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
+      // storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       // eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to delete preference:', err);
@@ -148,8 +148,8 @@ export function useUser() {
       console.log("adding preference", response)
       const newPreference = await response;
       setPreferencesState([...preferences, newPreference]);
-      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify([...preferences, newPreference]));
-      eventBus.emit('preferencesUpdated');
+      // storage.set(CACHED_PREFERENCES_KEY, JSON.stringify([...preferences, newPreference]));
+      // eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to add new macro preference:', err);
       setError('Failed to add new macro preference');
