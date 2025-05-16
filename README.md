@@ -1,3 +1,30 @@
+May 16
+------
+
+Finals are over. Got a bit cooked. But now we're back onto macrofit. I fixed the registration bug and added the customizable macro preferences feature. Now, I must add the ability for users to give meal preferences. Unfortunately, this is a bit more of an intricate task than I had originally realized, since it's going to require me to add a mechanism for tracking meals in the database.
+
+Every user will have an associated set of meals. These meals will all have associated datetimes, which will be used for filtering and displaying the meals. Ultimately, users should be able to create custom meals. But for now, I'm just going to have the default breakfast, lunch and dinner.
+
+In the useUser hook, I will have a mechanism for loading meals, similar to the way preferences are loaded. 
+
+1. Upon loading, I will check if the dates of the cached meals are for the correct day (in that user's timezone). If they are, then the cached values can be relied upon. Otherwise, move on to database retrieval
+
+2. The meals "breakfast", "lunch", and "dinner" are all retrieved from the database for that day. Meals have a unique time, and a unique name/date pair. If any of the meals are missing, then create a new empty meal in the database
+
+3. Set the cached values to the retrieved or newly generated meals, pushing update notifications where required.
+
+The meal will only ever be updated in two cases
+1. The user logs a food
+2. The user deletes a food
+
+These events need to also update the database in the places they currently update the local storage.
+
+
+Finally, it is important to note that the rendering of meals CANNOT be dependent on the user's meal preferences, once that is implemented. For instance, if a user decides they no longer have breakfast in their meal template, they should still be able to see the breakfasts they ate in the past.
+
+
+
+
 May 10
 ------
 

@@ -13,6 +13,7 @@ model User {
   name             String?
   email            String           @unique
   macroPreferences UserPreference[]
+  meals            Meal[]
 }
 
 model Kitchen {
@@ -23,15 +24,16 @@ model Kitchen {
 }
 
 model Food {
-  id           String      @id
-  name         String
-  description  String?
-  kitchen_id   String
-  active       Boolean
-  updated      DateTime    @default(now()) @updatedAt
-  serving_size Float
-  kitchen      Kitchen     @relation(fields: [kitchen_id], references: [id])
-  macros       FoodMacro[]
+  id            String      @id
+  name          String
+  description   String?
+  kitchen_id    String
+  active        Boolean
+  updated       DateTime    @default(now()) @updatedAt
+  serving_size  Float
+  kitchen       Kitchen     @relation(fields: [kitchen_id], references: [id])
+  macros        FoodMacro[]
+  foodServings  FoodServing[]
 
   @@unique([name, kitchen_id])
 }
@@ -66,4 +68,21 @@ model UserPreference {
   user      User              @relation(fields: [user_id], references: [user_id])
 
   @@unique([user_id, metric_id])
+}
+
+model FoodServing {
+  id          String  @id
+  food_id     String
+  meal_id     String
+  food        Food    @relation(fields: [food_id], references: [id])
+  meal        Meal    @relation(fields: [meal_id], references: [id])
+}
+
+model Meal {
+  id        String        @id
+  name      String
+  date      DateTime
+  user_id   Int
+  user      User          @relation(fields: [user_id], references: [user_id])
+  servings  FoodServing[]
 }
