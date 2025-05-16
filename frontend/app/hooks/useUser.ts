@@ -63,11 +63,6 @@ export function useUser() {
     eventBus.emit('preferencesUpdated');
   }, [preferences]);
 
-  useEffect(() => {
-    // console.log("preferences", preferences)
-    // console.log("macroPreferencesUpdated", macroPreferences)
-  }, [macroPreferences]);
-
   const createUser = async (userData: { email: string; name: string }) => {
     try {
       setLoading(true);
