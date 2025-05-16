@@ -1,7 +1,7 @@
 // backend/routes/userRoutes.ts
 import express from 'express';
 import prisma from '../prisma_client';
-import { getUser, createUser, updateUserPreferences, getUserPreferences } from '../user/user';
+import { getUser, createUser, updateUserPreferences, getUserPreferences, deleteUserPreference } from '../user/user';
 import { BadRequestError, UserNotFoundError } from '../user/types';
 
 const router = express.Router();
@@ -102,6 +102,53 @@ router.put('/user/preferences', async (req: express.Request<UpdatePreferencesPar
             console.error('Failed to update preferences:', err);
             res.status(500).json({ error: 'Internal Server Error' });
         }
+    }
+});
+
+router.delete('/user/preferences', async (req: express.Request, res: express.Response) => {
+    try {
+        // get metric id from params 
+        const metric_id = req.query.metric_id as string;
+        const user_id = req.query.user_id ? parseInt(req.query.user_id as string) : undefined;
+
+        if (!metric_id || !user_id) {
+            throw new BadRequestError('Metric ID is required');
+        }
+
+        const deletedPreference = await deleteUserPreference({ user_id, metric_id });
+        res.status(200).json(deletedPreference);
+        
+    } catch (err) {
+        if (err instanceof BadRequestError) {
+            res.status(400).json({ error: err.message });
+        }
+    }
+});
+
+router.post('/user/preferences', async (
+  req: express.Request<any, any, { user_id: number; metric_id: string; min_value: number | null; max_value: number | null }>,
+  res: express.Response
+) => {
+    try {
+        const { user_id, metric_id, min_value, max_value } = req.body;
+        if (!user_id || !metric_id) {
+            res.status(400).json({ error: 'user_id and metric_id are required' });
+        }
+        const newPreference = await prisma.userPreference.create({
+            data: {
+                user_id,
+                metric_id,
+                min_value,
+                max_value,
+            },
+            include: {
+                metric: true,
+            },
+        });
+        res.status(201).json(newPreference);
+    } catch (err) {
+        console.error('Failed to add user preference:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 

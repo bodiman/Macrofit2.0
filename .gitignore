@@ -49,5 +49,5 @@ app-example
 # /backend/scripts/*.pdf
 # /backend/scripts/*.docx
 
-/backend/prisma/scripts/**/*.csv
-/backend/prisma/scripts/**/*.json
+# /backend/prisma/scripts/**/*.csv
+# /backend/prisma/scripts/**/*.json

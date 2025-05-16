@@ -13,7 +13,6 @@ export const useApi = () => {
         }
 
         const token = await getToken();
-        console.log('Token:', token ? 'Present' : 'Missing'); // Log token presence
         
         if (!token) {
             console.error('No token available');
@@ -26,13 +25,8 @@ export const useApi = () => {
             ...options.headers,
         };
 
-        console.log('Making request to:', `${API_URL}${endpoint}`);
-        console.log('With headers:', {
-            ...headers,
-            'Authorization': 'Bearer [REDACTED]' // Don't log the actual token
-        });
-
         try {
+            // console.log("fetching", `${API_URL}${endpoint}`);
             const response = await fetch(`${API_URL}${endpoint}`, {
                 ...options,
                 headers,

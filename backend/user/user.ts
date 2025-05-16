@@ -161,3 +161,16 @@ export const updateUserPreferences = async ({
     return updatedPreferences;
 };
 
+export const deleteUserPreference = async ({ user_id, metric_id }: { user_id: number, metric_id: string }) => {
+    const preference = await prisma.userPreference.delete({
+        where: { 
+            user_id_metric_id: {
+                user_id,
+                metric_id
+            }
+        },
+    });
+
+    return preference;
+};
+
