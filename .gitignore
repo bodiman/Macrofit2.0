@@ -40,3 +40,14 @@ app-example
 
 /backend/generated/
 /backend/node_modules/
+
+# /backend/scripts/*.csv
+# /backend/scripts/*.json
+# /backend/scripts/*.log
+# /backend/scripts/*.txt
+# /backend/scripts/*.md
+# /backend/scripts/*.pdf
+# /backend/scripts/*.docx
+
+/backend/prisma/scripts/**/*.csv
+/backend/prisma/scripts/**/*.json
