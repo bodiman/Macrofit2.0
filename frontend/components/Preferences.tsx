@@ -15,16 +15,14 @@ import eventBus from '@/app/storage/eventEmitter';
 import { useApi } from '@/lib/api';
 import { useMetrics } from '@/lib/api/metrics';
 
-const CACHED_PREFERENCES_KEY = 'cached_macro_preferences';
-
 type MealPreferences = {
     defaultMealNames: string[];
 };
 
 export default function Preferences() {
     const { signOut } = useAuth();
-    const { preferences, loading: userLoading, error: userError, updatePreference, appUser } = useUser();
-    const { metrics, loading: metricsLoading, error: metricsError, addPreference, deletePreference } = useMetrics();
+    const { preferences, loading: userLoading, error: userError, updatePreference, appUser, addPreference, deletePreference } = useUser();
+    const { metrics, loading: metricsLoading, error: metricsError } = useMetrics();
     const insets = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
     const api = useApi();
@@ -37,15 +35,18 @@ export default function Preferences() {
     const [availableMacros, setAvailableMacros] = useState<Array<{ id: string; name: string; unit: string }>>([]);
     const [selectedMacro, setSelectedMacro] = useState<{ id: string; name: string; unit: string } | null>(null);
     const [newMacroRange, setNewMacroRange] = useState({ min: 0, max: 0 });
-    const [preferencesState, setPreferencesState] = useState<MacroPreference[]>(preferences);
     const [filter, setFilter] = useState('');
 
     useEffect(() => {
         if (metrics) {
-            console.log(metrics)
             setAvailableMacros(metrics);
         }
     }, [metrics]);
+
+    // useEffect(() => {
+    //     // not showing the updated preferences after adding new macro
+    //     // console.log("preferences", preferences)
+    // }, [preferences]);
 
     const handleMacroChange = async (id: string, newRange: { min: number; max: number; unit: string }) => {
         try {            
@@ -58,7 +59,7 @@ export default function Preferences() {
     const handleDeleteMacro = async (id: string) => {
         if (!appUser) return;
         try {
-            await deletePreference(appUser.user_id, id);
+            await deletePreference(id);
         } catch (error) {
             console.error('Error deleting macro preference:', error);
         }
@@ -75,7 +76,6 @@ export default function Preferences() {
                 metric_id: selectedMacro.id,
                 min_value: newMacroRange.min,
                 max_value: newMacroRange.max,
-                user_id: appUser.user_id
             });
             setShowAddModal(false);
         } catch (err) {
@@ -176,7 +176,25 @@ export default function Preferences() {
                             renderItem={({ item }) => (
                                 <TouchableOpacity
                                     style={styles.macroOption}
-                                    onPress={() => setSelectedMacro(item)}
+                                    onPress={async () => {
+                                        if (!appUser) return;
+                                        try {
+                                            await addPreference({
+                                                metric_id: item.id,
+                                                min_value: 0,
+                                                max_value: 0,
+                                            });
+                                            setShowAddModal(false);
+                                            setEditingMacro({
+                                                ...item,
+                                                min: 0,
+                                                max: 0,
+                                                unit: item.unit
+                                            });
+                                        } catch (err) {
+                                            console.error('Failed to add new macro preference:', err);
+                                        }
+                                    }}
                                 >
                                     <Text>{item.name}</Text>
                                 </TouchableOpacity>

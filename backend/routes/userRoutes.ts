@@ -125,4 +125,31 @@ router.delete('/user/preferences', async (req: express.Request, res: express.Res
     }
 });
 
+router.post('/user/preferences', async (
+  req: express.Request<any, any, { user_id: number; metric_id: string; min_value: number | null; max_value: number | null }>,
+  res: express.Response
+) => {
+    try {
+        const { user_id, metric_id, min_value, max_value } = req.body;
+        if (!user_id || !metric_id) {
+            res.status(400).json({ error: 'user_id and metric_id are required' });
+        }
+        const newPreference = await prisma.userPreference.create({
+            data: {
+                user_id,
+                metric_id,
+                min_value,
+                max_value,
+            },
+            include: {
+                metric: true,
+            },
+        });
+        res.status(201).json(newPreference);
+    } catch (err) {
+        console.error('Failed to add user preference:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 export default router;
