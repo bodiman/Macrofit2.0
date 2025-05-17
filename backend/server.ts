@@ -2,6 +2,7 @@ import menuRoutes from './routes/menuRoutes';
 import foodRoutes from './routes/foodRoutes';
 import userRoutes from './routes/userRoutes';
 import metricsRoutes from './routes/metricsRoutes';
+import mealRoutes from './routes/mealRoutes';
 import { requireAuth } from './middleware/auth';
 import { Request, Response, NextFunction } from 'express';
 
@@ -50,6 +51,7 @@ app.post('/api/register', userRoutes);
 // Protected routes (auth required)
 app.use('/api', requireAuth);
 app.use('/api', userRoutes);
+app.use('/api', mealRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/menus', menuRoutes);
 app.use('/api/metrics', metricsRoutes);

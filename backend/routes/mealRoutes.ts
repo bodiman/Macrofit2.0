@@ -17,6 +17,7 @@ router.post('/user/meals', async (req, res) => {
         const { user_id, name, date, time } = req.body;
         if (!user_id || !name || !date || !time) {
             res.status(400).json({ error: 'user_id, name, date, and time are required' });
+            return;
         }
         const newMeal = await prisma.meal.create({
             data: {
@@ -26,10 +27,45 @@ router.post('/user/meals', async (req, res) => {
                 date: toDate(date),
                 time: toTime(time),
             },
+            include: {
+                servings: {
+                    include: {
+                        food: true
+                    }
+                }
+            }
         });
         res.status(201).json(newMeal);
     } catch (err) {
         console.error('Failed to create meal:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Update a meal
+router.put('/user/meals/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, date, time } = req.body;
+        
+        const updatedMeal = await prisma.meal.update({
+            where: { id },
+            data: {
+                ...(name && { name }),
+                ...(date && { date: toDate(date) }),
+                ...(time && { time: toTime(time) }),
+            },
+            include: {
+                servings: {
+                    include: {
+                        food: true
+                    }
+                }
+            }
+        });
+        res.status(200).json(updatedMeal);
+    } catch (err) {
+        console.error('Failed to update meal:', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -48,9 +84,26 @@ router.delete('/user/meals/:id', async (req, res) => {
 
 router.get('/user/meals', async (req, res) => {
     try {
-        const { user_id, date, name } = req.body;
+        const { user_id, date } = req.query;
 
-        const meals = await prisma.meal.findMany({ where: { user_id, date, name } });
+        if (!user_id) {
+            res.status(400).json({ error: 'user_id is required' });
+            return;
+        }
+
+        const meals = await prisma.meal.findMany({ 
+            where: { 
+                user_id: Number(user_id),
+                date: toDate(new Date(date as string))
+            },
+            include: {
+                servings: {
+                    include: {
+                        food: true
+                    }
+                }
+            }
+        });
         res.status(200).json(meals);
     } catch (err) {
         console.error('Failed to get meals:', err);
@@ -64,14 +117,18 @@ router.post('/user/food-serving', async (req, res) => {
         const { food_id, meal_id, quantity } = req.body;
         if (!food_id || !meal_id) {
             res.status(400).json({ error: 'food_id and meal_id are required' });
+            return;
         }
         const newServing = await prisma.foodServing.create({
             data: {
                 id: crypto.randomUUID(),
                 food_id,
                 meal_id,
-                quantity,
+                quantity: quantity || 1,
             },
+            include: {
+                food: true
+            }
         });
         res.status(201).json(newServing);
     } catch (err) {
@@ -84,13 +141,15 @@ router.post('/user/food-serving', async (req, res) => {
 router.put('/user/food-serving/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { food_id, meal_id } = req.body;
+        const { quantity } = req.body;
         const updatedServing = await prisma.foodServing.update({
             where: { id },
             data: {
-                ...(food_id && { food_id }),
-                ...(meal_id && { meal_id }),
+                quantity
             },
+            include: {
+                food: true
+            }
         });
         res.status(200).json(updatedServing);
     } catch (err) {

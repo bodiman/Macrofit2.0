@@ -177,6 +177,12 @@ export function useUser() {
     }
   };
 
+  const fetchMeals = async (userId: number, date: Date) => {
+    const data = await api.get(`/api/user/meals?user_id=${userId}&date=${date}`);
+    console.log("data", data)
+    // setMeals(data);
+  }
+
   useEffect(() => {
     if (!isLoaded || !clerkUser) {
       setLoading(false);
@@ -190,11 +196,10 @@ export function useUser() {
         });
         const res = await api.get(`/api/user?${params.toString()}`);
         setAppUser(res);
-
         if (res.user_id) {
           await fetchPreferences(res.user_id);
+          const meals = await fetchMeals(res.user_id, new Date());
         }
-
       } catch (e: any) {
         if (e.message && e.message.includes('404')) {
           setNeedsRegistration(true);

@@ -26,7 +26,6 @@ export const useApi = () => {
         };
 
         try {
-            // console.log("fetching", `${API_URL}${endpoint}`);
             const response = await fetch(`${API_URL}${endpoint}`, {
                 ...options,
                 headers,
