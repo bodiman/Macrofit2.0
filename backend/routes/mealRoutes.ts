@@ -4,40 +4,90 @@ import prisma from '../prisma_client';
 const router = express.Router();
 
 const toDate = (date: Date) => {
+    date = new Date(date)
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 };
 
 const toTime = (date: Date) => {
+    date = new Date(date)
     return new Date(0, 0, 0, date.getHours(), date.getMinutes(), date.getSeconds());
 };
 
 // Create a new meal for a user
 router.post('/user/meals', async (req, res) => {
     try {
-        const { user_id, name, date, time } = req.body;
-        if (!user_id || !name || !date || !time) {
-            res.status(400).json({ error: 'user_id, name, date, and time are required' });
-            return;
-        }
-        const newMeal = await prisma.meal.create({
-            data: {
-                id: crypto.randomUUID(),
-                user_id,
-                name,
-                date: toDate(date),
-                time: toTime(time),
-            },
-            include: {
-                servings: {
-                    include: {
-                        food: true
+        const { user_id, meals } = req.body;
+        
+        // Handle single meal creation
+        if (!meals) {
+            const { name, date, time } = req.body;
+            if (!user_id || !name || !date || !time) {
+                res.status(400).json({ error: 'user_id, name, date, and time are required' });
+                return;
+            }
+            const newMeal = await prisma.meal.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    user_id,
+                    name,
+                    date: toDate(date),
+                    time: toTime(time),
+                },
+                include: {
+                    servings: {
+                        include: {
+                            food: true
+                        }
                     }
                 }
+            });
+            res.status(201).json(newMeal);
+            return;
+        }
+
+        // Handle multiple meals creation
+        if (!user_id || !Array.isArray(meals)) {
+            res.status(400).json({ error: 'user_id and meals array are required' });
+            return;
+        }
+
+        console.log("meals", meals)
+
+        // Validate each meal in the array
+        for (const meal of meals) {
+            if (!meal.name || !meal.date || !meal.time) {
+                res.status(400).json({ 
+                    error: 'Each meal must have name, date, and time',
+                    invalidMeal: meal
+                });
+                return;
             }
-        });
-        res.status(201).json(newMeal);
+        }
+
+        const createdMeals = await Promise.all(
+            meals.map(meal => 
+                prisma.meal.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        user_id,
+                        name: meal.name,
+                        date: toDate(meal.date),
+                        time: toTime(meal.time),
+                    },
+                    include: {
+                        servings: {
+                            include: {
+                                food: true
+                            }
+                        }
+                    }
+                })
+            )
+        );
+
+        res.status(201).json(createdMeals);
     } catch (err) {
-        console.error('Failed to create meal:', err);
+        console.error('Failed to create meals:', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

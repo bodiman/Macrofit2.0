@@ -40,8 +40,9 @@ export type FoodServing = {
 export type Meal = {
     id: string,
     name: string,
-    hour: number,
-    foods: FoodServing[],
+    date: Date,
+    time: Date,
+    servings: FoodServing[],
 }
 
 export type Range = {

@@ -39,7 +39,7 @@ export default function MealDisplay({ meal, modalLauncher, onFoodPress }: Props)
             </View>
             <View style={styles.foodContainer}>
                 {
-                meal.foods.map((food, idx)=> {
+                meal.servings.map((food, idx)=> {
                     return (
                         <TableDisplay 
                             key={idx} 

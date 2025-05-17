@@ -61,8 +61,10 @@ export default function AppHeader() {
         };
     }, []);
 
+    console.log("meals", meals)
+
     const allFoodServings = useMemo(() => 
-        meals.flatMap(meal => meal.foods),
+        meals.flatMap(meal => meal.servings),
         [meals]
     );
     

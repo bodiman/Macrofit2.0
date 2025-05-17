@@ -11,24 +11,27 @@ import { useApi } from '@/lib/api';
 import { FoodServing, Portion, Meal as TempMeal } from '@/tempdata';
 
 
-const defaultMeals = [
+const defaultMeals: TempMeal[] = [
   {
       id: '0',
       name: "Breakfast",
-      hour: 8,
-      foods: [],
+      date: new Date(),
+      time: new Date(new Date().setHours(8, 0, 0, 0)),
+      servings: [],
   },
   {
       id: '1',
       name: "Lunch",
-      hour: 13,
-      foods: [],
+      date: new Date(),
+      time: new Date(new Date().setHours(13, 0, 0, 0)),
+      servings: [],
   },
   {
       id: '2',
       name: "Dinner",
-      hour: 18,
-      foods: []
+      date: new Date(),
+      time: new Date(new Date().setHours(18, 0, 0, 0)),
+      servings: []
   }
 ]
 
@@ -69,7 +72,7 @@ export function useUser() {
 
   // Sync preferences when external changes happen
   useEffect(() => {
-    const handleUpdatedPreferences = () => {
+    const handleUpdate = () => {
       const updated = loadPreferences();
 
       setPreferencesState(prev => {
@@ -84,10 +87,10 @@ export function useUser() {
       setMeals(updated);
     }
 
-    eventBus.on('preferencesUpdated', handleUpdatedPreferences);
+    eventBus.on('preferencesUpdated', handleUpdate);
     eventBus.on('mealsUpdated', handleMealsUpdate);
     return () => {
-      eventBus.off('preferencesUpdated', handleUpdatedPreferences);
+      eventBus.off('preferencesUpdated', handleUpdate);
       eventBus.off('mealsUpdated', handleMealsUpdate);
     };
   }, []);
@@ -95,8 +98,6 @@ export function useUser() {
   // Update macro preferences when preferences change
   useEffect(() => {
     setMacroPreferences(toMacroPreference(preferences));
-    storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(preferences));
-    eventBus.emit('preferencesUpdated');
   }, [preferences]);
 
   const createUser = async (userData: { email: string; name: string }) => {
@@ -105,6 +106,8 @@ export function useUser() {
       const data = await api.post('/api/register', userData);
       setAppUser(data.user);
       setPreferencesState(data.user.macroPreferences);
+      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
+      eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to register app user:', err);
       setError('Failed to register user');
@@ -130,6 +133,8 @@ export function useUser() {
         p.metric_id === updatedPreference[0].metric_id ? updatedPreference[0] : p
       );
       setPreferencesState(updatedPreferences);
+      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
+      eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to update preferences:', err);
       setError('Failed to update preferences');
@@ -140,6 +145,8 @@ export function useUser() {
     try {
       const data = await api.get(`/api/user/preferences?user_id=${userId}`);
       setPreferencesState(data);
+      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data));
+      eventBus.emit('preferencesUpdated');
     } catch (err) {
       console.error('Failed to fetch preferences:', err);
       setError('Failed to fetch preferences');
@@ -178,9 +185,27 @@ export function useUser() {
   };
 
   const fetchMeals = async (userId: number, date: Date) => {
-    const data = await api.get(`/api/user/meals?user_id=${userId}&date=${date}`);
+    let data = await api.get(`/api/user/meals?user_id=${userId}&date=${date}`);
+    const meals_to_create = [];
+
+    for (const meal of defaultMeals) {
+      const mealData = data.find((m: Meal) => m.name === meal.name);
+      console.log("meal", meal)
+      if (!mealData) {
+        meals_to_create.push(meal);
+      }
+    }
+
+    if (meals_to_create.length > 0) {
+      const created = await api.post('/api/user/meals', {
+        user_id: userId,
+        meals: meals_to_create
+      });
+      data = [...data, ...created].sort((a, b) => a.hour - b.hour);
+    }
+    
     console.log("data", data)
-    // setMeals(data);
+    setMeals(data);
   }
 
   useEffect(() => {
@@ -198,7 +223,7 @@ export function useUser() {
         setAppUser(res);
         if (res.user_id) {
           await fetchPreferences(res.user_id);
-          const meals = await fetchMeals(res.user_id, new Date());
+          await fetchMeals(res.user_id, new Date());
         }
       } catch (e: any) {
         if (e.message && e.message.includes('404')) {
@@ -226,13 +251,13 @@ export function useUser() {
   };
 
   // Add foods to a meal
-  const addFoodsToMeal = (mealId: string, foodsToAdd: TempMeal['foods']) => {
+  const addFoodsToMeal = (mealId: string, foodsToAdd: TempMeal['servings']) => {
       const meal = meals.find(m => m.id === mealId);
       if (!meal) return;
 
       const updatedMeal = {
           ...meal,
-          foods: [...meal.foods, ...foodsToAdd]
+          servings: [...meal.servings, ...foodsToAdd]
       };
       updateMeal(updatedMeal);
   };
@@ -240,14 +265,14 @@ export function useUser() {
   // Update a food's portion in a meal
   const updateFoodPortion = (foodId: string, newPortion: Portion) => {
       const updatedMeals = meals.map(meal => {
-          const updatedFoods = meal.foods.map(food => {
-              if (food.id === foodId) {
+          const updatedFoods = meal.servings.map(serving => {
+              if (serving.id === foodId) {
                   return {
-                      ...food,
+                      ...serving,
                       portion: newPortion
                   };
               }
-              return food;
+              return serving;
           });
           return {
               ...meal,
