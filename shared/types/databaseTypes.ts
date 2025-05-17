@@ -12,6 +12,20 @@ export type UserPreference = {
     };
 };
 
+export type FoodServing = {
+    id: string,
+    food_id: string,
+    portion: number,
+    portion_unit: string
+}
+
+export type Meal = {
+    id: string,
+    name: string,
+    hour: number,
+    foods: FoodServing[]
+}
+    
 export type MacroValue = {
     id: number,
     food_id: string,

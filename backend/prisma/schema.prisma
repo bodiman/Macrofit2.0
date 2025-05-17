@@ -74,6 +74,7 @@ model FoodServing {
   id          String  @id
   food_id     String
   meal_id     String
+  quantity    Float
   food        Food    @relation(fields: [food_id], references: [id])
   meal        Meal    @relation(fields: [meal_id], references: [id])
 }
@@ -81,8 +82,12 @@ model FoodServing {
 model Meal {
   id        String        @id
   name      String
-  date      DateTime
+  date      DateTime      @db.Date
+  time      DateTime      @db.Time
   user_id   Int
   user      User          @relation(fields: [user_id], references: [user_id])
   servings  FoodServing[]
+
+  @@unique([user_id, date, time])
+  @@unique([user_id, date, name])
 }

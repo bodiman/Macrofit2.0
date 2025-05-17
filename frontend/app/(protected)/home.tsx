@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, useUser } from '@clerk/clerk-expo'
+import { SignedIn, SignedOut } from '@clerk/clerk-expo'
 import { Link } from 'expo-router'
 import { Text, View, ScrollView, StyleSheet, Button } from 'react-native'
 import { FlatList } from 'react-native';
@@ -10,21 +10,30 @@ import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
-import useMeals from '../hooks/useMeals';
 import 'react-native-get-random-values';
-
+import eventBus from '@/app/storage/eventEmitter';
+import { useUser } from '../hooks/useUser';
 
 export default function Page() {
   const { 
     meals, 
-    activeMeal, 
     updateMeal, 
-    openFoodSearch, 
-    closeFoodSearch,
-    editingFood,
-    setEditingFood,
     updateFoodPortion
-  } = useMeals();
+  } = useUser();
+
+  const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
+  const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
+    // Open the food search modal for a specific meal
+  const openFoodSearch = (meal: Meal) => {
+    setActiveMeal(meal);
+  }
+
+  // Close the food search modal
+  const closeFoodSearch = () => {
+      // Close the modal
+      eventBus.emit('foodSearchModalClose');
+      setActiveMeal(null);
+  }
 
   return (
       <View style={styles.parentReference}>

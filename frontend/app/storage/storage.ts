@@ -1,5 +1,4 @@
 import { MMKV } from 'react-native-mmkv';
-import { bacon, hotdog, sandwich, fried, burrito } from '@/tempdata'
 
 
 const storage = new MMKV();
