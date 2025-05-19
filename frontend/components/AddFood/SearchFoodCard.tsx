@@ -13,6 +13,8 @@ type Props = {
 }
 
 export default function SearchFoodCard({ food, onAdd }: Props) {
+
+    // console.log("food", food)
     const [unit, setUnit] = useState<ServingUnit>(food.servingUnits[0]);
     const { preferences } = useUser();
 

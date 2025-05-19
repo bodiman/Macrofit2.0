@@ -42,6 +42,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 setIsLoading(true);
                 try {
                     const results = await searchAllFoods(searchQuery);
+                    console.log("results", results)
                     setSearchResults(results);
                 } catch (error) {
                     console.error('Error searching foods:', error);
