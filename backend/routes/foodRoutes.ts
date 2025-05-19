@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import prisma from '../prisma_client';
 import { getNutritionixData, getNutritionixCommonNames } from '../utils/Nutritionix/nutritionix';
 import { v4 as uuidv4 } from 'uuid';
-import { FoodTable } from '../prisma_client';
 import { Prisma } from '@prisma/client';
 
 interface Food {
@@ -173,7 +172,6 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                     description: `${food.name} from Common Foods`,
                                     active: false,
                                     kitchen_id: commonFoodsKitchen.id,
-                                    serving_size: food.serving_size,
                                     macros: {
                                         create: food.macros.map((macro: any) => ({
                                             value: macro.value,

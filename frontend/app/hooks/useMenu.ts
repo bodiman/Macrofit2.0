@@ -33,7 +33,7 @@ export function useMenu() {
 
     const searchMenuFoods = async (menuId: string, searchQuery: string = '') => {
         try {
-            const foods = await getMenuFoods(menuId, searchQuery);
+            const foods: Food[] = await getMenuFoods(menuId, searchQuery);
             return foods;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch menu foods');

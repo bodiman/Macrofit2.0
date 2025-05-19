@@ -2,25 +2,6 @@ import { MMKV } from 'react-native-mmkv';
 
 
 const storage = new MMKV();
-export default storage
+// storage.clearAll();
 
-export const meals = [
-    {
-        id: '0',
-        name: "Breakfast",
-        hour: 8,
-        foods: [],
-    },
-    {
-        id: '1',
-        name: "Lunch",
-        hour: 13,
-        foods: [],
-    },
-    {
-        id: '2',
-        name: "Dinner",
-        hour: 18,
-        foods: [],
-    }
-]
+export default storage

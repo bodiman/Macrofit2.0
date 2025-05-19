@@ -3,33 +3,33 @@ import { useUser as useClerkUser, useAuth } from '@clerk/clerk-expo';
 import { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
 import { UserPreference, Meal } from '@shared/types/databaseTypes';
-import { MacroPreferences } from '@/tempdata';
+import { MacroPreferences, ServingUnit } from '@/tempdata';
 import { toMacroPreference } from '@/lib/utils/toMacroPreferences';
 import storage from '@/app/storage/storage';
 import eventBus from '@/app/storage/eventEmitter';
 import { useApi } from '@/lib/api';
-import { FoodServing, Portion, Meal as TempMeal } from '@/tempdata';
-
+import { Meal as TempMeal } from '@shared/types/foodTypes';
+import { FoodServing } from '@shared/types/foodTypes';
 
 const defaultMeals: TempMeal[] = [
   {
       id: '0',
       name: "Breakfast",
-      date: new Date(),
+      date: new Date(new Date().setHours(8, 0, 0, 0)),
       time: new Date(new Date().setHours(8, 0, 0, 0)),
       servings: [],
   },
   {
       id: '1',
       name: "Lunch",
-      date: new Date(),
+      date: new Date(new Date().setHours(13, 0, 0, 0)),
       time: new Date(new Date().setHours(13, 0, 0, 0)),
       servings: [],
   },
   {
       id: '2',
       name: "Dinner",
-      date: new Date(),
+      date: new Date(new Date().setHours(18, 0, 0, 0)),
       time: new Date(new Date().setHours(18, 0, 0, 0)),
       servings: []
   }
@@ -175,7 +175,7 @@ export function useUser() {
         max_value
       });
 
-      console.log("adding preference", response)
+      // console.log("adding preference", response)
       const newPreference = await response;
       setPreferencesState([...preferences, newPreference]);
     } catch (err) {
@@ -190,7 +190,7 @@ export function useUser() {
 
     for (const meal of defaultMeals) {
       const mealData = data.find((m: Meal) => m.name === meal.name);
-      console.log("meal", meal)
+      // console.log("meal", meal)
       if (!mealData) {
         meals_to_create.push(meal);
       }
@@ -201,10 +201,9 @@ export function useUser() {
         user_id: userId,
         meals: meals_to_create
       });
-      data = [...data, ...created].sort((a, b) => a.hour - b.hour);
+      data = [...data, ...created].sort((a, b) => a.time - b.time);
     }
     
-    console.log("data", data)
     setMeals(data);
   }
 
@@ -240,36 +239,29 @@ export function useUser() {
     fetchAppUser();
   }, [isLoaded, clerkUser]);
 
-  // Update a specific meal
-  const updateMeal = (updatedMeal: TempMeal) => {
-      const updatedMeals = meals.map(meal => 
-          meal.id === updatedMeal.id ? updatedMeal : meal
-      );
-      setMeals(updatedMeals);
-      storage.set('meals', JSON.stringify(updatedMeals));
+  
+
+  // Add foods to a meal
+  // make a request to the server to create a new FoodServing associated with a particular meal
+  // update the local state to reflect the new FoodServing
+  const addFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
+      // make a post request to the server to add the foods to the meal
+      const response = await api.post(`/api/user/meals/${mealId}/servings`, {
+        foodServings: foodsToAdd
+      });
+
       eventBus.emit('mealsUpdated');
   };
 
-  // Add foods to a meal
-  const addFoodsToMeal = (mealId: string, foodsToAdd: TempMeal['servings']) => {
-      const meal = meals.find(m => m.id === mealId);
-      if (!meal) return;
-
-      const updatedMeal = {
-          ...meal,
-          servings: [...meal.servings, ...foodsToAdd]
-      };
-      updateMeal(updatedMeal);
-  };
-
   // Update a food's portion in a meal
-  const updateFoodPortion = (foodId: string, newPortion: Portion) => {
+  const updateFoodPortion = (servingId: string, quantity: number, unit: ServingUnit) => {
       const updatedMeals = meals.map(meal => {
           const updatedFoods = meal.servings.map(serving => {
-              if (serving.id === foodId) {
+              if (serving.id === servingId) {
                   return {
                       ...serving,
-                      portion: newPortion
+                      quantity,
+                      unit
                   };
               }
               return serving;
@@ -303,7 +295,6 @@ export function useUser() {
 
     // Meals
     meals,
-    updateMeal,
     addFoodsToMeal,
     updateFoodPortion,
     

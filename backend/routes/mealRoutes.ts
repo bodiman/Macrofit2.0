@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import express from 'express';
 import prisma from '../prisma_client';
+import { Meal } from '@shared/types/foodTypes';
+import { toMeals } from '../dataTransferObjects';
 const router = express.Router();
 
 const toDate = (date: Date) => {
@@ -10,7 +12,10 @@ const toDate = (date: Date) => {
 
 const toTime = (date: Date) => {
     date = new Date(date)
-    return new Date(0, 0, 0, date.getHours(), date.getMinutes(), date.getSeconds());
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
 };
 
 // Create a new meal for a user
@@ -36,11 +41,14 @@ router.post('/user/meals', async (req, res) => {
                 include: {
                     servings: {
                         include: {
-                            food: true
+                            food: true,
+                            unit: true
                         }
                     }
                 }
             });
+
+            console.log("newMeal", newMeal)
             res.status(201).json(newMeal);
             return;
         }
@@ -50,8 +58,6 @@ router.post('/user/meals', async (req, res) => {
             res.status(400).json({ error: 'user_id and meals array are required' });
             return;
         }
-
-        console.log("meals", meals)
 
         // Validate each meal in the array
         for (const meal of meals) {
@@ -77,7 +83,13 @@ router.post('/user/meals', async (req, res) => {
                     include: {
                         servings: {
                             include: {
-                                food: true
+                                food: {
+                                    include: {
+                                        macros: true,
+                                        servingUnits: true,
+                                    }
+                                },
+                                unit: true
                             }
                         }
                     }
@@ -108,7 +120,8 @@ router.put('/user/meals/:id', async (req, res) => {
             include: {
                 servings: {
                     include: {
-                        food: true
+                        food: true,
+                        unit: true
                     }
                 }
             }
@@ -141,7 +154,7 @@ router.get('/user/meals', async (req, res) => {
             return;
         }
 
-        const meals = await prisma.meal.findMany({ 
+        const dbMeals = await prisma.meal.findMany({ 
             where: { 
                 user_id: Number(user_id),
                 date: toDate(new Date(date as string))
@@ -149,11 +162,23 @@ router.get('/user/meals', async (req, res) => {
             include: {
                 servings: {
                     include: {
-                        food: true
+                        food: {
+                            include: {
+                                macros: {
+                                    include: {
+                                        metric: true
+                                    }
+                                },
+                                servingUnits: true,
+                            }
+                        },
+                        unit: true
                     }
                 }
             }
         });
+
+        const meals: Meal[] = toMeals(dbMeals);
         res.status(200).json(meals);
     } catch (err) {
         console.error('Failed to get meals:', err);
@@ -162,45 +187,73 @@ router.get('/user/meals', async (req, res) => {
 });
 
 // Add a food serving to a meal
-router.post('/user/food-serving', async (req, res) => {
+router.post('/user/meals/:mealId/servings', async (req, res) => {
     try {
-        const { food_id, meal_id, quantity } = req.body;
-        if (!food_id || !meal_id) {
-            res.status(400).json({ error: 'food_id and meal_id are required' });
-            return;
-        }
-        const newServing = await prisma.foodServing.create({
-            data: {
-                id: crypto.randomUUID(),
-                food_id,
-                meal_id,
-                quantity: quantity || 1,
-            },
-            include: {
-                food: true
+        const { mealId } = req.params;
+        const { foodServings } = req.body;
+        const newServings = [];
+
+        for (const serving of foodServings) {
+            const { food, quantity, unit } = serving;
+            const food_id = food.id;
+
+            if (!food_id || !unit || !quantity) {
+                res.status(400).json({ error: 'food_id, unit, and quantity are required' });
+                return;
             }
-        });
-        res.status(201).json(newServing);
+
+            // Verify the meal exists
+            const meal = await prisma.meal.findUnique({
+                where: { id: mealId }
+            });
+
+            if (!meal) {
+                res.status(404).json({ error: 'Meal not found' });
+                return;
+            }
+
+            const newServing = await prisma.foodServing.create({
+                data: {
+                    id: crypto.randomUUID(),
+                    unit_id: unit.id,
+                    food_id,
+                    meal_id: mealId,
+                    quantity: Number(quantity)
+                },
+                include: {
+                    food: true
+                }
+            });
+            newServings.push(newServing);
+        }
+        res.status(201).json(newServings);
     } catch (err) {
         console.error('Failed to add food serving:', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
-// Update a food serving by id
-router.put('/user/food-serving/:id', async (req, res) => {
+// Update a food serving
+router.put('/user/meals/servings/:servingId', async (req, res) => {
     try {
-        const { id } = req.params;
+        const { servingId } = req.params;
         const { quantity } = req.body;
+
+        if (!quantity) {
+            res.status(400).json({ error: 'quantity is required' });
+            return;
+        }
+
         const updatedServing = await prisma.foodServing.update({
-            where: { id },
+            where: { id: servingId },
             data: {
-                quantity
+                quantity: Number(quantity)
             },
             include: {
                 food: true
             }
         });
+
         res.status(200).json(updatedServing);
     } catch (err) {
         console.error('Failed to update food serving:', err);
@@ -208,14 +261,37 @@ router.put('/user/food-serving/:id', async (req, res) => {
     }
 });
 
-// Delete a food serving by id
-router.delete('/user/food-serving/:id', async (req, res) => {
+// Delete a food serving
+router.delete('/user/meals/servings/:servingId', async (req, res) => {
     try {
-        const { id } = req.params;
-        await prisma.foodServing.delete({ where: { id } });
+        const { servingId } = req.params;
+
+        await prisma.foodServing.delete({
+            where: { id: servingId }
+        });
+
         res.status(204).send();
     } catch (err) {
         console.error('Failed to delete food serving:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Get all servings for a meal
+router.get('/user/meals/:mealId/servings', async (req, res) => {
+    try {
+        const { mealId } = req.params;
+
+        const servings = await prisma.foodServing.findMany({
+            where: { meal_id: mealId },
+            include: {
+                food: true
+            }
+        });
+
+        res.status(200).json(servings);
+    } catch (err) {
+        console.error('Failed to get food servings:', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });

@@ -1,16 +1,12 @@
 // import { v4 as uuidv4 } from 'uuid';
 import { generateUUID } from '@/lib/utils/uuid';
+import { Food, FoodServing } from '@shared/types/foodTypes';
 
 //types
 
-export type Unit = {
+export type ServingUnit = {
     name: string,
     grams: number
-}
-
-export type Portion = {
-    unit: Unit,
-    quantity: number
 }
 
 // export type Macros = {
@@ -23,27 +19,6 @@ export type Portion = {
 //     sugar?: number,
 //     potassium?: number
 // }
-
-export type Food = {
-    id: string,
-    name: string,
-    macros: Macros,
-}
-
-export type FoodServing = {
-    id: string
-    food: Food
-    portion: Portion,
-    servingUnits: Unit[],
-}
-
-export type Meal = {
-    id: string,
-    name: string,
-    date: Date,
-    time: Date,
-    servings: FoodServing[],
-}
 
 export type Range = {
     min?: number,
@@ -64,22 +39,22 @@ export const unitMap = {
 }
 
 // Units
-export const gram: Unit = {
+export const gram: ServingUnit = {
     name: "g",
     grams: 1
 }
 
-export const ounce: Unit = {
+export const ounce: ServingUnit = {
     name: "oz",
     grams: 28.35
 }
 
-export const cup: Unit = {
+export const cup: ServingUnit = {
     name: "cups",
     grams: 20
 }
 
-export const servingUnits: Unit[] = [
+export const servingUnits: ServingUnit[] = [
     gram, ounce, cup
 ]
 

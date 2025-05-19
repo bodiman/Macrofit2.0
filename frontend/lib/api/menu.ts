@@ -17,10 +17,7 @@ export const useMenuApi = () => {
             : `/api/menus/${menuId}/foods`;
             
         const data = await api.get(endpoint);
-        return data.map((food: dbFood) => ({
-            ...food,
-            macros: toMacros(food.macros)
-        }));
+        return data;
     };
 
     return {

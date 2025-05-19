@@ -22,7 +22,7 @@ export default function MealDisplay({ meal, modalLauncher, onFoodPress }: Props)
             const selectedMeal = allMeals.find(item => item.id == meal.id)
 
             if (selectedMeal) {
-                selectedMeal.foods = selectedMeal.foods.filter((item)=> (item.id != food.id));
+                selectedMeal.servings = selectedMeal.servings.filter((item)=> (item.id != food.id));
                 storage.set('meals', JSON.stringify(allMeals));
                 eventBus.emit('mealsUpdated')
             }

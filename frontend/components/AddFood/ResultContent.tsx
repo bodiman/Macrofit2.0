@@ -2,7 +2,7 @@ import { View, Text, ScrollView, StyleSheet, Animated, FlatList, Pressable, Acti
 import { useEffect, useRef, useState } from "react"
 import Colors from "@/styles/colors"
 import { useFoodSearchApi } from "@/lib/api/foodSearch"
-import { Food, FoodServing, Portion } from "@shared/types/foodTypes"
+import { Food, FoodServing, ServingUnit } from "@shared/types/foodTypes"
 import SearchFoodCard from "./SearchFoodCard"
 import storage from "@/app/storage/storage"
 import { v4 as uuidv4 } from 'uuid';
@@ -53,6 +53,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 setIsLoading(true);
                 try {
                     const results = await searchMenuFoods(selectedMenuId, searchQuery);
+                    console.log("results", results)
                     setSearchResults(results);
                 } catch (error) {
                     console.error('Error searching foods:', error);
@@ -68,12 +69,13 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
         fetchFoods();
     }, [searchQuery, selectedMenuId]);
 
-    const handleAddFood = (food: Food, portion: Portion) => {
+    const handleAddFood = (food: Food, quantity: number, unit: ServingUnit) => {
+
         const foodServing: FoodServing = {
             id: uuidv4(),
             food: food,
-            portion: portion,
-            servingUnits: servingUnits
+            quantity: quantity,
+            unit: food.servingUnits[0]
         };
         onAddToCart(foodServing);
         closeModal();

@@ -24,16 +24,16 @@ model Kitchen {
 }
 
 model Food {
-  id            String      @id
-  name          String
-  description   String?
-  kitchen_id    String
-  active        Boolean
-  updated       DateTime    @default(now()) @updatedAt
-  serving_size  Float
-  kitchen       Kitchen     @relation(fields: [kitchen_id], references: [id])
-  macros        FoodMacro[]
-  foodServings  FoodServing[]
+  id                String          @id
+  name              String
+  description       String?
+  kitchen_id        String
+  active            Boolean
+  updated           DateTime        @default(now()) @updatedAt
+  kitchen           Kitchen         @relation(fields: [kitchen_id], references: [id])
+  servingUnits      ServingUnit[]
+  macros            FoodMacro[]
+  foodServings      FoodServing[]
 
   @@unique([name, kitchen_id])
 }
@@ -71,23 +71,36 @@ model UserPreference {
 }
 
 model FoodServing {
-  id          String  @id
+  id          String        @id
   food_id     String
   meal_id     String
+  unit_id     String
   quantity    Float
-  food        Food    @relation(fields: [food_id], references: [id])
-  meal        Meal    @relation(fields: [meal_id], references: [id])
+  unit        ServingUnit   @relation(fields: [unit_id], references: [id]) 
+  food        Food          @relation(fields: [food_id], references: [id])
+  meal        Meal          @relation(fields: [meal_id], references: [id])
 }
 
 model Meal {
   id        String        @id
   name      String
   date      DateTime      @db.Date
-  time      DateTime      @db.Time
+  time      String
   user_id   Int
   user      User          @relation(fields: [user_id], references: [user_id])
   servings  FoodServing[]
 
   @@unique([user_id, date, time])
   @@unique([user_id, date, name])
+}
+
+model ServingUnit {
+  id        String    @id
+  name      String
+  grams     Float
+  food_id   String
+  food      Food      @relation(fields: [food_id], references: [id])
+  servings  FoodServing[]
+
+  @@unique([name, food_id])
 }

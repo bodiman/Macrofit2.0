@@ -4,7 +4,8 @@ import { Text, View, ScrollView, StyleSheet, Button } from 'react-native'
 import { FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SignOutButton } from '@/components/SignOutButton'
-import { Meal, FoodServing } from '@/tempdata'
+import { Meal } from '@/tempdata'
+import { FoodServing } from '@shared/types/foodTypes';
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -13,11 +14,12 @@ import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import 'react-native-get-random-values';
 import eventBus from '@/app/storage/eventEmitter';
 import { useUser } from '../hooks/useUser';
+import { ServingUnit } from '@shared/types/foodTypes';
 
 export default function Page() {
   const { 
     meals, 
-    updateMeal, 
+    addFoodsToMeal, 
     updateFoodPortion
   } = useUser();
 
@@ -56,15 +58,15 @@ export default function Page() {
             activeMeal={activeMeal} 
             modalCloser={closeFoodSearch} 
             onClose={closeFoodSearch}
-            onUpdateMeal={updateMeal}
+            addFoodsToMeal={addFoodsToMeal}
           />
           {editingFood && (
             <EditFoodModal
-              food={editingFood}
+              foodServing={editingFood}
               onClose={() => setEditingFood(null)}
-              onUpdatePortion={(portion) => {
+              onUpdatePortion={(quantity: number, unit: ServingUnit) => {
                 if (editingFood) {
-                  updateFoodPortion(editingFood.id, portion);
+                  updateFoodPortion(editingFood.id, quantity, unit);
                 }
               }}
             />

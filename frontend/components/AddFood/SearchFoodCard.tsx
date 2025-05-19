@@ -1,5 +1,5 @@
 import Colors from '@/styles/colors'
-import { Food, Unit, Portion } from '@shared/types/foodTypes'
+import { Food, ServingUnit } from '@shared/types/foodTypes'
 import { servingUnits } from '@/tempdata'
 import { Text, View, StyleSheet, TouchableOpacity, TextInput } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -9,19 +9,15 @@ import useUser from '@/app/hooks/useUser';
 
 type Props = {
     food: Food,
-    onAdd: (food: Food, portion: Portion) => void
+    onAdd: (food: Food, quantity: number, unit: ServingUnit) => void
 }
 
 export default function SearchFoodCard({ food, onAdd }: Props) {
-    const [unit, setUnit] = useState<Unit>(servingUnits[0]);
+    const [unit, setUnit] = useState<ServingUnit>(food.servingUnits[0]);
     const { preferences } = useUser();
 
     const handleAdd = () => {
-        const portion: Portion = {
-            unit,
-            quantity: 0
-        };
-        onAdd(food, portion);
+        onAdd(food, 0, unit);
     };
 
     return (

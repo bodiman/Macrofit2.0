@@ -2,7 +2,7 @@ import Colors from "@/styles/colors";
 import { View, Text, TextInput, StyleSheet, Button, Pressable, TouchableOpacity, ScrollView, Platform } from "react-native"
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { FoodServing, Portion } from "@shared/types/foodTypes";
+import { FoodServing, ServingUnit } from "@shared/types/foodTypes";
 import { FlatList } from "react-native";
 import FoodCard from "./FoodCard";
 import { useEffect, useState, useRef } from "react";
@@ -23,6 +23,7 @@ type Props = {
 export default function AddFood({ shoppingCart, setShoppingCart, handleLog }: Props) {
     const [displayResults, setDisplayResults] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
     const totalMacros = useMacros(shoppingCart);
     const searchBarRef = useRef<TextInput>(null);
     const { preferences } = useUser();
@@ -36,12 +37,13 @@ export default function AddFood({ shoppingCart, setShoppingCart, handleLog }: Pr
         setShoppingCart(updatedCart);
     };
 
-    const handleUpdatePortion = (foodId: string, newPortion: Portion) => {
+    const handleUpdatePortion = (foodId: string, quantity: number, unit: ServingUnit) => {
         const updatedCart = shoppingCart.map(item => {
             if (item.id === foodId) {
                 return {
                     ...item,
-                    portion: newPortion
+                    quantity,
+                    unit
                 };
             }
             return item;
@@ -101,7 +103,7 @@ export default function AddFood({ shoppingCart, setShoppingCart, handleLog }: Pr
                     renderItem={({ item }) => (
                         <FoodCard 
                             food={item}
-                            onUpdatePortion={(portion) => handleUpdatePortion(item.id, portion)}
+                            onUpdatePortion={(quantity: number, unit: ServingUnit) => handleUpdatePortion(item.id, quantity, unit)}
                             onRemove={() => handleRemoveFromCart(item.id)}
                         />
                     )}

@@ -61,13 +61,12 @@ export default function AppHeader() {
         };
     }, []);
 
-    console.log("meals", meals)
-
     const allFoodServings = useMemo(() => 
         meals.flatMap(meal => meal.servings),
         [meals]
     );
     
+    console.log("allFoodServings", allFoodServings)
     const mealMacros = useMacros(allFoodServings);
     const cartMacros = useMacros(shoppingCart);
 
