@@ -4,7 +4,7 @@ import { Text, View, ScrollView, StyleSheet, Button } from 'react-native'
 import { FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SignOutButton } from '@/components/SignOutButton'
-import { Meal } from '@/tempdata'
+import { Meal } from '@shared/types/foodTypes';
 import { FoodServing } from '@shared/types/foodTypes';
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
@@ -20,6 +20,7 @@ export default function Page() {
   const { 
     meals, 
     addFoodsToMeal, 
+    deleteFoodFromMeal,
     updateFoodPortion
   } = useUser();
 
@@ -48,6 +49,7 @@ export default function Page() {
                 meal={item} 
                 modalLauncher={() => openFoodSearch(item)}
                 onFoodPress={(food) => setEditingFood(food)}
+                handleDeleteFood={(serving: FoodServing) => deleteFoodFromMeal(item.id, serving.id)}
               />
             )}
             ItemSeparatorComponent={() => <View style={{ height: 40 }} />}

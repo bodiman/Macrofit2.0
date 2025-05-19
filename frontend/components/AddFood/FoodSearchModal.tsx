@@ -1,8 +1,7 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
-import { PropsWithChildren, useState, useEffect } from 'react';
+import { PropsWithChildren, useEffect } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Meal } from '@/tempdata';
-import { FoodServing } from '@shared/types/foodTypes';
+import { Meal, FoodServing } from '@shared/types/foodTypes';
 import Colors from '@/styles/colors';
 import AddFood from './AddFood';
 import AnimatedModal from '../AnimatedModal';

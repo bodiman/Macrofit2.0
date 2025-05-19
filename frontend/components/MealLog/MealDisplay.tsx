@@ -1,4 +1,4 @@
-import { FoodServing, Meal } from '@/tempdata'
+import { FoodServing, Meal } from '@shared/types/foodTypes'
 import { Text, View, StyleSheet, Pressable } from 'react-native'
 import Colors from '@/styles/colors'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -12,22 +12,23 @@ type Props = {
     meal: Meal, 
     modalLauncher: ()=> void,
     onFoodPress: (food: FoodServing) => void,
+    handleDeleteFood: (food: FoodServing) => void,
 }
 
-export default function MealDisplay({ meal, modalLauncher, onFoodPress }: Props) {
-    const handleDeleteFood = (food: FoodServing) => {
-        const mealLog = storage.getString('meals')
-        if (mealLog != null) {
-            const allMeals = JSON.parse(mealLog) as Meal[];
-            const selectedMeal = allMeals.find(item => item.id == meal.id)
+export default function MealDisplay({ meal, modalLauncher, onFoodPress, handleDeleteFood }: Props) {
+    // const handleDeleteFood = (food: FoodServing) => {
+    //     const mealLog = storage.getString('meals')
+    //     if (mealLog != null) {
+    //         const allMeals = JSON.parse(mealLog) as Meal[];
+    //         const selectedMeal = allMeals.find(item => item.id == meal.id)
 
-            if (selectedMeal) {
-                selectedMeal.servings = selectedMeal.servings.filter((item)=> (item.id != food.id));
-                storage.set('meals', JSON.stringify(allMeals));
-                eventBus.emit('mealsUpdated')
-            }
-        }
-    }
+    //         if (selectedMeal) {
+    //             selectedMeal.servings = selectedMeal.servings.filter((item)=> (item.id != food.id));
+    //             storage.set('meals', JSON.stringify(allMeals));
+    //             eventBus.emit('mealsUpdated')
+    //         }
+    //     }
+    // }
 
     return (
         <View style={styles.mealContainer}>

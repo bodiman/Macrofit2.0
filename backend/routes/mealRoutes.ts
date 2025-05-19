@@ -105,33 +105,33 @@ router.post('/user/meals', async (req, res) => {
 });
 
 // Update a meal
-router.put('/user/meals/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, date, time } = req.body;
+// router.put('/user/meals/:id', async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { name, date, time } = req.body;
         
-        const updatedMeal = await prisma.meal.update({
-            where: { id },
-            data: {
-                ...(name && { name }),
-                ...(date && { date: toDate(date) }),
-                ...(time && { time: toTime(time) }),
-            },
-            include: {
-                servings: {
-                    include: {
-                        food: true,
-                        unit: true
-                    }
-                }
-            }
-        });
-        res.status(200).json(updatedMeal);
-    } catch (err) {
-        console.error('Failed to update meal:', err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
+//         const updatedMeal = await prisma.meal.update({
+//             where: { id },
+//             data: {
+//                 ...(name && { name }),
+//                 ...(date && { date: toDate(date) }),
+//                 ...(time && { time: toTime(time) }),
+//             },
+//             include: {
+//                 servings: {
+//                     include: {
+//                         food: true,
+//                         unit: true
+//                     }
+//                 }
+//             }
+//         });
+//         res.status(200).json(updatedMeal);
+//     } catch (err) {
+//         console.error('Failed to update meal:', err);
+//         res.status(500).json({ error: 'Internal Server Error' });
+//     }
+// });
 
 // Delete a meal by id
 router.delete('/user/meals/:id', async (req, res) => {
@@ -239,7 +239,9 @@ router.put('/user/meals/servings/:servingId', async (req, res) => {
         const { servingId } = req.params;
         const { quantity } = req.body;
 
-        if (!quantity) {
+        console.log("quantity", quantity)
+
+        if (quantity === undefined) {
             res.status(400).json({ error: 'quantity is required' });
             return;
         }

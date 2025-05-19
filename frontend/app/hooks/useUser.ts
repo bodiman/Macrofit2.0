@@ -84,6 +84,7 @@ export function useUser() {
 
     const handleMealsUpdate = () => {
       const updated = loadMeals();
+      console.log("updated meals", updated)
       setMeals(updated);
     }
 
@@ -239,22 +240,74 @@ export function useUser() {
     fetchAppUser();
   }, [isLoaded, clerkUser]);
 
-  
+
+  const deleteFoodFromMeal = async (mealId: string, foodId: string) => {
+    const updatedMeals = meals.map(meal => {
+      if (meal.id === mealId) {
+        return {
+          ...meal,
+          servings: meal.servings.filter(serving => serving.id !== foodId)  
+        };
+      }
+      return meal;
+    });
+
+    const originalMeals = meals;
+
+    setMeals(updatedMeals);
+    storage.set('meals', JSON.stringify(updatedMeals));
+    eventBus.emit('mealsUpdated');
+
+    try {
+      await api.delete(`/api/user/meals/servings/${foodId}`);
+    } catch (err) {
+      setMeals(originalMeals);
+      storage.set('meals', JSON.stringify(originalMeals));
+      eventBus.emit('mealsUpdated');
+      console.log(originalMeals)
+      console.error('Failed to delete food from meal:', err);
+      setError('Failed to delete food from meal');
+    }
+  };
 
   // Add foods to a meal
   // make a request to the server to create a new FoodServing associated with a particular meal
   // update the local state to reflect the new FoodServing
   const addFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
-      // make a post request to the server to add the foods to the meal
-      const response = await api.post(`/api/user/meals/${mealId}/servings`, {
-        foodServings: foodsToAdd
+
+      //update local state to reflect the new FoodServing
+      const updatedMeals = meals.map(meal => {
+        if (meal.id === mealId) {
+          return {
+            ...meal,
+            servings: [...meal.servings, ...foodsToAdd]
+          };
+        }
+        return meal;
       });
 
+      const originalMeals = meals;
+
+      storage.set('meals', JSON.stringify(updatedMeals));
       eventBus.emit('mealsUpdated');
+
+      try {
+        // make a post request to the server to add the foods to the meal
+        await api.post(`/api/user/meals/${mealId}/servings`, {
+          foodServings: foodsToAdd
+        });
+      } catch (err) {
+        // set local state to reflect the original state
+        storage.set('meals', JSON.stringify(originalMeals));
+        eventBus.emit('mealsUpdated');
+
+        console.error('Failed to add foods to meal:', err);
+        setError('Failed to add foods to meal');
+      }
   };
 
   // Update a food's portion in a meal
-  const updateFoodPortion = (servingId: string, quantity: number, unit: ServingUnit) => {
+  const updateFoodPortion = async (servingId: string, quantity: number, unit: ServingUnit) => {
       const updatedMeals = meals.map(meal => {
           const updatedFoods = meal.servings.map(serving => {
               if (serving.id === servingId) {
@@ -268,12 +321,22 @@ export function useUser() {
           });
           return {
               ...meal,
-              foods: updatedFoods
+              servings: updatedFoods
           };
       });
-      setMeals(updatedMeals);
       storage.set('meals', JSON.stringify(updatedMeals));
       eventBus.emit('mealsUpdated');
+
+      // try {
+      //   console.log("quantity", quantity)
+      //   await api.put(`/api/user/meals/servings/${servingId}`, {
+      //     quantity: quantity ? quantity : 0,
+      //     unit,
+      //   });
+      // } catch (err) {
+      //   console.error('Failed to update food portion:', err);
+      //   setError('Failed to update food portion');
+      // }
   };
 
   return { 
@@ -296,6 +359,7 @@ export function useUser() {
     // Meals
     meals,
     addFoodsToMeal,
+    deleteFoodFromMeal,
     updateFoodPortion,
     
   };

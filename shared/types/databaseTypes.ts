@@ -23,7 +23,7 @@ export type Meal = {
     id: string,
     name: string,
     hour: number,
-    foods: FoodServing[]
+    servings: FoodServing[]
 }
     
 export type MacroValue = {

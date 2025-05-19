@@ -26,8 +26,6 @@ const MyIcon = React.memo(() => (
 
 const calculateAdjustedCalories = (foodServing: FoodServing): number => {
     const { food, quantity, unit } = foodServing;
-
-    console.log("foodServing", food.macros)
     const baseCalories = food.macros.calories || 0;
     const gramsInPortion = quantity * unit.grams;
     return Math.round(baseCalories * gramsInPortion);

@@ -66,7 +66,6 @@ export default function AppHeader() {
         [meals]
     );
     
-    console.log("allFoodServings", allFoodServings)
     const mealMacros = useMacros(allFoodServings);
     const cartMacros = useMacros(shoppingCart);
 
