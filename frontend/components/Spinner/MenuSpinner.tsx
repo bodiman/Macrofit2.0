@@ -17,6 +17,7 @@ export default function MenuSpinner({ menus, selectedMenuId, onSelect, loading =
         ? { id: 'all', name: 'All Dining Halls' }
         : menus.find(menu => menu.id === selectedMenuId);
 
+    console.log(menus)
     const allMenus = [
         { id: 'all', name: 'All Dining Halls' },
         ...menus

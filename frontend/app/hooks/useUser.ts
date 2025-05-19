@@ -84,7 +84,6 @@ export function useUser() {
 
     const handleMealsUpdate = () => {
       const updated = loadMeals();
-      console.log("updated meals", updated)
       setMeals(updated);
     }
 
@@ -104,7 +103,8 @@ export function useUser() {
   const createUser = async (userData: { email: string; name: string }) => {
     try {
       setLoading(true);
-      const data = await api.post('/api/register', userData);
+      const res = await api.post('/api/register', userData);
+      const data = await res.json();
       setAppUser(data.user);
       setPreferencesState(data.user.macroPreferences);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data.user.macroPreferences));
@@ -126,10 +126,11 @@ export function useUser() {
     if (!appUser) return;
 
     try {
-      const updatedPreference: UserPreference[] = await api.put('/api/user/preferences', {
+      const res = await api.put('/api/user/preferences', {
         user_id: appUser.user_id,
         preferences: [preference],
       });
+      const updatedPreference: UserPreference[] = await res.json();
       const updatedPreferences = preferences.map(p => 
         p.metric_id === updatedPreference[0].metric_id ? updatedPreference[0] : p
       );
@@ -144,7 +145,8 @@ export function useUser() {
 
   const fetchPreferences = async (userId: number) => {
     try {
-      const data = await api.get(`/api/user/preferences?user_id=${userId}`);
+      const res = await api.get(`/api/user/preferences?user_id=${userId}`);
+      const data = await res.json();
       setPreferencesState(data);
       storage.set(CACHED_PREFERENCES_KEY, JSON.stringify(data));
       eventBus.emit('preferencesUpdated');
@@ -177,7 +179,7 @@ export function useUser() {
       });
 
       // console.log("adding preference", response)
-      const newPreference = await response;
+      const newPreference = await response.json();
       setPreferencesState([...preferences, newPreference]);
     } catch (err) {
       console.error('Failed to add new macro preference:', err);
@@ -186,7 +188,8 @@ export function useUser() {
   };
 
   const fetchMeals = async (userId: number, date: Date) => {
-    let data = await api.get(`/api/user/meals?user_id=${userId}&date=${date}`);
+    const res = await api.get(`/api/user/meals?user_id=${userId}&date=${date}`);
+    let data = await res.json();
     const meals_to_create = [];
 
     for (const meal of defaultMeals) {
@@ -198,10 +201,11 @@ export function useUser() {
     }
 
     if (meals_to_create.length > 0) {
-      const created = await api.post('/api/user/meals', {
+      const created_response = await api.post('/api/user/meals', {
         user_id: userId,
         meals: meals_to_create
       });
+      const created = await created_response.json();
       data = [...data, ...created].sort((a, b) => a.time - b.time);
     }
     
@@ -220,10 +224,11 @@ export function useUser() {
           email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
         });
         const res = await api.get(`/api/user?${params.toString()}`);
-        setAppUser(res);
-        if (res.user_id) {
-          await fetchPreferences(res.user_id);
-          await fetchMeals(res.user_id, new Date());
+        const user = await res.json();
+        setAppUser(user);
+        if (user.user_id) {
+          await fetchPreferences(user.user_id);
+          await fetchMeals(user.user_id, new Date());
         }
       } catch (e: any) {
         if (e.message && e.message.includes('404')) {

@@ -214,7 +214,7 @@ router.post('/user/meals/:mealId/servings', async (req, res) => {
 
             const newServing = await prisma.foodServing.create({
                 data: {
-                    id: crypto.randomUUID(),
+                    id: serving.id,
                     unit_id: unit.id,
                     food_id,
                     meal_id: mealId,
@@ -267,6 +267,8 @@ router.put('/user/meals/servings/:servingId', async (req, res) => {
 router.delete('/user/meals/servings/:servingId', async (req, res) => {
     try {
         const { servingId } = req.params;
+
+        console.log("servingId", servingId)
 
         await prisma.foodServing.delete({
             where: { id: servingId }
