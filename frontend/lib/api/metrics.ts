@@ -12,7 +12,8 @@ export function useMetrics() {
       setLoading(true);
       try {
         const response = await api.get('/api/metrics/nutritional-metrics');
-        setMetrics(response);
+        const data = await response.json();
+        setMetrics(data);
         setError(null);
       } catch (err) {
         setError(String(err));
