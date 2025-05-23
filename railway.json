@@ -1,3 +1,11 @@
 {
-    
+  "build": {
+    "installCommand": "npm install --prefix backend",
+    "startCommand": "npm run start --prefix backend"
+  },
+  "deploy": {
+    "startCommand": "npm run start --prefix backend",
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
 }
