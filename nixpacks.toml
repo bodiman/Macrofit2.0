@@ -1,3 +1,8 @@
+providers = ["node"]
+
+[config]
+nodeVersion = "18"
+
 [phases.setup]
 cmds = ["npm install --prefix backend"]
 
