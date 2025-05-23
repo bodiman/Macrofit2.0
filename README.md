@@ -1,3 +1,9 @@
+May 23
+------
+
+Currently, the user's meal preferences are hardcoded in the useUser hook. Instead of this, the "meal preferences", the daily meals each user wants to eat, and their macro goals for that particular meal, should be tracked and stored in the database. The user should be able to edit these preferences from the preferences page. Meals with no foodServings should only appear on the home screen if they exist in the user's meal preferences, and meals that do not exist in the user's meal preferneces, and have no associated foodServings should not be displayed, and should be deleted from the database.
+
+
 May 16
 ------
 
