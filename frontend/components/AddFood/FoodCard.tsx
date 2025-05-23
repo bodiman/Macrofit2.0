@@ -1,22 +1,23 @@
 import Colors from '@/styles/colors'
-import { FoodServing, Unit, Portion } from '@/tempdata'
+import { FoodServing } from '@/tempdata'
 import { Text, View, StyleSheet, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TextInput } from 'react-native-gesture-handler';
 import { useState, useRef } from 'react';
 import UnitSpinner from '../Spinner/UnitSpinner';
 import { v4 as uuidv4 } from 'uuid';
+import { ServingUnit } from '@shared/types/foodTypes';
 
 type Props = {
     food: FoodServing,
-    onUpdatePortion: (portion: Portion) => void,
+    onUpdatePortion: (quantity: number, unit: ServingUnit) => void,
     onRemove: () => void
 }
 
 export default function FoodCard({ food, onUpdatePortion, onRemove }: Props) {
-    const [unit, setUnit] = useState<Unit>(food.portion.unit);
-    const [quantity, setQuantity] = useState(food.portion.quantity);
-    const [stringQuantity, setStringQuantity] = useState(food.portion.quantity.toString());
+    const [unit, setUnit] = useState<ServingUnit>(food.unit);
+    const [quantity, setQuantity] = useState(food.quantity);
+    const [stringQuantity, setStringQuantity] = useState(food.quantity.toString());
 
     const handleQuantityChange = (val: string) => {
         setStringQuantity(val);
@@ -26,23 +27,17 @@ export default function FoodCard({ food, onUpdatePortion, onRemove }: Props) {
             
             setQuantity(displayQuantity);
             if (onUpdatePortion) {
-                onUpdatePortion({
-                    unit,
-                    quantity: displayQuantity
-                });
+                onUpdatePortion(displayQuantity, unit);
             }
         } catch {
             setQuantity(0);
         }
     };
 
-    const handleUnitChange = (newUnit: Unit) => {
+    const handleUnitChange = (newUnit: ServingUnit) => {
         setUnit(newUnit);
         if (onUpdatePortion) {
-            onUpdatePortion({
-                unit: newUnit,
-                quantity
-            });
+            onUpdatePortion(quantity, newUnit);
         }
     };
 

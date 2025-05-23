@@ -8,7 +8,8 @@ export const useMenuApi = () => {
     const api = useApi();
 
     const getMenus = async (): Promise<Kitchen[]> => {
-        return api.get('/api/menus');
+        const res = await api.get('/api/menus');
+        return res.json();
     };
 
     const getMenuFoods = async (menuId: string, search?: string): Promise<Food[]> => {
@@ -16,11 +17,8 @@ export const useMenuApi = () => {
             ? `/api/menus/${menuId}/foods?search=${encodeURIComponent(search)}`
             : `/api/menus/${menuId}/foods`;
             
-        const data = await api.get(endpoint);
-        return data.map((food: dbFood) => ({
-            ...food,
-            macros: toMacros(food.macros)
-        }));
+        const res = await api.get(endpoint);
+        return res.json();
     };
 
     return {

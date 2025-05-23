@@ -1,4 +1,5 @@
-import { Food, FoodServing, Macros, Portion } from "@/tempdata";
+import { Macros, } from "@/tempdata";
+import { FoodServing, Food } from "@shared/types/foodTypes";
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import Colors from "@/styles/colors";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -24,9 +25,9 @@ const MyIcon = React.memo(() => (
   ));
 
 const calculateAdjustedCalories = (foodServing: FoodServing): number => {
-    const { food, portion } = foodServing;
+    const { food, quantity, unit } = foodServing;
     const baseCalories = food.macros.calories || 0;
-    const gramsInPortion = portion.quantity * portion.unit.grams;
+    const gramsInPortion = quantity * unit.grams;
     return Math.round(baseCalories * gramsInPortion);
 };
 
@@ -44,7 +45,7 @@ export default function TableRow({ foodServing, handleDeleteFood, onPress }: Pro
             <View style={styles.container}>
                 <Text style={styles.tableName}>
                     { foodServing.food.name } 
-                    <View><Text style={styles.portion}>{ foodServing.portion.quantity } { foodServing.portion.unit.name }</Text></View>
+                    <View><Text style={styles.portion}>{ foodServing.quantity } { foodServing.unit.name }</Text></View>
                 </Text>
                 <Text style={styles.tableDatum}>
                     { adjustedCalories }

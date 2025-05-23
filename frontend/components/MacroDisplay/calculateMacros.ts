@@ -1,10 +1,12 @@
-import { FoodServing, Macros } from '@/tempdata';
+import { Macros } from '@/tempdata';
+import { FoodServing } from '@shared/types/foodTypes';
 import storage from '@/app/storage/storage';
 
 // macros adjusted for portion size
 export const calculateAdjustedMacros = (foodServing: FoodServing): Macros => {
-    const { food, portion } = foodServing;
-    const gramsInPortion = portion.quantity * portion.unit.grams;
+    const { unit, quantity, food } = foodServing;
+    // console.log("portion", portion)
+    const gramsInPortion = quantity * unit.grams;
     const totalMacros: Macros = {};
 
     // console.log("food.macros", food.macros);

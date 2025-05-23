@@ -26,7 +26,6 @@ export const useApi = () => {
         };
 
         try {
-            // console.log("fetching", `${API_URL}${endpoint}`);
             const response = await fetch(`${API_URL}${endpoint}`, {
                 ...options,
                 headers,
@@ -42,7 +41,7 @@ export const useApi = () => {
                 throw new Error(`${response.status} Error: ${error.error}`);
             }
 
-            return response.json();
+            return response;
         } catch (error) {
             console.error('Request failed:', error);
             throw error;

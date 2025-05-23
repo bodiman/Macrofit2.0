@@ -14,6 +14,7 @@ import storage from '@/app/storage/storage';
 import eventBus from '@/app/storage/eventEmitter';
 import { useApi } from '@/lib/api';
 import { useMetrics } from '@/lib/api/metrics';
+import AddMacroModal from './Preferences/AddMacroModal';
 
 type MealPreferences = {
     defaultMealNames: string[];
@@ -69,15 +70,16 @@ export default function Preferences() {
         setShowAddModal(true);
     };
 
-    const handleAddNewMacro = async () => {
-        if (!selectedMacro || !appUser) return;
+    const handleAddNewMacro = async (macro: { id: string; name: string; unit: string }, min: number, max: number) => {
         try {
             await addPreference({
-                metric_id: selectedMacro.id,
-                min_value: newMacroRange.min,
-                max_value: newMacroRange.max,
+                metric_id: macro.id,
+                min_value: min,
+                max_value: max,
             });
             setShowAddModal(false);
+            // open the modal for this macro
+            setEditingMacro(macro);
         } catch (err) {
             console.error('Failed to add new macro preference:', err);
         }
@@ -152,82 +154,13 @@ export default function Preferences() {
                 />
             )}
 
-            <Modal
+            <AddMacroModal
                 visible={showAddModal}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowAddModal(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Add New Macro</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Filter macros..."
-                            value={filter}
-                            onChangeText={setFilter}
-                        />
-                        <FlatList
-                            data={availableMacros
-                                .filter(macro => macro.name.toLowerCase().includes(filter.toLowerCase()))
-                                .filter(macro => !preferences.some(pref => pref.id === macro.id))
-                            }
-                            keyExtractor={(item) => item.id}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity
-                                    style={styles.macroOption}
-                                    onPress={async () => {
-                                        if (!appUser) return;
-                                        try {
-                                            await addPreference({
-                                                metric_id: item.id,
-                                                min_value: 0,
-                                                max_value: 0,
-                                            });
-                                            setShowAddModal(false);
-                                            setEditingMacro({
-                                                ...item,
-                                                min: 0,
-                                                max: 0,
-                                                unit: item.unit
-                                            });
-                                        } catch (err) {
-                                            console.error('Failed to add new macro preference:', err);
-                                        }
-                                    }}
-                                >
-                                    <Text>{item.name}</Text>
-                                </TouchableOpacity>
-                            )}
-                            style={{ maxHeight: 200 }}
-                        />
-                        {selectedMacro && (
-                            <View style={styles.inputContainer}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Min Value"
-                                    keyboardType="numeric"
-                                    onChangeText={(text) => setNewMacroRange({ ...newMacroRange, min: Number(text) })}
-                                />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Max Value"
-                                    keyboardType="numeric"
-                                    onChangeText={(text) => setNewMacroRange({ ...newMacroRange, max: Number(text) })}
-                                />
-                            </View>
-                        )}
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity style={styles.button} onPress={handleAddNewMacro}>
-                                <Text style={styles.buttonText}>Add</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.button} onPress={() => setShowAddModal(false)}>
-                                <Text style={styles.buttonText}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                onClose={() => setShowAddModal(false)}
+                metrics={availableMacros}
+                preferences={preferences}
+                onSave={handleAddNewMacro}
+            />
         </View>
     );
 }

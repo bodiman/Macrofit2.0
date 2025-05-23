@@ -2,8 +2,8 @@ import { Router, Request, Response } from 'express';
 import prisma from '../prisma_client';
 import { getNutritionixData, getNutritionixCommonNames } from '../utils/Nutritionix/nutritionix';
 import { v4 as uuidv4 } from 'uuid';
-import { FoodTable } from '../prisma_client';
 import { Prisma } from '@prisma/client';
+import { toFoods } from '../dataTransferObjects';
 
 interface Food {
     id: string;
@@ -95,25 +95,28 @@ router.get('/search-all', async (req: Request, res: Response) => {
                     include: {
                         metric: true
                     }
-                }
+                },
+                servingUnits: true
             }
         });
 
-        // convert foods from database into Food type
-        const transformedFoods: Food[] = foods.map((food) => ({
-            id: food.id,
-            name: food.name,
-            description: food.description,
-            kitchen_id: food.kitchen_id,
-            active: false,
-            updated_at: new Date(),
-            macros: Object.fromEntries(
-                food.macros.map(macro => [
-                    macro.metric.id,
-                    macro.value
-                ])
-            )
-        }));
+        const transformedFoods: Food[] = toFoods(foods);
+
+        // // convert foods from database into Food type
+        // const transformedFoods: Food[] = foods.map((food) => ({
+        //     id: food.id,
+        //     name: food.name,
+        //     description: food.description,
+        //     kitchen_id: food.kitchen_id,
+        //     active: false,
+        //     updated_at: new Date(),
+        //     macros: Object.fromEntries(
+        //         food.macros.map(macro => [
+        //             macro.metric.id,
+        //             macro.value
+        //         ])
+        //     )
+        // }));
 
         // Add common foods to database if they don't exist
         if (query.length >= 3 && !writing) {
@@ -173,7 +176,6 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                     description: `${food.name} from Common Foods`,
                                     active: false,
                                     kitchen_id: commonFoodsKitchen.id,
-                                    serving_size: food.serving_size,
                                     macros: {
                                         create: food.macros.map((macro: any) => ({
                                             value: macro.value,

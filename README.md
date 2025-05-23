@@ -1,3 +1,46 @@
+May 23
+------
+
+Currently, the user's meal preferences are hardcoded in the useUser hook. Instead of this, the "meal preferences", the daily meals each user wants to eat, and their macro goals for that particular meal, should be tracked and stored in the database. The user should be able to edit these preferences from the preferences page. Meals with no foodServings should only appear on the home screen if they exist in the user's meal preferences, and meals that do not exist in the user's meal preferneces, and have no associated foodServings should not be displayed, and should be deleted from the database.
+
+
+May 16
+------
+
+Finals are over. Got a bit cooked. But now we're back onto macrofit. I fixed the registration bug and added the customizable macro preferences feature. Now, I must add the ability for users to give meal preferences. Unfortunately, this is a bit more of an intricate task than I had originally realized, since it's going to require me to add a mechanism for tracking meals in the database.
+
+Every user will have an associated set of meals. These meals will all have associated datetimes, which will be used for filtering and displaying the meals. Ultimately, users should be able to create custom meals. But for now, I'm just going to have the default breakfast, lunch and dinner.
+
+In the useUser hook, I will have a mechanism for loading meals, similar to the way preferences are loaded. 
+
+1. Upon loading, I will check if the dates of the cached meals are for the correct day (in that user's timezone). If they are, then the cached values can be relied upon. Otherwise, move on to database retrieval
+
+2. The meals "breakfast", "lunch", and "dinner" are all retrieved from the database for that day. Meals have a unique time, and a unique name/date pair. If any of the meals are missing, then create a new empty meal in the database
+
+3. Set the cached values to the retrieved or newly generated meals, pushing update notifications where required.
+
+The meal will only ever be updated in two cases
+1. The user logs a food
+2. The user deletes a food
+
+These events need to also update the database in the places they currently update the local storage.
+
+
+Finally, it is important to note that the rendering of meals CANNOT be dependent on the user's meal preferences, once that is implemented. For instance, if a user decides they no longer have breakfast in their meal template, they should still be able to see the breakfasts they ate in the past.
+
+
+Consideration
+-------------
+Sould the app header's preferences always correspond to the user's stated preferences? What if they make a meal plan that deviates from their stated preferences? Should that override the defaults?
+
+I think it should. Adaptability of logging is a core to Macrofit's mission. Especially for an athlete, the number of calories / carbs / protein consumed might vary drastically between active days and inactive days. When the user goes to construct a meal plan, they should be able to adjust the macro distribution for each meal, as well as the overall targets. These values should default to the user's preferences, since a lot of the time, people will just do the same meal plan every day. But, you can quickly edit the range for each macro. Then, the color-coded feedback you receive on the app header and in the meal planning sections will be based on the meal plan you have set out for that day (or the default preferences if you haven't planned your meals.)
+
+
+But then what if a user makes a plan for just a single meal? The user's "defaul preferences" will have defaults for each meal. The preferences for the whole day are just given by the sum of the preferences for each meal, default or custom, depending on whether a user has actually made a plan.
+
+
+
+
 May 10
 ------
 

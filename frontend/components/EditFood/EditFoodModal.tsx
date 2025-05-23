@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FoodServing, Portion, MacroPreferences } from '@/tempdata';
+import { MacroPreferences } from '@/tempdata';
+import { FoodServing } from '@shared/types/foodTypes';
 import Colors from '@/styles/colors';
 import { useState, useMemo } from 'react';
 import { TextInput } from 'react-native-gesture-handler';
@@ -8,26 +9,24 @@ import AnimatedModal from '../AnimatedModal';
 import useMacros from '@/app/hooks/useMacros';
 import { MacroPreference } from '@shared/types/macroTypes';
 import useUser from '@/app/hooks/useUser';
-
+import { ServingUnit } from '@shared/types/foodTypes';
 type Props = {
-    food: FoodServing;
+    foodServing: FoodServing;
     onClose: () => void;
-    onUpdatePortion: (portion: Portion) => void;
+    onUpdatePortion: (quantity: number, unit: ServingUnit) => void;
 };
 
-export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props) {
-    const [unit, setUnit] = useState(food.portion.unit);
-    const [quantity, setQuantity] = useState(food.portion.quantity);
-    const [stringQuantity, setStringQuantity] = useState(food.portion.quantity.toString());
+export default function EditFoodModal({ foodServing, onClose, onUpdatePortion }: Props) {
+    const [unit, setUnit] = useState(foodServing.unit);
+    const [quantity, setQuantity] = useState(foodServing.quantity);
+    const [stringQuantity, setStringQuantity] = useState(foodServing.quantity.toString());
     const { preferences } = useUser();
     
     const currentFoodServing = useMemo(() => ({
-        ...food,
-        portion: {
-            unit,
-            quantity
-        }
-    }), [food, unit, quantity]);
+        ...foodServing,
+        unit,
+        quantity,
+    }), [foodServing, unit, quantity]);
 
     const adjustedMacros = useMacros([currentFoodServing]);
 
@@ -36,10 +35,10 @@ export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props)
         try {
             const newQuantity = parseFloat(val);
             setQuantity(newQuantity);
-            onUpdatePortion({
-                unit,
-                quantity: newQuantity
-            });
+            onUpdatePortion(
+                newQuantity,
+                unit
+            );
         } catch {
             setQuantity(0);
         }
@@ -47,10 +46,7 @@ export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props)
 
     const handleUnitChange = (newUnit: typeof unit) => {
         setUnit(newUnit);
-        onUpdatePortion({
-            unit: newUnit,
-            quantity
-        });
+        onUpdatePortion(quantity, newUnit);
     };
 
     const renderMacroRow = (preference: MacroPreference) => {
@@ -69,7 +65,7 @@ export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props)
         <AnimatedModal isVisible={true} onClose={onClose} zIndex={100}>
             <View style={styles.modalContent}>
                 <View style={styles.titleContainer}>
-                    <Text style={styles.title}>{food.food.name}</Text>
+                    <Text style={styles.title}>{foodServing.food.name}</Text>
                 </View>
                 <View style={styles.contentContainer}>
                     <View style={styles.inputContainer}>
@@ -80,7 +76,7 @@ export default function EditFoodModal({ food, onClose, onUpdatePortion }: Props)
                             keyboardType="numeric"
                         />
                         <UnitSpinner 
-                            foodItem={food}
+                            foodItem={foodServing}
                             unit={unit}
                             setUnit={handleUnitChange}
                         />

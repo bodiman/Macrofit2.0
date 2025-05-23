@@ -5,7 +5,6 @@ import MacrosDisplay from "./MacroDisplay/MacrosDisplay"
 import { Macros } from "@/tempdata"
 import { useEffect, useMemo, useState } from "react"
 import useMacros from "@/app/hooks/useMacros"
-import useMeals from "@/app/hooks/useMeals"
 import storage from "@/app/storage/storage"
 import eventBus from "@/app/storage/eventEmitter"
 import useShoppingCart from "@/app/hooks/useShoppingCart"
@@ -37,8 +36,7 @@ export function WideUpArrow({ width = 10, height = 10, color = 'black' }) {
   }
 
 export default function AppHeader() {
-    const { meals } = useMeals();
-    const { preferences } = useUser();
+    const { preferences, meals } = useUser();
     const { shoppingCart, setShoppingCart } = useShoppingCart();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showMacros, setShowMacros] = useState(true);
@@ -64,7 +62,7 @@ export default function AppHeader() {
     }, []);
 
     const allFoodServings = useMemo(() => 
-        meals.flatMap(meal => meal.foods),
+        meals.flatMap(meal => meal.servings),
         [meals]
     );
     

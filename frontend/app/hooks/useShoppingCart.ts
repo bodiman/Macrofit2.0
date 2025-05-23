@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FoodServing } from '@/tempdata';
+import { FoodServing } from '@shared/types/foodTypes';
 import storage from '@/app/storage/storage';
 import eventBus from '@/app/storage/eventEmitter';
 
@@ -38,11 +38,22 @@ export default function useShoppingCart() {
         setShoppingCartState(newCart);
     };
 
+    const addFoodToCart = (foodServing: FoodServing) => {
+        setShoppingCart([...shoppingCart, foodServing]);
+    }
+
+    const removeFoodFromCart = (id: string) => {
+        const updatedCart = shoppingCart.filter((foodServing) => foodServing.id !== id);
+        setShoppingCart(updatedCart);
+    }
+
     const clearCart = () => setShoppingCart([]);
 
     return {
         shoppingCart,
         setShoppingCart,
+        // addFoodToCart,
+        // removeFoodFromCart,
         clearCart,
     };
 }

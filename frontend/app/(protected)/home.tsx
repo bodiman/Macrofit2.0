@@ -1,30 +1,42 @@
-import { SignedIn, SignedOut, useUser } from '@clerk/clerk-expo'
+import { SignedIn, SignedOut } from '@clerk/clerk-expo'
 import { Link } from 'expo-router'
 import { Text, View, ScrollView, StyleSheet, Button } from 'react-native'
 import { FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SignOutButton } from '@/components/SignOutButton'
-import { Meal, FoodServing } from '@/tempdata'
+import { Meal } from '@shared/types/foodTypes';
+import { FoodServing } from '@shared/types/foodTypes';
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
-import useMeals from '../hooks/useMeals';
 import 'react-native-get-random-values';
-
+import eventBus from '@/app/storage/eventEmitter';
+import { useUser } from '../hooks/useUser';
+import { ServingUnit } from '@shared/types/foodTypes';
 
 export default function Page() {
   const { 
     meals, 
-    activeMeal, 
-    updateMeal, 
-    openFoodSearch, 
-    closeFoodSearch,
-    editingFood,
-    setEditingFood,
+    addFoodsToMeal, 
+    deleteFoodFromMeal,
     updateFoodPortion
-  } = useMeals();
+  } = useUser();
+
+  const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
+  const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
+    // Open the food search modal for a specific meal
+  const openFoodSearch = (meal: Meal) => {
+    setActiveMeal(meal);
+  }
+
+  // Close the food search modal
+  const closeFoodSearch = () => {
+      // Close the modal
+      eventBus.emit('foodSearchModalClose');
+      setActiveMeal(null);
+  }
 
   return (
       <View style={styles.parentReference}>
@@ -37,6 +49,7 @@ export default function Page() {
                 meal={item} 
                 modalLauncher={() => openFoodSearch(item)}
                 onFoodPress={(food) => setEditingFood(food)}
+                handleDeleteFood={(serving: FoodServing) => deleteFoodFromMeal(item.id, serving.id)}
               />
             )}
             ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
@@ -47,15 +60,15 @@ export default function Page() {
             activeMeal={activeMeal} 
             modalCloser={closeFoodSearch} 
             onClose={closeFoodSearch}
-            onUpdateMeal={updateMeal}
+            addFoodsToMeal={addFoodsToMeal}
           />
           {editingFood && (
             <EditFoodModal
-              food={editingFood}
+              foodServing={editingFood}
               onClose={() => setEditingFood(null)}
-              onUpdatePortion={(portion) => {
+              onUpdatePortion={(quantity: number, unit: ServingUnit) => {
                 if (editingFood) {
-                  updateFoodPortion(editingFood.id, portion);
+                  updateFoodPortion(editingFood.id, quantity, unit);
                 }
               }}
             />

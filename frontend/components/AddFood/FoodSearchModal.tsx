@@ -1,7 +1,7 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
-import { PropsWithChildren, useState, useEffect } from 'react';
+import { PropsWithChildren, useEffect } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Meal } from '@/tempdata';
+import { Meal, FoodServing } from '@shared/types/foodTypes';
 import Colors from '@/styles/colors';
 import AddFood from './AddFood';
 import AnimatedModal from '../AnimatedModal';
@@ -12,10 +12,10 @@ type Props = PropsWithChildren<{
     onClose: () => void,
     modalCloser: () => void,
     activeMeal: Meal | null,
-    onUpdateMeal: (updatedMeal: Meal) => void
+    addFoodsToMeal: (mealId: string, updatedMeal: FoodServing[]) => Promise<void>
 }>;
 
-export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUpdateMeal }: Props) {
+export default function FoodSearchModal({ onClose, activeMeal, modalCloser, addFoodsToMeal }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
 
     useEffect(() => {
@@ -29,16 +29,16 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, onUp
     const handleLog = () => {
         if (activeMeal) {
             // Add foods from shopping cart to the meal
-            const updatedMeal = {
-                ...activeMeal,
-                foods: [...activeMeal.foods, ...shoppingCart]
-            };
+            // const updatedMeal = {
+            //     ...activeMeal,
+            //     foods: [...activeMeal.servings, ...shoppingCart]
+            // };
             
             // Update the meal
-            onUpdateMeal(updatedMeal);
-
-            clearCart();
-            modalCloser();
+            addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
+                clearCart();
+                modalCloser();
+            });
         }
     };
 

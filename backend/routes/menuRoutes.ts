@@ -1,5 +1,8 @@
 import express from 'express';
 import prisma from '../prisma_client';
+import { Food } from '@shared/types/foodTypes';
+import { toFoods } from '../dataTransferObjects';
+
 
 const router = express.Router();
 
@@ -28,7 +31,7 @@ router.get('/:menuId/foods', async (req, res) => {
         const { menuId } = req.params;
         const { search } = req.query;
 
-        const foods = await prisma.food.findMany({
+        const dbFoods = await prisma.food.findMany({
             where: {
                 kitchen_id: menuId,
                 active: true,
@@ -44,9 +47,12 @@ router.get('/:menuId/foods', async (req, res) => {
                     include: {
                         metric: true
                     }
-                }
+                },
+                servingUnits: true
             }
         });
+
+        const foods: Food[] = toFoods(dbFoods);
 
         res.json(foods);
     } catch (error) {
