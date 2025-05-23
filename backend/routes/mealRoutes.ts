@@ -238,6 +238,7 @@ router.put('/user/meals/servings/:servingId', async (req, res) => {
     try {
         const { servingId } = req.params;
         const { quantity } = req.body;
+        const { unit } = req.body;
 
         console.log("quantity", quantity)
 
@@ -249,7 +250,8 @@ router.put('/user/meals/servings/:servingId', async (req, res) => {
         const updatedServing = await prisma.foodServing.update({
             where: { id: servingId },
             data: {
-                quantity: Number(quantity)
+                quantity: Number(quantity),
+                unit_id: unit.id
             },
             include: {
                 food: true
