@@ -167,7 +167,7 @@ async function main() {
                     },
                     create: {
                         id: foodId,
-                        serving_size: record.serving_size * 28.35,
+                        // serving_size: record.serving_size * 28.35,
                         name: record.name,
                         kitchen_id: kitchenId,
                         active: record.meal === meal,
