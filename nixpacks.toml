@@ -1,0 +1,5 @@
+[phases.setup]
+cmds = ["npm install --prefix backend"]
+
+[start]
+command = "npm run start --prefix backend" 
