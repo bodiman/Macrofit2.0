@@ -333,7 +333,6 @@ export function useUser() {
       eventBus.emit('mealsUpdated');
 
       try {
-        console.log("quantity", quantity)
         await api.put(`/api/user/meals/servings/${servingId}`, {
           quantity: quantity ? quantity : 0,
           unit,
