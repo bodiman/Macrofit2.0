@@ -332,16 +332,16 @@ export function useUser() {
       storage.set('meals', JSON.stringify(updatedMeals));
       eventBus.emit('mealsUpdated');
 
-      // try {
-      //   console.log("quantity", quantity)
-      //   await api.put(`/api/user/meals/servings/${servingId}`, {
-      //     quantity: quantity ? quantity : 0,
-      //     unit,
-      //   });
-      // } catch (err) {
-      //   console.error('Failed to update food portion:', err);
-      //   setError('Failed to update food portion');
-      // }
+      try {
+        console.log("quantity", quantity)
+        await api.put(`/api/user/meals/servings/${servingId}`, {
+          quantity: quantity ? quantity : 0,
+          unit,
+        });
+      } catch (err) {
+        console.error('Failed to update food portion:', err);
+        setError('Failed to update food portion');
+      }
   };
 
   return { 
