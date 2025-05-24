@@ -57,6 +57,5 @@ export type UserMealPreference = {
     user_id: number;
     name: string;
     default_time: string;
-    display_order: number;
     macroGoals: MealMacroGoal[];
 };

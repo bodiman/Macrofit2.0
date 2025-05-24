@@ -91,7 +91,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction): Promise
 
         const preferences = await prisma.userMealPreference.findMany({
             where: { user_id: userId },
-            orderBy: { display_order: 'asc' },
+            orderBy: { default_time: 'asc' },
             include: { macroGoals: { include: { metric: true } } }, 
         });
         res.json(preferences);
@@ -110,10 +110,10 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
             res.status(403).json({ error: 'User ID cannot be determined for creation. Ensure token is valid.' });
             return; 
         }
-        const { name, default_time, display_order } = req.body;
+        const { name, default_time } = req.body;
 
-        if (!name || !default_time || display_order === undefined) {
-            res.status(400).json({ error: 'Name, default_time, and display_order are required' });
+        if (!name || !default_time) {
+            res.status(400).json({ error: 'Name and default_time are required' });
             return; 
         }
 
@@ -122,7 +122,6 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
                 user_id: userId,
                 name,
                 default_time,
-                display_order,
             },
              include: { macroGoals: { include: { metric: true } } }, 
         });
@@ -131,7 +130,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction): Promis
     } catch (error: any) {
         console.error('Failed to create meal preference:', error);
         if (error.code === 'P2002') { 
-             res.status(409).json({ error: 'A meal preference with this name or display order already exists for this user.' });
+             res.status(409).json({ error: 'A meal preference with this name already exists for this user.' });
         } else {
             res.status(500).json({ error: 'Internal server error' });
         }
@@ -143,7 +142,7 @@ router.put('/:preferenceId', async (req: Request, res: Response, next: NextFunct
     try {
         const userId = await getUserIdFromRequest(req); 
         const { preferenceId } = req.params;
-        const { name, default_time, display_order } = req.body;
+        const { name, default_time } = req.body;
 
         if (!userId) {
             res.status(403).json({ error: 'User not authenticated for this action.' });
@@ -166,7 +165,6 @@ router.put('/:preferenceId', async (req: Request, res: Response, next: NextFunct
             data: {
                 name,
                 default_time,
-                display_order,
             },
             include: { macroGoals: { include: { metric: true } } }
         });
@@ -175,7 +173,7 @@ router.put('/:preferenceId', async (req: Request, res: Response, next: NextFunct
     } catch (error: any) {
         console.error('Failed to update meal preference:', error);
          if (error.code === 'P2002') {
-            res.status(409).json({ error: 'Update would violate a unique constraint (name or display order).' });
+            res.status(409).json({ error: 'Update would violate a unique constraint (name).' });
         } else {
             res.status(500).json({ error: 'Internal server error' });
         }

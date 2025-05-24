@@ -24,38 +24,33 @@ export const createUser = async (email: string, name?: string) => {
     const normalizedEmail = email.toLowerCase().trim();
     console.log(`createUser: Normalized email for new user: '${normalizedEmail}'`);
 
-    // Check if user already exists with this normalized email to prevent duplicates if this function is called inadvertently
     const existingUser = await prisma.user.findUnique({
         where: {
-            email: normalizedEmail, // Prisma unique finds are case-sensitive by default on PostgreSQL
-                                // We rely on the application logic to ensure emails are unique case-insensitively
-                                // by always normalizing before create/query.
+            email: normalizedEmail,
         }
     });
 
     if (existingUser) {
         console.warn(`createUser: User with normalized email '${normalizedEmail}' already exists with user_id: ${existingUser.user_id}. Returning existing user.`);
-        // Fetch and return the existing user with preferences, similar to how it's done for a new user.
         const userWithPrefs = await prisma.user.findUnique({
             where: { user_id: existingUser.user_id },
             include: {
                 macroPreferences: { include: { metric: true } },
+                userMealPreferences: { include: { macroGoals: {include: { metric: true } } } }, // Also include meal prefs
             },
         });
         return { user: userWithPrefs, alreadyExisted: true };
     }
 
-    // Create the user
     const user = await prisma.user.create({
         data: { 
-            email: normalizedEmail, // Store normalized email
+            email: normalizedEmail,
             name,
         },
     });
     console.log(`createUser: New user created with user_id: ${user.user_id} for email: '${normalizedEmail}'`);
 
-    // Should create default preferences for the user
-
+    // Create default general macro preferences
     const metrics = await prisma.nutritionalMetric.findMany({
         where: {
             name: {
@@ -63,33 +58,50 @@ export const createUser = async (email: string, name?: string) => {
             },
         },
     });
-
     const preferencesData = metrics.map(metric => ({
         user_id: user.user_id,
         metric_id: metric.id,
         min_value: defaultPreferences[metric.name].min,
         max_value: defaultPreferences[metric.name].max,
     }));
-    
     await prisma.userPreference.createMany({
         data: preferencesData,
         skipDuplicates: true,
     });
-     console.log(`createUser: Default preferences created for user_id: ${user.user_id}`);
+    console.log(`createUser: Default general macro preferences created for user_id: ${user.user_id}`);
 
-    // Fetch the user again with preferences to return
-    const userWithPreferences = await prisma.user.findUnique({
+    // Create default meal preferences (Breakfast, Lunch, Dinner)
+    const defaultMealSlots = [
+        { name: "Breakfast", default_time: "08:00" },
+        { name: "Lunch", default_time: "13:00" },
+        { name: "Dinner", default_time: "18:00" },
+    ];
+
+    const mealPreferenceData = defaultMealSlots.map(slot => ({
+        user_id: user.user_id,
+        name: slot.name,
+        default_time: slot.default_time,
+    }));
+
+    await prisma.userMealPreference.createMany({
+        data: mealPreferenceData,
+        skipDuplicates: true, // In case this runs again, though `existingUser` check should prevent it for meal prefs
+    });
+    console.log(`createUser: Default meal preferences (Breakfast, Lunch, Dinner) created for user_id: ${user.user_id}`);
+
+    // Fetch the user again with all preferences to return
+    const userWithAllPreferences = await prisma.user.findUnique({
         where: { user_id: user.user_id },
         include: {
-            macroPreferences: {
-                include: {
-                    metric: true,
-                },
+            macroPreferences: { include: { metric: true } },
+            userMealPreferences: { 
+                orderBy: { default_time: 'asc' }, // Ensure they are sorted by time
+                include: { macroGoals: { include: { metric: true } } }
             },
         },
     });
 
-    return { user: userWithPreferences, alreadyExisted: false };
+    return { user: userWithAllPreferences, alreadyExisted: false };
 };
 
 export const getUser = async ({email, user_id}: {email?: string, user_id?: number}) => {
@@ -98,6 +110,14 @@ export const getUser = async ({email, user_id}: {email?: string, user_id?: numbe
     }
     
     let user;
+    const includeOptions = {
+        macroPreferences: { include: { metric: true } },
+        userMealPreferences: { 
+            orderBy: { default_time: 'asc' as const },
+            include: { macroGoals: { include: { metric: true } } }
+        },
+    };
+
     if (email) {
         const normalizedEmail = email.toLowerCase().trim();
         console.log(`getUser: Searching for user with normalized email: '${normalizedEmail}' (case-insensitive)`);
@@ -105,23 +125,18 @@ export const getUser = async ({email, user_id}: {email?: string, user_id?: numbe
             where: { 
                 email: {
                     equals: normalizedEmail,
-                    mode: 'insensitive'
+                    mode: 'insensitive' as const
                 }
             },
-            include: {
-                macroPreferences: { include: { metric: true } },
-            },
+            include: includeOptions,
         });
     } else if (user_id) {
         console.log(`getUser: Searching for user with user_id: ${user_id}`);
         user = await prisma.user.findUnique({
-            where: { user_id: user_id! }, // user_id is an INT, direct match
-            include: {
-                macroPreferences: { include: { metric: true } },
-            },
+            where: { user_id: user_id! },
+            include: includeOptions,
         });
     } else {
-        // This case should be caught by the initial check, but as a safeguard:
         throw new BadRequestError('Internal error: Insufficient parameters for getUser');
     }
 

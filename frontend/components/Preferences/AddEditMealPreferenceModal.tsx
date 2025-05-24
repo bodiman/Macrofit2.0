@@ -6,7 +6,7 @@ import Colors from '@/styles/colors';
 type AddEditMealPreferenceModalProps = {
     visible: boolean;
     onClose: () => void;
-    onSubmit: (data: Omit<UserMealPreference, 'id' | 'user_id' | 'macroGoals'>) => void;
+    onSubmit: (data: Omit<UserMealPreference, 'id' | 'user_id' | 'macroGoals' | 'display_order'>) => void;
     initialData?: UserMealPreference | null;
 };
 
@@ -18,17 +18,14 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
 }) => {
     const [name, setName] = useState('');
     const [defaultTime, setDefaultTime] = useState('');
-    const [displayOrder, setDisplayOrder] = useState('');
 
     useEffect(() => {
         if (initialData) {
             setName(initialData.name);
             setDefaultTime(initialData.default_time);
-            setDisplayOrder(String(initialData.display_order));
         } else {
             setName('');
             setDefaultTime('');
-            setDisplayOrder('');
         }
     }, [initialData, visible]);
 
@@ -37,16 +34,10 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
             alert('Please enter a valid name and default time (HH:MM).');
             return;
         }
-        const order = parseInt(displayOrder, 10);
-        if (isNaN(order)) {
-            alert('Please enter a valid display order number.');
-            return;
-        }
 
         onSubmit({
             name: name.trim(),
             default_time: defaultTime,
-            display_order: order,
         });
         onClose();
     };
@@ -76,13 +67,6 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
                         value={defaultTime}
                         onChangeText={setDefaultTime}
                         keyboardType="numbers-and-punctuation"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Display Order (e.g., 1)"
-                        value={displayOrder}
-                        onChangeText={setDisplayOrder}
-                        keyboardType="numeric"
                     />
 
                     <View style={styles.buttonContainer}>

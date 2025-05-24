@@ -387,43 +387,52 @@ export function useUser() {
   };
 
   // CRUD for UserMealPreferences (Meal Slots)
-  const addUserMealPreference = async (preferenceData: Omit<UserMealPreference, 'id' | 'user_id' | 'macroGoals'>) => {
+  const addUserMealPreference = async (preferenceData: Omit<UserMealPreference, 'id' | 'user_id' | 'macroGoals' | 'display_order'>) => {
     if (!appUser) return null;
     const originalPreferences = userMealPreferences;
-    // Optimistic update: generate a temporary ID for UI rendering if needed, or wait for backend response
-    // For simplicity, we'll add after backend confirmation for now.
     try {
       const response = await api.post('/api/user/meal-preferences', {
         ...preferenceData,
-        // user_id is added by the backend based on authenticated session
       });
       const newPreference: UserMealPreference = await response.json();
-      const updatedPreferences = [...originalPreferences, newPreference].sort((a, b) => a.display_order - b.display_order);
+      const updatedPreferences = [...originalPreferences, newPreference].sort((a, b) => {
+        return a.default_time.localeCompare(b.default_time);
+      });
       setUserMealPreferencesState(updatedPreferences);
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
+
+      // Optimistically update meals for today
+      await fetchMeals(appUser.user_id, new Date());
+
       return newPreference;
     } catch (err) {
-      // Revert optimistic update if it was done: setUserMealPreferencesState(originalPreferences);
       console.error('Failed to add user meal preference:', err);
       setError('Failed to add user meal preference');
       return null;
     }
   };
 
-  const updateUserMealPreference = async (preferenceId: string, updateData: Partial<Omit<UserMealPreference, 'id' | 'user_id' | 'macroGoals'>>) => {
+  const updateUserMealPreference = async (preferenceId: string, updateData: Partial<Omit<UserMealPreference, 'id' | 'user_id' | 'macroGoals' | 'display_order'>>) => {
     if (!appUser) return null;
     const originalPreferences = userMealPreferences;
     try {
       const response = await api.put(`/api/user/meal-preferences/${preferenceId}`, updateData);
       const updatedPreference: UserMealPreference = await response.json();
-      const updatedPreferences = originalPreferences.map(p => p.id === preferenceId ? updatedPreference : p).sort((a, b) => a.display_order - b.display_order);
+      const updatedPreferences = originalPreferences
+        .map(p => p.id === preferenceId ? updatedPreference : p)
+        .sort((a, b) => {
+            return a.default_time.localeCompare(b.default_time);
+        });
       setUserMealPreferencesState(updatedPreferences);
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
+
+      // Optimistically update meals for today
+      await fetchMeals(appUser.user_id, new Date());
+
       return updatedPreference;
     } catch (err) {
-      // Revert: setUserMealPreferencesState(originalPreferences);
       console.error('Failed to update user meal preference:', err);
       setError('Failed to update user meal preference');
       return null;
@@ -436,12 +445,16 @@ export function useUser() {
     try {
       await api.delete(`/api/user/meal-preferences/${preferenceId}`);
       const updatedPreferences = originalPreferences.filter(p => p.id !== preferenceId);
-      // No need to re-sort here as order of remaining items doesn't change
       setUserMealPreferencesState(updatedPreferences);
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
+
+      // Optimistically update meals for today
+      if (appUser) { // Check appUser again just in case, though outer check should cover
+        await fetchMeals(appUser.user_id, new Date());
+      }
+
     } catch (err) {
-      // Revert: setUserMealPreferencesState(originalPreferences);
       console.error('Failed to delete user meal preference:', err);
       setError('Failed to delete user meal preference');
     }

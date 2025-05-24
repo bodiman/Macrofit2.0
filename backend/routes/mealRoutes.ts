@@ -173,7 +173,7 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
 
         const userMealPreferences = await prisma.userMealPreference.findMany({
             where: { user_id: userId },
-            orderBy: { display_order: 'asc' },
+            orderBy: { default_time: 'asc' },
         });
 
         if (userMealPreferences.length > 0) {
@@ -201,7 +201,7 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
             await prisma.$transaction(mealUpsertPromises);
         }
 
-        let dbMealsForDay = await prisma.meal.findMany({
+        let dbMealsForDayWithIncludes = await prisma.meal.findMany({
             where: {
                 user_id: userId,
                 date: targetDate,
@@ -221,9 +221,8 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
             }
         });
 
-        // Phase 2, Step 5: Meal Cleanup Logic
-        if (dbMealsForDay.length > 0) {
-            const mealsToDeleteIds = dbMealsForDay
+        if (dbMealsForDayWithIncludes.length > 0) {
+            const mealsToDeleteIds = dbMealsForDayWithIncludes
                 .filter(dbMeal => {
                     const isPreferred = userMealPreferences.some(p => p.name === dbMeal.name);
                     const isEmpty = dbMeal.servings.length === 0;
@@ -238,26 +237,26 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
                         user_id: userId 
                     }
                 });
-                // Filter out deleted meals from the current array
-                dbMealsForDay = dbMealsForDay.filter(meal => !mealsToDeleteIds.includes(meal.id));
+                dbMealsForDayWithIncludes = dbMealsForDayWithIncludes.filter(meal => !mealsToDeleteIds.includes(meal.id));
             }
         }
+        
+        const orderedMealsFromPreferences = userMealPreferences.map(preference => {
+            return dbMealsForDayWithIncludes.find(dbMeal => dbMeal.name === preference.name);
+        }).filter(meal => meal !== undefined) as typeof dbMealsForDayWithIncludes;
 
-        let sortedDbMeals = userMealPreferences.map(preference => {
-            return dbMealsForDay.find(dbMeal => dbMeal.name === preference.name);
-        }).filter(meal => meal !== undefined) as any[]; 
-
-        const adHocDbMeals = dbMealsForDay.filter(dbMeal => 
+        const adHocMeals = dbMealsForDayWithIncludes.filter(dbMeal => 
             !userMealPreferences.some(p => p.name === dbMeal.name)
         );
         
-        sortedDbMeals = [...sortedDbMeals, ...adHocDbMeals];
+        const allMealsForDaySorted = [...orderedMealsFromPreferences, ...adHocMeals].sort((a, b) => {
+            return a.time.localeCompare(b.time);
+        });
 
-        const transformedMeals: Meal[] = toMeals(sortedDbMeals); 
+        const finalMealsDto = toMeals(allMealsForDaySorted);
 
-        res.status(200).json(transformedMeals);
+        res.status(200).json(finalMealsDto);
         return;
-
     } catch (err) {
         console.error('Failed to get meals (with preferences logic):', err);
         next(err);

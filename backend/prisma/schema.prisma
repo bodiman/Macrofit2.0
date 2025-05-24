@@ -112,13 +112,11 @@ model UserMealPreference {
   user_id       Int
   name          String
   default_time  String
-  display_order Int
 
   user       User            @relation(fields: [user_id], references: [user_id])
   macroGoals MealMacroGoal[]
 
   @@unique([user_id, name])
-  @@unique([user_id, display_order])
   @@index([user_id])
 }
 

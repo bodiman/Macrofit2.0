@@ -99,7 +99,7 @@ export default function Preferences() {
         }
     };
 
-    const handleSaveMealPreference = async (data: Omit<UserMealPreferenceType, 'id' | 'user_id' | 'macroGoals'>) => {
+    const handleSaveMealPreference = async (data: Omit<UserMealPreferenceType, 'id' | 'user_id' | 'macroGoals' | 'display_order'>) => {
         try {
             if (editingMealPreference) {
                 await updateUserMealPreference(editingMealPreference.id, data);
@@ -150,7 +150,7 @@ export default function Preferences() {
                     </TouchableOpacity>
                 </View>
                 <View style={styles.cardListContainer}>
-                    {userMealPreferences.sort((a,b) => a.display_order - b.display_order).map(preference => (
+                    {userMealPreferences.map(preference => (
                         <MealPreferenceCard
                             key={preference.id}
                             preference={preference}
@@ -246,7 +246,6 @@ function MealPreferenceCard({ preference, onEdit, onDelete }: {
             <View style={styles.cardLeftContent}> 
                 <Text style={styles.cardTitle}>{preference.name}</Text>
                 <Text style={styles.mealTimeText}>Default Time: {preference.default_time}</Text>
-                <Text style={styles.mealOrderText}>Order: {preference.display_order}</Text>
             </View>
             <View style={styles.cardActions}> 
                 <TouchableOpacity onPress={onEdit} style={styles.editButton}>
