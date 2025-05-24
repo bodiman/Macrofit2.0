@@ -3,6 +3,7 @@ import foodRoutes from './routes/foodRoutes';
 import userRoutes from './routes/userRoutes';
 import metricsRoutes from './routes/metricsRoutes';
 import mealRoutes from './routes/mealRoutes';
+import mealPreferencesRouter from './routes/mealPreferences';
 import { requireAuth } from './middleware/auth';
 import { Request, Response, NextFunction } from 'express';
 
@@ -52,9 +53,11 @@ app.post('/api/register', userRoutes);
 app.use('/api', requireAuth);
 app.use('/api', userRoutes);
 app.use('/api', mealRoutes);
-app.use('/api/foods', foodRoutes);
+app.use('/api/food', foodRoutes);
 app.use('/api/menus', menuRoutes);
 app.use('/api/metrics', metricsRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/user/meal-preferences', mealPreferencesRouter);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

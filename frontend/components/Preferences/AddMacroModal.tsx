@@ -43,6 +43,7 @@ export default function AddMacroModal({ visible, onClose, metrics, preferences, 
                             onPress={() => handleMacroPress(item)}
                         >
                             <Text>{item.name}</Text>
+                            {/* <Text>{item.id}</Text> */}
                         </TouchableOpacity>
                     )}
                     style={{ maxHeight: 200 }}

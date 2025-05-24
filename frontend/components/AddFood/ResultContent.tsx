@@ -76,7 +76,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
             id: uuidv4(),
             food: food,
             quantity: quantity,
-            unit: food.servingUnits[0]
+            unit: unit
         };
         onAddToCart(foodServing);
         closeModal();

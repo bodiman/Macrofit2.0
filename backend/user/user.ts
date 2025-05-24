@@ -21,16 +21,36 @@ const defaultPreferences: DefaultPreferences = {
 };
 
 export const createUser = async (email: string, name?: string) => {
-    // Create the user
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`createUser: Normalized email for new user: '${normalizedEmail}'`);
+
+    const existingUser = await prisma.user.findUnique({
+        where: {
+            email: normalizedEmail,
+        }
+    });
+
+    if (existingUser) {
+        console.warn(`createUser: User with normalized email '${normalizedEmail}' already exists with user_id: ${existingUser.user_id}. Returning existing user.`);
+        const userWithPrefs = await prisma.user.findUnique({
+            where: { user_id: existingUser.user_id },
+            include: {
+                macroPreferences: { include: { metric: true } },
+                userMealPreferences: { include: { macroGoals: {include: { metric: true } } } }, // Also include meal prefs
+            },
+        });
+        return { user: userWithPrefs, alreadyExisted: true };
+    }
+
     const user = await prisma.user.create({
         data: { 
-            email,
+            email: normalizedEmail,
             name,
         },
     });
+    console.log(`createUser: New user created with user_id: ${user.user_id} for email: '${normalizedEmail}'`);
 
-    // Should create default preferences for the user
-
+    // Create default general macro preferences
     const metrics = await prisma.nutritionalMetric.findMany({
         where: {
             name: {
@@ -38,54 +58,95 @@ export const createUser = async (email: string, name?: string) => {
             },
         },
     });
-
     const preferencesData = metrics.map(metric => ({
         user_id: user.user_id,
         metric_id: metric.id,
         min_value: defaultPreferences[metric.name].min,
         max_value: defaultPreferences[metric.name].max,
     }));
-    
     await prisma.userPreference.createMany({
         data: preferencesData,
         skipDuplicates: true,
     });
+    console.log(`createUser: Default general macro preferences created for user_id: ${user.user_id}`);
 
-    // Fetch the user again with preferences to return
-    const userWithPreferences = await prisma.user.findUnique({
+    // Create default meal preferences (Breakfast, Lunch, Dinner)
+    const defaultMealSlots = [
+        { name: "Breakfast", default_time: "08:00" },
+        { name: "Lunch", default_time: "13:00" },
+        { name: "Dinner", default_time: "18:00" },
+    ];
+
+    const mealPreferenceData = defaultMealSlots.map(slot => ({
+        user_id: user.user_id,
+        name: slot.name,
+        default_time: slot.default_time,
+    }));
+
+    await prisma.userMealPreference.createMany({
+        data: mealPreferenceData,
+        skipDuplicates: true, // In case this runs again, though `existingUser` check should prevent it for meal prefs
+    });
+    console.log(`createUser: Default meal preferences (Breakfast, Lunch, Dinner) created for user_id: ${user.user_id}`);
+
+    // Fetch the user again with all preferences to return
+    const userWithAllPreferences = await prisma.user.findUnique({
         where: { user_id: user.user_id },
         include: {
-            macroPreferences: {
-                include: {
-                    metric: true,
-                },
+            macroPreferences: { include: { metric: true } },
+            userMealPreferences: { 
+                orderBy: { default_time: 'asc' }, // Ensure they are sorted by time
+                include: { macroGoals: { include: { metric: true } } }
             },
         },
     });
 
-    return { user: userWithPreferences };
+    return { user: userWithAllPreferences, alreadyExisted: false };
 };
 
 export const getUser = async ({email, user_id}: {email?: string, user_id?: number}) => {
     if (!email && !user_id) {
-        throw new BadRequestError('Email or id is required');
+        throw new BadRequestError('Email or User ID is required for getUser');
     }
     
-    const user = await prisma.user.findUnique({
-        where: email ? { email } : { user_id: user_id! },
-        include: {
-            macroPreferences: {
-                include: {
-                    metric: true,
-                },
-            },
+    let user;
+    const includeOptions = {
+        macroPreferences: { include: { metric: true } },
+        userMealPreferences: { 
+            orderBy: { default_time: 'asc' as const },
+            include: { macroGoals: { include: { metric: true } } }
         },
-    });
+    };
+
+    if (email) {
+        const normalizedEmail = email.toLowerCase().trim();
+        console.log(`getUser: Searching for user with normalized email: '${normalizedEmail}' (case-insensitive)`);
+        user = await prisma.user.findFirst({
+            where: { 
+                email: {
+                    equals: normalizedEmail,
+                    mode: 'insensitive' as const
+                }
+            },
+            include: includeOptions,
+        });
+    } else if (user_id) {
+        console.log(`getUser: Searching for user with user_id: ${user_id}`);
+        user = await prisma.user.findUnique({
+            where: { user_id: user_id! },
+            include: includeOptions,
+        });
+    } else {
+        throw new BadRequestError('Internal error: Insufficient parameters for getUser');
+    }
 
     if (!user) {
-        throw new UserNotFoundError('User not found');
+        const criteria = email ? `email '${email.toLowerCase().trim()}'` : `user_id '${user_id}'`;
+        console.warn(`getUser: User not found with ${criteria}`);
+        throw new UserNotFoundError(`User not found with ${criteria}`);
     }
     
+    console.log(`getUser: User found with user_id: ${user.user_id}`);
     return user;
 };
 

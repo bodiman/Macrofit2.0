@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Pressable, TextInput, TouchableOpacity, FlatLis
 import { useEffect, useState } from 'react';
 import Colors from '@/styles/colors';
 import { MacroPreference } from '@/tempdata';
+import { UserMealPreference as UserMealPreferenceType } from '@shared/types/databaseTypes';
 import MacrosDisplay from './MacroDisplay/MacrosDisplay';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import PlusIcon from './Icons/PlusIcon';
@@ -10,33 +11,35 @@ import { useUser } from '@/app/hooks/useUser';
 import EditMacroModal from './Preferences/EditMacroModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import storage from '@/app/storage/storage';
-import eventBus from '@/app/storage/eventEmitter';
-import { useApi } from '@/lib/api';
 import { useMetrics } from '@/lib/api/metrics';
 import AddMacroModal from './Preferences/AddMacroModal';
-
-type MealPreferences = {
-    defaultMealNames: string[];
-};
+import AddEditMealPreferenceModal from './Preferences/AddEditMealPreferenceModal';
 
 export default function Preferences() {
     const { signOut } = useAuth();
-    const { preferences, loading: userLoading, error: userError, updatePreference, appUser, addPreference, deletePreference } = useUser();
+    const {
+        preferences,
+        loading: userLoading,
+        error: userError,
+        updatePreference,
+        appUser,
+        addPreference,
+        deletePreference,
+        userMealPreferences,
+        fetchUserMealPreferences,
+        addUserMealPreference,
+        updateUserMealPreference,
+        deleteUserMealPreference,
+    } = useUser();
     const { metrics, loading: metricsLoading, error: metricsError } = useMetrics();
     const insets = useSafeAreaInsets();
     const tabBarHeight = useBottomTabBarHeight();
-    const api = useApi();
 
-    const [mealPreferences, setMealPreferences] = useState<MealPreferences>({
-        defaultMealNames: ['Breakfast', 'Lunch', 'Dinner', 'Snacks']
-    });
     const [editingMacro, setEditingMacro] = useState<MacroPreference | null>(null);
-    const [showAddModal, setShowAddModal] = useState(false);
+    const [showAddMacroModal, setShowAddMacroModal] = useState(false);
     const [availableMacros, setAvailableMacros] = useState<Array<{ id: string; name: string; unit: string }>>([]);
-    const [selectedMacro, setSelectedMacro] = useState<{ id: string; name: string; unit: string } | null>(null);
-    const [newMacroRange, setNewMacroRange] = useState({ min: 0, max: 0 });
-    const [filter, setFilter] = useState('');
+    const [editingMealPreference, setEditingMealPreference] = useState<UserMealPreferenceType | null>(null);
+    const [showAddEditMealPreferenceModal, setShowAddEditMealPreferenceModal] = useState(false);
 
     useEffect(() => {
         if (metrics) {
@@ -44,14 +47,9 @@ export default function Preferences() {
         }
     }, [metrics]);
 
-    // useEffect(() => {
-    //     // not showing the updated preferences after adding new macro
-    //     // console.log("preferences", preferences)
-    // }, [preferences]);
-
     const handleMacroChange = async (id: string, newRange: { min: number; max: number; unit: string }) => {
-        try {            
-            await updatePreference({metric_id: id, min_value: newRange.min, max_value: newRange.max});
+        try {
+            await updatePreference({ metric_id: id, min_value: newRange.min, max_value: newRange.max });
         } catch (error) {
             console.error('Error updating macro preferences:', error);
         }
@@ -67,7 +65,7 @@ export default function Preferences() {
     };
 
     const handleAddMacro = () => {
-        setShowAddModal(true);
+        setShowAddMacroModal(true);
     };
 
     const handleAddNewMacro = async (macro: { id: string; name: string; unit: string }, min: number, max: number) => {
@@ -77,11 +75,41 @@ export default function Preferences() {
                 min_value: min,
                 max_value: max,
             });
-            setShowAddModal(false);
-            // open the modal for this macro
-            setEditingMacro(macro);
+            setShowAddMacroModal(false);
         } catch (err) {
             console.error('Failed to add new macro preference:', err);
+        }
+    };
+
+    const handleOpenAddMealPreferenceModal = () => {
+        setEditingMealPreference(null);
+        setShowAddEditMealPreferenceModal(true);
+    };
+
+    const handleOpenEditMealPreferenceModal = (preference: UserMealPreferenceType) => {
+        setEditingMealPreference(preference);
+        setShowAddEditMealPreferenceModal(true);
+    };
+
+    const handleDeleteMealPreference = async (preferenceId: string) => {
+        try {
+            await deleteUserMealPreference(preferenceId);
+        } catch (error) {
+            console.error('Error deleting meal preference:', error);
+        }
+    };
+
+    const handleSaveMealPreference = async (data: Omit<UserMealPreferenceType, 'id' | 'user_id' | 'macroGoals' | 'display_order'>) => {
+        try {
+            if (editingMealPreference) {
+                await updateUserMealPreference(editingMealPreference.id, data);
+            } else {
+                await addUserMealPreference(data);
+            }
+            setShowAddEditMealPreferenceModal(false);
+            setEditingMealPreference(null);
+        } catch (error) {
+            console.error('Error saving meal preference:', error);
         }
     };
 
@@ -96,27 +124,40 @@ export default function Preferences() {
     const renderHeader = () => (
         <View>
             <Text style={styles.title}>Preferences</Text>
-            <View style={styles.section}>
-                <View style={styles.macroContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Macro Goals</Text>
-                        <TouchableOpacity 
-                            style={styles.addButton}
-                            onPress={handleAddMacro}
-                        >
-                            <PlusIcon backgroundColor={Colors.black} />
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.macroCards}>
-                        {preferences.map(goal => (
-                            <MacroCard
-                                key={goal.id}
-                                goal={goal}
-                                onDelete={() => handleDeleteMacro(goal.id)}
-                                onPress={() => setEditingMacro(goal)}
-                            />
-                        ))}
-                    </View>
+            <View style={styles.sectionContainer}>
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Daily Macro Goals</Text>
+                    <TouchableOpacity style={styles.addButton} onPress={handleAddMacro}>
+                        <PlusIcon backgroundColor={Colors.black} />
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.cardListContainer}>
+                    {preferences.map(goal => (
+                        <MacroCard
+                            key={goal.id}
+                            goal={goal}
+                            onDelete={() => handleDeleteMacro(goal.id)}
+                            onPress={() => setEditingMacro(goal)}
+                        />
+                    ))}
+                </View>
+            </View>
+            <View style={styles.sectionContainer}>
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Meal Definitions</Text>
+                    <TouchableOpacity style={styles.addButton} onPress={handleOpenAddMealPreferenceModal}>
+                        <PlusIcon backgroundColor={Colors.black} />
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.cardListContainer}>
+                    {userMealPreferences.map(preference => (
+                        <MealPreferenceCard
+                            key={preference.id}
+                            preference={preference}
+                            onEdit={() => handleOpenEditMealPreferenceModal(preference)}
+                            onDelete={() => handleDeleteMealPreference(preference.id)}
+                        />
+                    ))}
                 </View>
             </View>
         </View>
@@ -124,10 +165,7 @@ export default function Preferences() {
 
     const renderFooter = () => (
         <View style={styles.footer}>
-            <TouchableOpacity 
-                style={styles.logoutButton}
-                onPress={handleLogout}
-            >
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <Text style={styles.logoutText}>Log Out</Text>
             </TouchableOpacity>
         </View>
@@ -155,12 +193,24 @@ export default function Preferences() {
             )}
 
             <AddMacroModal
-                visible={showAddModal}
-                onClose={() => setShowAddModal(false)}
+                visible={showAddMacroModal}
+                onClose={() => setShowAddMacroModal(false)}
                 metrics={availableMacros}
                 preferences={preferences}
                 onSave={handleAddNewMacro}
             />
+
+            {showAddEditMealPreferenceModal && (
+                <AddEditMealPreferenceModal
+                    visible={showAddEditMealPreferenceModal}
+                    onClose={() => {
+                        setShowAddEditMealPreferenceModal(false);
+                        setEditingMealPreference(null);
+                    }}
+                    onSubmit={handleSaveMealPreference}
+                    initialData={editingMealPreference}
+                />
+            )}
         </View>
     );
 }
@@ -173,31 +223,38 @@ function MacroCard({ goal, onDelete, onPress }: {
     return (
         <TouchableOpacity style={styles.card} onPress={onPress}>
             <View style={styles.cardHeader}>
-                <TouchableOpacity onPress={onDelete}>
+                <TouchableOpacity onPress={onDelete} style={styles.deleteIconContainer}>
                     <MaterialIcons name="delete" size={20} color={Colors.gray} />
                 </TouchableOpacity>
                 <Text style={styles.cardTitle}>{goal.name}</Text>
             </View>
             <View style={styles.cardContent}>
-                <Text style={styles.target}>{goal.min}-{goal.max}</Text>
+                <Text style={styles.target}>{goal.min ?? 'N/A'} - {goal.max ?? 'N/A'}</Text>
                 <Text style={styles.unit}>{goal.unit}</Text>
             </View>
         </TouchableOpacity>
     );
 }
 
-function MealNameInput({ value, onChange }: { 
-    value: string; 
-    onChange: (value: string) => void;
+function MealPreferenceCard({ preference, onEdit, onDelete }: {
+    preference: UserMealPreferenceType;
+    onEdit: () => void;
+    onDelete: () => void;
 }) {
     return (
-        <View style={styles.inputContainer}>
-            <TextInput
-                style={styles.input}
-                value={value}
-                onChangeText={onChange}
-                placeholder="Meal Name"
-            />
+        <View style={styles.card}> 
+            <View style={styles.cardLeftContent}> 
+                <Text style={styles.cardTitle}>{preference.name}</Text>
+                <Text style={styles.mealTimeText}>Default Time: {preference.default_time}</Text>
+            </View>
+            <View style={styles.cardActions}> 
+                <TouchableOpacity onPress={onEdit} style={styles.editButton}>
+                    <MaterialIcons name="edit" size={22} color={Colors.blue} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={onDelete} style={styles.deleteIconContainer}>
+                    <MaterialIcons name="delete" size={22} color={Colors.middleorange} />
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -205,66 +262,87 @@ function MealNameInput({ value, onChange }: {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: Colors.lightgray,
     },
     contentContainer: {
-        padding: 20,
+        paddingHorizontal: 15,
         paddingBottom: 50,
     },
     footer: {
-        marginTop: 20,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        paddingHorizontal: 15,
+        marginTop: 30,
         marginBottom: 20,
     },
-    section: {
-        flex: 1,
+    title: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        marginBottom: 25,
+        marginTop: 10,
+        textAlign: 'center',
+        color: Colors.calblue,
+    },
+    sectionContainer: {
+        backgroundColor: Colors.white,
+        borderRadius: 12,
+        shadowColor: Colors.black,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 5,
+        elevation: 3,
+        marginBottom: 25,
+        overflow: 'hidden',
     },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 12,
-        backgroundColor: 'transparent',
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        backgroundColor: Colors.coolgray,
         borderBottomWidth: 1,
-        borderBottomColor: Colors.gray,
+        borderBottomColor: Colors.lightgray,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
+        color: Colors.darkgray,
     },
     addButton: {
-        width: 25,
-        height: 25,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
+        padding: 5,
     },
-    macroContainer: {
-        backgroundColor: "#F0F8FF",
-        borderRadius: 12,
-        shadowColor: Colors.black,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 4,
-        shadowOpacity: 0.1,
-        shadowRadius: 10,
-        overflow: 'hidden',
-
-        marginVertical: 8,
-        borderWidth: 3,
-        borderColor: '#DDE4EA',
-    },
-    macroCards: {
-        gap: 1,
+    cardListContainer: {
     },
     card: {
         padding: 15,
         borderTopWidth: 1,
-        borderTopColor: Colors.gray,
+        borderTopColor: Colors.lightgray,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        backgroundColor: Colors.white,
+    },
+    cardLeftContent: {
+        flex: 1,
+        gap: 4,
+    },
+    mealTimeText: {
+        fontSize: 14,
+        color: Colors.mediumgray,
+    },
+    mealOrderText: {
+        fontSize: 14,
+        color: Colors.mediumgray,
+    },
+    cardActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 15,
+    },
+    editButton: {
+        padding: 5,
+    },
+    deleteIconContainer: {
+        padding: 5,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -274,6 +352,7 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 16,
         fontWeight: '600',
+        color: Colors.black,
     },
     cardContent: {
         flexDirection: 'row',
@@ -283,30 +362,18 @@ const styles = StyleSheet.create({
     target: {
         fontSize: 16,
         fontWeight: '600',
+        color: Colors.black,
     },
     unit: {
         fontSize: 16,
-        color: Colors.gray,
-    },
-    mealInputs: {
-        gap: 8,
-    },
-    inputContainer: {
-        marginBottom: 8,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: Colors.gray,
-        borderRadius: 5,
-        padding: 10,
-        fontSize: 16,
+        color: Colors.mediumgray,
     },
     logoutButton: {
         backgroundColor: Colors.orange,
-        padding: 15,
-        borderRadius: 5,
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        borderRadius: 8,
         alignItems: 'center',
-        marginTop: 20,
     },
     logoutText: {
         color: Colors.white,
@@ -320,38 +387,21 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-        width: '80%',
-        backgroundColor: 'white',
+        width: '85%',
+        backgroundColor: Colors.white,
         borderRadius: 10,
         padding: 20,
         alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     modalTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         marginBottom: 20,
-    },
-    macroOption: {
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-        width: '100%',
-    },
-    modalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: '100%',
-        marginTop: 20,
-    },
-    button: {
-        backgroundColor: Colors.orange,
-        padding: 10,
-        borderRadius: 5,
-        width: '40%',
-        alignItems: 'center',
-    },
-    buttonText: {
-        color: 'white',
-        fontWeight: 'bold',
+        color: Colors.calblue,
     },
 }); 

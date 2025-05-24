@@ -15,11 +15,22 @@ type Props = {
 export default function SearchFoodCard({ food, onAdd }: Props) {
 
     // console.log("food", food)
-    const [unit, setUnit] = useState<ServingUnit>(food.servingUnits[0]);
+    const [unit, setUnit] = useState<ServingUnit | undefined>(() => {
+        if (food.servingUnits && food.servingUnits.length > 0 && food.servingUnits[0].grams !== undefined) {
+            return food.servingUnits[0];
+        }
+        console.warn(`Food item "${food.name}" (id: ${food.id}) has no valid serving units or the first unit is missing 'grams'. Defaulting to undefined.`);
+        return undefined;
+    });
     const { preferences } = useUser();
 
     const handleAdd = () => {
-        onAdd(food, 0, unit);
+        if (unit) { // Only call onAdd if a valid unit is set
+            onAdd(food, 1, unit); // Default quantity to 1 instead of 0
+        } else {
+            console.error(`Cannot add food "${food.name}" to cart: no valid serving unit selected or available.`);
+            // Optionally, show a user-facing error here
+        }
     };
 
     return (
