@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { UserMealPreference } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { TimePicker } from 'antd'
 // import TimePicker from 'react-time-picker';
 // import 'react-time-picker/dist/TimePicker.css';
 // import 'react-clock/dist/Clock.css';
@@ -13,6 +14,10 @@ import TimePickerIcon from "react-multi-date-picker/plugins/time_picker";
 import "react-multi-date-picker/styles/colors/green.css"; // Example color theme
 import "react-multi-date-picker/styles/backgrounds/bg-dark.css"; // Example background theme for calendar (though we hide day picker)
 // Option 2: Or create/use a custom theme if needed
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
 
 type AddEditMealPreferenceModalProps = {
     visible: boolean;
@@ -38,6 +43,16 @@ const formatDateToTime = (date: Date): string => {
     return `${hours}:${minutes}`;
 };
 
+// Helper to format Dayjs object to HH:MM string (for AntD TimePicker)
+const formatDayjsToTime = (time: dayjs.Dayjs): string => {
+    return time.format('HH:mm');
+};
+
+// Helper to parse HH:MM string to a Dayjs object (for AntD TimePicker)
+const parseTimeToDayjs = (timeStr: string): dayjs.Dayjs | null => {
+    return dayjs(timeStr, 'HH:mm');
+};
+
 const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
     visible,
     onClose,
@@ -48,6 +63,8 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
     const [defaultTime, setDefaultTime] = useState('08:00'); // Default to a sensible time string
     const [timePickerDate, setTimePickerDate] = useState(parseTimeToDate('08:00'));
     const [showTimePicker, setShowTimePicker] = useState(false);
+
+    const modalContentRef = useRef<View>(null); // Ref for the modal content
 
     // Log at the start of the render function
     console.log(
@@ -76,11 +93,10 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
         }
     }, [initialData, visible]); // Rerun when modal visibility or initialData changes
 
-    const handleTimeChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-        console.log(`DateTimePicker onChange event (Platform: ${Platform.OS}):`, event.type, "selectedDate:", selectedDate);
+    // Handler for Native DateTimePicker
+    const handleNativeTimeChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+        console.log(`Native DateTimePicker onChange event (Platform: ${Platform.OS}):`, event.type, "selectedDate:", selectedDate);
         
-        // For Android, the picker dialog dismisses itself. We always set showTimePicker to false.
-        // For iOS with 'spinner', it's inline. We might hide it or let user tap away/press done.
         if (Platform.OS === 'android') {
             setShowTimePicker(false);
         }
@@ -88,12 +104,20 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
         if (event.type === 'set' && selectedDate) { 
             setTimePickerDate(selectedDate);
             setDefaultTime(formatDateToTime(selectedDate));
-            // For iOS with modal pickers (display='default'), you might hide here:
-            // if (Platform.OS === 'ios') setShowTimePicker(false);
         } else if (event.type === 'dismissed') {
-            // On Android, setShowTimePicker(false) is already called.
-            // On iOS, for modal pickers, you might also set setShowTimePicker(false) here.
-            // if (Platform.OS === 'ios') setShowTimePicker(false); 
+            // Handle dismissal if needed
+        }
+    };
+
+    // Handler for Ant Design TimePicker
+    const handleAntdTimeChange = (time: dayjs.Dayjs | null, timeString: string | string[]) => {
+        console.log(`Ant Design TimePicker onChange:`, time, timeString);
+        // timeString can be an array for range pickers, but we use single picker
+        const formattedTimeString = Array.isArray(timeString) ? timeString[0] : timeString;
+        if (time) {
+            setDefaultTime(formatDayjsToTime(time));
+        } else {
+            setDefaultTime(''); // Or a default/placeholder if time is cleared
         }
     };
 
@@ -123,7 +147,7 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
             onRequestClose={onClose}
         >
             <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
+                <View style={styles.modalContent} ref={modalContentRef}>
                     <Text style={styles.modalTitle}>
                         {initialData ? 'Edit Meal Preference' : 'Add Meal Preference'}
                     </Text>
@@ -138,29 +162,13 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
                     {/* Time Input Section */}
                     {Platform.OS === 'web' ? (
                         <View style={styles.webTimePickerWrapper}>
-                            <DatePicker
-                                disableDayPicker
+                            <TimePicker
+                                value={defaultTime ? parseTimeToDayjs(defaultTime) : null}
+                                onChange={handleAntdTimeChange}
                                 format="HH:mm"
-                                value={defaultTime} // It can often parse HH:mm string
-                                onChange={(dateObject) => {
-                                    if (dateObject) {
-                                        // dateObject could be DateObject instance or an array depending on settings
-                                        // For single time picker, it should be a DateObject
-                                        // We need to format it back to HH:mm string
-                                        const hours = dateObject.hour.toString().padStart(2, '0');
-                                        const minutes = dateObject.minute.toString().padStart(2, '0');
-                                        setDefaultTime(`${hours}:${minutes}`);
-                                    } else {
-                                        setDefaultTime('');
-                                    }
-                                }}
-                                plugins={[
-                                    <TimePickerIcon hideSeconds position="bottom" />
-                                ]}
-                                // The DatePicker component will render an <input>. 
-                                // To style it like other inputs, assign a className and define it in global CSS.
-                                className="custom-time-picker-input"
-                                zIndex={2000} // Set a high z-index for the picker popup
+                                style={{ width: '100%' }} // Ensure picker takes full width of its wrapper
+                                getPopupContainer={() => modalContentRef.current as unknown as HTMLElement}
+                                // popupStyle={{ zIndex: 3000 }} // Optionally, ensure popup zIndex is very high
                             />
                         </View>
                     ) : (
@@ -182,7 +190,7 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
                                         mode={"time"}
                                         is24Hour={false}
                                         display={Platform.OS === 'ios' ? 'spinner' : 'default'} 
-                                        onChange={handleTimeChange}
+                                        onChange={handleNativeTimeChange}
                                         style={Platform.OS === 'ios' ? styles.iosPickerStyle : {}}
                                     />
                                 </View>
@@ -211,6 +219,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.5)',
+        // Ensure modal container itself does not inadvertently trap focus or events meant for popups
     },
     modalContent: {
         width: '85%',
@@ -223,6 +232,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
+        // The ref for getPopupContainer will point here if you attach it to this View
     },
     modalTitle: {
         fontSize: 20,
@@ -293,14 +303,14 @@ const styles = StyleSheet.create({
         // Height is important for the spinner's visibility
         height: 216,
     },
-    webTimePickerWrapper: { // Style for the wrapper around the web time picker
+    webTimePickerWrapper: {
         height: 45,
         // borderColor: Colors.lightgray, // DatePicker might have its own border
         // borderWidth: 1,
         borderRadius: 5,
         marginBottom: 15,
         justifyContent: 'center', // Vertically center the picker
-        zIndex: 2000, // Set a high z-index for the picker popup
+        // zIndex: 2000, // zIndex on wrapper may not be needed if getPopupContainer is used effectively
     },
     // webDatePickerInput: { // This style object cannot be passed directly to inputClass
     //     height: '100% !important',
