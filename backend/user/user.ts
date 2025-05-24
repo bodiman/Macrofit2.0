@@ -21,13 +21,38 @@ const defaultPreferences: DefaultPreferences = {
 };
 
 export const createUser = async (email: string, name?: string) => {
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`createUser: Normalized email for new user: '${normalizedEmail}'`);
+
+    // Check if user already exists with this normalized email to prevent duplicates if this function is called inadvertently
+    const existingUser = await prisma.user.findUnique({
+        where: {
+            email: normalizedEmail, // Prisma unique finds are case-sensitive by default on PostgreSQL
+                                // We rely on the application logic to ensure emails are unique case-insensitively
+                                // by always normalizing before create/query.
+        }
+    });
+
+    if (existingUser) {
+        console.warn(`createUser: User with normalized email '${normalizedEmail}' already exists with user_id: ${existingUser.user_id}. Returning existing user.`);
+        // Fetch and return the existing user with preferences, similar to how it's done for a new user.
+        const userWithPrefs = await prisma.user.findUnique({
+            where: { user_id: existingUser.user_id },
+            include: {
+                macroPreferences: { include: { metric: true } },
+            },
+        });
+        return { user: userWithPrefs, alreadyExisted: true };
+    }
+
     // Create the user
     const user = await prisma.user.create({
         data: { 
-            email,
+            email: normalizedEmail, // Store normalized email
             name,
         },
     });
+    console.log(`createUser: New user created with user_id: ${user.user_id} for email: '${normalizedEmail}'`);
 
     // Should create default preferences for the user
 
@@ -50,6 +75,7 @@ export const createUser = async (email: string, name?: string) => {
         data: preferencesData,
         skipDuplicates: true,
     });
+     console.log(`createUser: Default preferences created for user_id: ${user.user_id}`);
 
     // Fetch the user again with preferences to return
     const userWithPreferences = await prisma.user.findUnique({
@@ -63,29 +89,49 @@ export const createUser = async (email: string, name?: string) => {
         },
     });
 
-    return { user: userWithPreferences };
+    return { user: userWithPreferences, alreadyExisted: false };
 };
 
 export const getUser = async ({email, user_id}: {email?: string, user_id?: number}) => {
     if (!email && !user_id) {
-        throw new BadRequestError('Email or id is required');
+        throw new BadRequestError('Email or User ID is required for getUser');
     }
     
-    const user = await prisma.user.findUnique({
-        where: email ? { email } : { user_id: user_id! },
-        include: {
-            macroPreferences: {
-                include: {
-                    metric: true,
-                },
+    let user;
+    if (email) {
+        const normalizedEmail = email.toLowerCase().trim();
+        console.log(`getUser: Searching for user with normalized email: '${normalizedEmail}' (case-insensitive)`);
+        user = await prisma.user.findFirst({
+            where: { 
+                email: {
+                    equals: normalizedEmail,
+                    mode: 'insensitive'
+                }
             },
-        },
-    });
+            include: {
+                macroPreferences: { include: { metric: true } },
+            },
+        });
+    } else if (user_id) {
+        console.log(`getUser: Searching for user with user_id: ${user_id}`);
+        user = await prisma.user.findUnique({
+            where: { user_id: user_id! }, // user_id is an INT, direct match
+            include: {
+                macroPreferences: { include: { metric: true } },
+            },
+        });
+    } else {
+        // This case should be caught by the initial check, but as a safeguard:
+        throw new BadRequestError('Internal error: Insufficient parameters for getUser');
+    }
 
     if (!user) {
-        throw new UserNotFoundError('User not found');
+        const criteria = email ? `email '${email.toLowerCase().trim()}'` : `user_id '${user_id}'`;
+        console.warn(`getUser: User not found with ${criteria}`);
+        throw new UserNotFoundError(`User not found with ${criteria}`);
     }
     
+    console.log(`getUser: User found with user_id: ${user.user_id}`);
     return user;
 };
 

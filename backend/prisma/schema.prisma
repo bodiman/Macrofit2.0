@@ -9,11 +9,12 @@ datasource db {
 }
 
 model User {
-  user_id          Int              @id @default(autoincrement())
-  name             String?
-  email            String           @unique
-  macroPreferences UserPreference[]
-  meals            Meal[]
+  user_id             Int                  @id @default(autoincrement())
+  name                String?
+  email               String               @unique
+  macroPreferences    UserPreference[] // These are general daily preferences
+  meals               Meal[] // Instances of meals eaten on a specific day
+  userMealPreferences UserMealPreference[] // The user's defined meal slots like "Breakfast", "Lunch" etc.
 }
 
 model Kitchen {
@@ -24,16 +25,16 @@ model Kitchen {
 }
 
 model Food {
-  id                String          @id
-  name              String
-  description       String?
-  kitchen_id        String
-  active            Boolean
-  updated           DateTime        @default(now()) @updatedAt
-  kitchen           Kitchen         @relation(fields: [kitchen_id], references: [id])
-  servingUnits      ServingUnit[]
-  macros            FoodMacro[]
-  foodServings      FoodServing[]
+  id           String        @id
+  name         String
+  description  String?
+  kitchen_id   String
+  active       Boolean
+  updated      DateTime      @default(now()) @updatedAt
+  kitchen      Kitchen       @relation(fields: [kitchen_id], references: [id])
+  servingUnits ServingUnit[]
+  macros       FoodMacro[]
+  foodServings FoodServing[]
 
   @@unique([name, kitchen_id])
 }
@@ -50,12 +51,13 @@ model FoodMacro {
 }
 
 model NutritionalMetric {
-  id          String           @id
-  name        String           @unique
-  description String?
-  unit        String
-  foodMacros  FoodMacro[]
-  preferences UserPreference[]
+  id            String           @id
+  name          String           @unique
+  description   String?
+  unit          String
+  foodMacros    FoodMacro[]
+  preferences   UserPreference[]
+  MealMacroGoal MealMacroGoal[]
 }
 
 model UserPreference {
@@ -71,36 +73,65 @@ model UserPreference {
 }
 
 model FoodServing {
-  id          String        @id
-  food_id     String
-  meal_id     String
-  unit_id     String
-  quantity    Float
-  unit        ServingUnit   @relation(fields: [unit_id], references: [id]) 
-  food        Food          @relation(fields: [food_id], references: [id])
-  meal        Meal          @relation(fields: [meal_id], references: [id])
+  id       String      @id
+  food_id  String
+  meal_id  String
+  unit_id  String
+  quantity Float
+  unit     ServingUnit @relation(fields: [unit_id], references: [id])
+  food     Food        @relation(fields: [food_id], references: [id])
+  meal     Meal        @relation(fields: [meal_id], references: [id])
 }
 
 model Meal {
-  id        String        @id
-  name      String
-  date      DateTime      @db.Date
-  time      String
-  user_id   Int
-  user      User          @relation(fields: [user_id], references: [user_id])
-  servings  FoodServing[]
+  id       String        @id
+  name     String
+  date     DateTime      @db.Date
+  time     String
+  user_id  Int
+  user     User          @relation(fields: [user_id], references: [user_id])
+  servings FoodServing[]
 
   @@unique([user_id, date, time])
   @@unique([user_id, date, name])
 }
 
 model ServingUnit {
-  id        String    @id
-  name      String
-  grams     Float
-  food_id   String
-  food      Food      @relation(fields: [food_id], references: [id])
-  servings  FoodServing[]
+  id       String        @id
+  name     String
+  grams    Float
+  food_id  String
+  food     Food          @relation(fields: [food_id], references: [id])
+  servings FoodServing[]
 
   @@unique([name, food_id])
+}
+
+model UserMealPreference {
+  id            String @id @default(cuid())
+  user_id       Int
+  name          String
+  default_time  String
+  display_order Int
+
+  user       User            @relation(fields: [user_id], references: [user_id])
+  macroGoals MealMacroGoal[]
+
+  @@unique([user_id, name])
+  @@unique([user_id, display_order])
+  @@index([user_id])
+}
+
+model MealMacroGoal {
+  id                      String @id @default(cuid())
+  user_meal_preference_id String
+  metric_id               String
+  min_value               Float?
+  max_value               Float?
+
+  userMealPreference UserMealPreference @relation(fields: [user_meal_preference_id], references: [id], onDelete: Cascade)
+  metric             NutritionalMetric  @relation(fields: [metric_id], references: [id])
+
+  @@unique([user_meal_preference_id, metric_id])
+  @@index([user_meal_preference_id])
 }

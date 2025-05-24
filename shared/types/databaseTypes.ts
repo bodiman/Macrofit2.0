@@ -4,12 +4,14 @@ export type UserPreference = {
     metric_id: string;
     min_value: number | null;
     max_value: number | null;
-    metric: {
-        id: string;
-        name: string;
-        unit: string;
-        description: string | null;
-    };
+    metric: NutritionalMetric;
+};
+
+export type NutritionalMetric = {
+    id: string;
+    name: string;
+    unit: string;
+    description: string | null;
 };
 
 export type FoodServing = {
@@ -31,12 +33,7 @@ export type MacroValue = {
     food_id: string,
     metric_id: string,
     value: number,
-    metric: {
-        id: string,
-        name: string,
-        description: string | null,
-        unit: string
-    }
+    metric: NutritionalMetric;
 }
 
 export type dbFood = {
@@ -45,3 +42,21 @@ export type dbFood = {
     description: string | null,
     macros: MacroValue[]
 }
+
+export type MealMacroGoal = {
+    id: string;
+    user_meal_preference_id: string;
+    metric_id: string;
+    min_value?: number | null;
+    max_value?: number | null;
+    metric: NutritionalMetric;
+};
+
+export type UserMealPreference = {
+    id: string;
+    user_id: number;
+    name: string;
+    default_time: string;
+    display_order: number;
+    macroGoals: MealMacroGoal[];
+};
