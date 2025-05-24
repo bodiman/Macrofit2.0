@@ -183,10 +183,19 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                                 connect: { id: macro.metric_id }
                                             }
                                         }))
+                                    },
+                                    servingUnits: {
+                                        create: [
+                                            {
+                                                id: uuidv4(),
+                                                name: "g",
+                                                grams: 1,
+                                            }
+                                        ]
                                     }
                                 }
                             });
-                            console.log("food written to database");
+                            console.log("food written to database with default 'g' serving unit");
                         } catch (error) {
                             console.error('Error writing food to database:', error);
                         }

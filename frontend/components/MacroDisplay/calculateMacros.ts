@@ -4,6 +4,7 @@ import storage from '@/app/storage/storage';
 
 // macros adjusted for portion size
 export const calculateAdjustedMacros = (foodServing: FoodServing): Macros => {
+    console.log("foodServing", foodServing);
     const { unit, quantity, food } = foodServing;
     // console.log("portion", portion)
     const gramsInPortion = quantity * unit.grams;

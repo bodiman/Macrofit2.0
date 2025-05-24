@@ -44,7 +44,7 @@ model FoodMacro {
   food_id   String
   metric_id String
   value     Float
-  food      Food              @relation(fields: [food_id], references: [id])
+  food      Food              @relation(fields: [food_id], references: [id], onDelete: Cascade)
   metric    NutritionalMetric @relation(fields: [metric_id], references: [id])
 
   @@unique([food_id, metric_id])
@@ -79,8 +79,8 @@ model FoodServing {
   unit_id  String
   quantity Float
   unit     ServingUnit @relation(fields: [unit_id], references: [id])
-  food     Food        @relation(fields: [food_id], references: [id])
-  meal     Meal        @relation(fields: [meal_id], references: [id])
+  food     Food        @relation(fields: [food_id], references: [id], onDelete: Cascade)
+  meal     Meal        @relation(fields: [meal_id], references: [id], onDelete: Cascade)
 }
 
 model Meal {
@@ -101,7 +101,7 @@ model ServingUnit {
   name     String
   grams    Float
   food_id  String
-  food     Food          @relation(fields: [food_id], references: [id])
+  food     Food          @relation(fields: [food_id], references: [id], onDelete: Cascade)
   servings FoodServing[]
 
   @@unique([name, food_id])
