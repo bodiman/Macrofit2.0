@@ -1,3 +1,9 @@
+May 24
+The user needs to have a way to edit how each meal is distributed. For instance, they may want to eat 20% of their calories during breakfast, 30% during lunch, and 50% at dinner. In the AddFoodModal, the macro preferences ought to reflect the macro preferences for the meal. So if the user wants to eat 1800 to 2000 calories total, and wants to eat 20% of their nutrients at breakfast, this would correspond to a range of 360 to 400 calories during the meal.
+
+The users should be able to edit their meal distribution preferences in the Preferences page through some intuitive UI component, perhaps through some interactive pie chart or line chart.
+
+
 May 23
 ------
 

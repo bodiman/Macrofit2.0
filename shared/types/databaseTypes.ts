@@ -47,8 +47,7 @@ export type MealMacroGoal = {
     id: string;
     user_meal_preference_id: string;
     metric_id: string;
-    min_value?: number | null;
-    max_value?: number | null;
+    target_percentage: number;
     metric: NutritionalMetric;
 };
 
@@ -57,5 +56,6 @@ export type UserMealPreference = {
     user_id: number;
     name: string;
     default_time: string;
+    distribution_percentage?: number | null;
     macroGoals: MealMacroGoal[];
 };

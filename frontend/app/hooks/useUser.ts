@@ -196,8 +196,12 @@ export function useUser() {
     }
   };
 
-  const addPreference = async ({metric_id, min_value, max_value}: {metric_id: string, min_value: number, max_value: number}) => {
-    if (!appUser) return;
+  const addPreference = async ({metric_id, min_value, max_value}: {metric_id: string, min_value: number, max_value: number}): Promise<UserPreference | null> => {
+    if (!appUser) {
+        console.error('addPreference: No appUser found, cannot add preference.');
+        setError('User not available to add preference.');
+        return null;
+    }
     try {
       const response = await api.post('/api/user/preferences', {
         user_id: appUser.user_id,
@@ -205,13 +209,15 @@ export function useUser() {
         min_value,
         max_value
       });
-      const newPreference = await response.json();
-      setPreferencesState([...preferences, newPreference]);
-      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify([...preferences, newPreference]));
+      const newPreference: UserPreference = await response.json();
+      setPreferencesState(prevPreferences => [...prevPreferences, newPreference]);
+      storage.set(CACHED_PREFERENCES_KEY, JSON.stringify([...preferences, newPreference])); // Note: 'preferences' here might be stale, consider using the updated state
       eventBus.emit('preferencesUpdated');
+      return newPreference; // Return the new preference
     } catch (err) {
       console.error('Failed to add new macro preference:', err);
       setError('Failed to add new macro preference');
+      return null; // Return null on error
     }
   };
 

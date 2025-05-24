@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-nativ
 import { PropsWithChildren, useEffect } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Meal, FoodServing } from '@shared/types/foodTypes';
+import { UserMealPreference } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 import AddFood from './AddFood';
 import AnimatedModal from '../AnimatedModal';
@@ -12,10 +13,11 @@ type Props = PropsWithChildren<{
     onClose: () => void,
     modalCloser: () => void,
     activeMeal: Meal | null,
+    activeMealPreference: UserMealPreference | null,
     addFoodsToMeal: (mealId: string, updatedMeal: FoodServing[]) => Promise<void>
 }>;
 
-export default function FoodSearchModal({ onClose, activeMeal, modalCloser, addFoodsToMeal }: Props) {
+export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
 
     useEffect(() => {
@@ -56,6 +58,7 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, addF
                         shoppingCart={shoppingCart}
                         setShoppingCart={setShoppingCart}
                         handleLog={handleLog}
+                        activeMealPreference={activeMealPreference}
                     />
                 </View>
             </View>
