@@ -355,41 +355,104 @@ export function useUser() {
       }
   };
 
-  const updateFoodPortion = async (servingId: string, quantity: number, unit: SharedServingUnit) => {
-      const originalMeals = meals;
-      const updatedMeals = meals.map(meal => {
-          const updatedServings = meal.servings.map(serving => {
-              if (serving.id === servingId) {
-                  return {
-                      ...serving,
-                      quantity,
-                      unit // Assuming unit structure matches what API expects or is part of serving
-                  };
-              }
-              return serving;
-          });
-          return {
-              ...meal,
-              servings: updatedServings
-          };
-      });
-      
-      setMeals(updatedMeals);
-      storage.set(CACHED_MEALS_KEY, JSON.stringify(updatedMeals));
-      eventBus.emit('mealsUpdated');
+  const updateFoodPortion = async (servingId: string, quantity: number, unit: SharedServingUnit, newStatus?: 'PLANNED' | 'LOGGED') => {
+    if (!appUser) return;
 
-      try {
-        await api.put(`/api/user/meals/servings/${servingId}`, {
-          quantity: quantity !== undefined ? quantity : 0, // ensure quantity is not undefined
-          unit: { id: unit.id }, // Send only the unit ID if that's what the backend expects to link
-        });
-      } catch (err) {
-        setMeals(originalMeals); // Revert on error
-        storage.set(CACHED_MEALS_KEY, JSON.stringify(originalMeals));
-        eventBus.emit('mealsUpdated');
-        console.error('Failed to update food portion:', err);
-        setError('Failed to update food portion');
+    const mealToUpdate = meals.find(meal => meal.servings.some(s => s.id === servingId));
+    if (!mealToUpdate) {
+      console.error("Meal not found for servingId:", servingId);
+      setError('Meal not found for the item.');
+      return;
+    }
+
+    const originalServing = mealToUpdate.servings.find(s => s.id === servingId);
+    if (!originalServing) {
+        console.error("Original serving not found for optimistic update:", servingId);
+        setError('Original serving not found.');
+        return;
+    }
+
+    const originalMealsJSON = JSON.stringify(meals);
+
+    // 1. Calculate the optimistically updated meals data first
+    const optimisticallyUpdatedMealsData = meals.map(meal => {
+      if (meal.id === mealToUpdate.id) {
+        return {
+          ...meal,
+          servings: meal.servings.map(s => {
+            if (s.id === servingId) {
+              return {
+                ...s,
+                quantity: quantity,
+                unit: unit,
+              };
+            }
+            return s;
+          })
+        };
       }
+      return meal;
+    });
+
+    // 2. Apply optimistic updates to state, storage, and emit event
+    setMeals(optimisticallyUpdatedMealsData);
+    storage.set(CACHED_MEALS_KEY, JSON.stringify(optimisticallyUpdatedMealsData));
+    eventBus.emit('mealsUpdated');
+
+    try {
+      const payload: any = {
+        quantity: quantity,
+        unit: { id: unit.id }, 
+      };
+      if (newStatus) {
+        payload.status = newStatus;
+      }
+
+      const res = await api.put(`/api/user/meals/servings/${servingId}`, payload);
+      const updatedServingFromServer = await res.json(); 
+
+      // 3. On success, update state, storage, and emit event with confirmed data
+      //    It's best to apply the server's version of the item to the current state
+      setMeals(currentOptimisticMeals => { // currentOptimisticMeals is optimisticallyUpdatedMealsData
+        const confirmedMeals = currentOptimisticMeals.map(m => {
+          if (m.id === mealToUpdate.id) {
+            return {
+              ...m,
+              servings: m.servings.map(s => {
+                if (s.id === servingId) {
+                  return {
+                    ...originalServing, 
+                    id: updatedServingFromServer.id, 
+                    quantity: updatedServingFromServer.quantity,
+                    unit: { 
+                      id: updatedServingFromServer.unit_id || unit.id,
+                      name: updatedServingFromServer.unit_name || unit.name,
+                      grams: updatedServingFromServer.unit_grams || unit.grams,
+                      food_id: originalServing.food.id, 
+                    },
+                    food: originalServing.food,
+                  } as FoodServing; 
+                }
+                return s;
+              })
+            };
+          }
+          return m;
+        });
+        storage.set(CACHED_MEALS_KEY, JSON.stringify(confirmedMeals));
+        eventBus.emit('mealsUpdated');
+        return confirmedMeals;
+      });
+
+    } catch (err) {
+      console.error('Failed to update food portion:', err);
+      setError('Failed to update food portion');
+      // 4. Revert state, storage, and emit event on error
+      const revertedMeals = JSON.parse(originalMealsJSON);
+      setMeals(revertedMeals);
+      storage.set(CACHED_MEALS_KEY, originalMealsJSON); // Use originalMealsJSON directly
+      eventBus.emit('mealsUpdated');
+    }
   };
 
   // CRUD for UserMealPreferences (Meal Slots)

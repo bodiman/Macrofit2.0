@@ -2,7 +2,7 @@ attr_id,2018 NFP,usda_tag,name,unit,id
 301,1,CA,"Calcium, Ca",mg,calcium
 205,1,CHOCDF,"Carbohydrate, by difference",g,carbohydrates
 601,1,CHOLE,Cholesterol,mg,cholesterol
-208,1,ENERC_KCAL,Energy,kcal,calories
+208,1,ENERC_KCAL,Calories,kcal,calories
 606,1,FASAT,"Fatty acids, total saturated",g,saturated_fat
 204,1,FAT,Total lipid (fat),g,fat
 605,1,FATRN,"Fatty acids, total trans",g,trans_fat
@@ -29,7 +29,7 @@ attr_id,2018 NFP,usda_tag,name,unit,id
 334,0,CRYPX,"Cryptoxanthin, beta",µg,cryptoxanthin
 312,0,CU,"Copper, Cu",mg,copper
 507,0,CYS_G,Cystine,g,cystine
-268,0,ENERC_KJ,Energy,kJ,joules
+268,0,ENERC_KJ,Joules,kJ,joules
 325,0,ERGCAL,Vitamin D2 (ergocalciferol),µg,vitamin_d2
 610,0,F10D0,10:00,g,10:00
 611,0,F12D0,12:00,g,12:00
