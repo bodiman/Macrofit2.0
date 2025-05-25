@@ -164,6 +164,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
 
                 if (nutritionixData.length > 0) {
                     const food = nutritionixData[0];
+                    // console.log("foodmeasures", food);
                     if (food) {
 
                         try {
@@ -185,13 +186,11 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                         }))
                                     },
                                     servingUnits: {
-                                        create: [
-                                            {
-                                                id: uuidv4(),
-                                                name: "g",
-                                                grams: 1,
-                                            }
-                                        ]
+                                        create: food.serving_units.map((unit: any) => ({
+                                            id: uuidv4(),
+                                            name: unit.name,
+                                            grams: unit.grams
+                                        }))
                                     }
                                 }
                             });

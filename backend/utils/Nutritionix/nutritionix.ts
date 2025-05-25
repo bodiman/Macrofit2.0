@@ -61,22 +61,35 @@ export async function getNutritionixData(commonFoods: string[]) {
 
             const result = await response.json()
 
-            console.log("result", result);
-            console.log("result['message']", result.message);
+
+            // console.log("result['message']", result.message);
 
             if (result.message == "We couldn't match any of your foods") {
                 return null;
             } else {
-                console.log("the result was ")
-                console.log(result);
+                // console.log("result", result['foods']);
+                // result['foods'].forEach((food: any) => {
+                //     console.log("food", food.alt_measures);
+                // });
             }
 
 
             const foodData = result['foods'][0];
+
+            const serving_units = foodData['alt_measures'].map((unit: any) => {
+                return {
+                    name: unit.measure,
+                    grams: unit.serving_weight
+                }
+            });
+            console.log("foodData", foodData.alt_measures);
+            console.log("serving_units", serving_units);
+            
             return {
                 name: foodData['food_name'],
                 id: `common-${foodData['food_name'].toLowerCase().replace(/ /g, '-')}`,
                 serving_size: foodData['serving_weight_grams'],
+                serving_units: serving_units,
                 macros: foodData['full_nutrients']
             }
         })

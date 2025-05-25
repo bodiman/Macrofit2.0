@@ -6,9 +6,6 @@ const router = express.Router();
 
 // Middleware for debugging req.auth and req.user
 router.use((req, res, next) => {
-  console.log('Auth Debug Middleware in mealPreferences.ts:');
-  console.log('req.auth:', JSON.stringify((req as any).auth, null, 2));
-  console.log('req.user:', JSON.stringify((req as any).user, null, 2));
   next();
 });
 
