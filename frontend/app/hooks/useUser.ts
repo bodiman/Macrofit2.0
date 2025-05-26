@@ -439,8 +439,6 @@ export function useUser() {
           }
           return m;
         });
-        storage.set(CACHED_MEALS_KEY, JSON.stringify(confirmedMeals));
-        eventBus.emit('mealsUpdated');
         return confirmedMeals;
       });
 
