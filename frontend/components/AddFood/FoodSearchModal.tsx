@@ -39,7 +39,6 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
             // };
             
             // Update the meal
-            console.log(shoppingCart)
             modalCloser();
             addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
                 clearCart();

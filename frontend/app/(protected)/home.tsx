@@ -12,7 +12,7 @@ import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import 'react-native-get-random-values';
 import eventBus from '@/app/storage/eventEmitter';
-import { useUser } from '../hooks/useUser';
+import { useUserContext } from '../context/UserContext';
 import { UserMealPreference } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 
@@ -24,7 +24,7 @@ export default function Page() {
     updateFoodPortion,
     userMealPreferences,
     preferences
-  } = useUser();
+  } = useUserContext();
 
   const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
   const [activeMealPreferenceDetails, setActiveMealPreferenceDetails] = useState<UserMealPreference | null>(null);

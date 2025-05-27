@@ -318,7 +318,6 @@ export function useUser() {
   };
 
   const addFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
-    console.log("adding foods to meal", foodsToAdd)
       const originalMeals = meals;
       // Optimistically update UI
       const updatedMeals = meals.map(meal => {
@@ -469,7 +468,6 @@ export function useUser() {
       eventBus.emit('userMealPreferencesUpdated');
 
       // Optimistically update meals for today
-      console.log("Fetching meals from addUserMealPreference")
       await fetchMeals(appUser.user_id, new Date());
 
       return newPreference;
