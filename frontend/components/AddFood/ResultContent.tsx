@@ -9,21 +9,24 @@ import { v4 as uuidv4 } from 'uuid';
 import { servingUnits } from "@/tempdata"
 import { useMenu } from "@/app/hooks/useMenu"
 import MenuSpinner from "../Spinner/MenuSpinner"
+import { MacroPreference } from "@shared/types/macroTypes"
 
 type Props = {
+    preferences: MacroPreference[],
     visible: boolean,
     closeModal: ()=> void,
     searchQuery: string,
     onAddToCart: (food: FoodServing) => void
 }
 
-export default function ResultContent({ visible, searchQuery, onAddToCart, closeModal }: Props) {
+export default function ResultContent({ visible, searchQuery, onAddToCart, closeModal, preferences }: Props) {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [selectedMenuId, setSelectedMenuId] = useState<string>('all');
     const [searchResults, setSearchResults] = useState<Food[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const { menus, loading: menusLoading, searchMenuFoods, error } = useMenu();
     const { searchAllFoods } = useFoodSearchApi();
+
     useEffect(() => {
         fadeAnim.setValue(0);
 
@@ -42,7 +45,6 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 setIsLoading(true);
                 try {
                     const results = await searchAllFoods(searchQuery);
-                    console.log("results", results)
                     setSearchResults(results);
                 } catch (error) {
                     console.error('Error searching foods:', error);
@@ -54,7 +56,6 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                 setIsLoading(true);
                 try {
                     const results = await searchMenuFoods(selectedMenuId, searchQuery);
-                    console.log("results", results)
                     setSearchResults(results);
                 } catch (error) {
                     console.error('Error searching foods:', error);
@@ -108,6 +109,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                         keyExtractor={(item) => item.id}
                         renderItem={({ item }) => (
                             <SearchFoodCard 
+                                preferences={preferences}
                                 food={item} 
                                 onAdd={handleAddFood}
                             />

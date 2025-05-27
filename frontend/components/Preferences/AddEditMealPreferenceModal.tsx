@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { UserMealPreference } from '@shared/types/databaseTypes';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, Alert } from 'react-native';
+import { UserMealPreference, MealMacroGoal } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { TimePicker } from 'antd'
@@ -19,10 +19,20 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 
 dayjs.extend(customParseFormat);
 
+// Type for the data submitted by the modal
+// Includes new fields, macroGoals is an array of { metric_id, target_percentage }
+export type MealPreferenceSubmitData = {
+    name: string;
+    default_time: string;
+    distribution_percentage?: number | null;
+    macroGoals?: Array<{ metric_id: string; target_percentage: number }>;
+};
+
 type AddEditMealPreferenceModalProps = {
     visible: boolean;
     onClose: () => void;
-    onSubmit: (data: Omit<UserMealPreference, 'id' | 'user_id' | 'macroGoals' | 'display_order'>) => void;
+    // Use the more specific submit data type
+    onSubmit: (data: MealPreferenceSubmitData) => void; 
     initialData?: UserMealPreference | null;
 };
 
@@ -60,11 +70,13 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
     initialData,
 }) => {
     const [name, setName] = useState('');
-    const [defaultTime, setDefaultTime] = useState('08:00'); // Default to a sensible time string
+    const [defaultTime, setDefaultTime] = useState('08:00');
+    // State for distribution_percentage (as string for input, number for submission)
+    const [distributionPercentage, setDistributionPercentage] = useState(''); 
     const [timePickerDate, setTimePickerDate] = useState(parseTimeToDate('08:00'));
     const [showTimePicker, setShowTimePicker] = useState(false);
 
-    const modalContentRef = useRef<View>(null); // Ref for the modal content
+    const modalContentRef = useRef<View>(null);
 
     // Log at the start of the render function
     console.log(
@@ -79,19 +91,27 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
                 const initialDefaultTime = initialData.default_time || '08:00';
                 setDefaultTime(initialDefaultTime);
                 setTimePickerDate(parseTimeToDate(initialDefaultTime));
+                // Initialize distributionPercentage from initialData
+                setDistributionPercentage(
+                    initialData.distribution_percentage !== null && initialData.distribution_percentage !== undefined 
+                        ? (initialData.distribution_percentage * 100).toString() // Display as percentage string e.g. "20"
+                        : '' 
+                );
+                // TODO: Initialize macroGoals UI when we add it
             } else {
                 // Reset to defaults for a new entry
                 setName('');
                 const initialDefaultTime = '08:00';
                 setDefaultTime(initialDefaultTime);
                 setTimePickerDate(parseTimeToDate(initialDefaultTime));
+                setDistributionPercentage(''); // Reset for new entry
+                // TODO: Reset macroGoals UI
             }
-            setShowTimePicker(false); // Crucial: Reset picker visibility when modal opens
+            setShowTimePicker(false); 
         } else {
             console.log('Modal became hidden.');
-            // Optionally reset other states if needed when modal is fully closed, though onClose handles submission logic
         }
-    }, [initialData, visible]); // Rerun when modal visibility or initialData changes
+    }, [initialData, visible]);
 
     // Handler for Native DateTimePicker
     const handleNativeTimeChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
@@ -112,26 +132,43 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
     // Handler for Ant Design TimePicker
     const handleAntdTimeChange = (time: dayjs.Dayjs | null, timeString: string | string[]) => {
         console.log(`Ant Design TimePicker onChange:`, time, timeString);
-        // timeString can be an array for range pickers, but we use single picker
         const formattedTimeString = Array.isArray(timeString) ? timeString[0] : timeString;
         if (time) {
             setDefaultTime(formatDayjsToTime(time));
         } else {
-            setDefaultTime(''); // Or a default/placeholder if time is cleared
+            setDefaultTime(''); 
         }
     };
 
     const handleSubmit = () => {
         console.log('Submit button pressed.');
         if (!name.trim() || !defaultTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/)) {
-            alert('Please enter a valid name and a valid default time in HH:MM format.');
+            Alert.alert('Validation Error', 'Please enter a valid name and a valid default time in HH:MM format.');
             return;
         }
-        onSubmit({
+
+        let distPercentNum: number | null | undefined = undefined;
+        if (distributionPercentage.trim() !== '') {
+            const parsedNum = parseFloat(distributionPercentage);
+            if (isNaN(parsedNum) || parsedNum < 0 || parsedNum > 100) {
+                Alert.alert('Validation Error', 'Distribution percentage must be a number between 0 and 100, or left blank.');
+                return;
+            }
+            distPercentNum = parsedNum / 100; // Convert to decimal for submission (e.g., 0.20)
+        } else {
+            distPercentNum = null; // Explicitly set to null if blank, backend expects Float?
+        }
+
+        // TODO: Collect macroGoals data when UI is implemented
+        const dataToSubmit: MealPreferenceSubmitData = {
             name: name.trim(),
             default_time: defaultTime,
-        });
-        onClose(); // Close modal after submission
+            distribution_percentage: distPercentNum,
+            // macroGoals: [], // Placeholder
+        };
+
+        onSubmit(dataToSubmit);
+        onClose();
     };
 
     const handleOpenTimePicker = () => {
@@ -177,6 +214,15 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
                             <Text style={styles.timeInputText}>{defaultTime || 'Select Time'}</Text>
                         </TouchableOpacity>
                     )}
+                    
+                    {/* Distribution Percentage Input */}
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Nutrient Distribution % (e.g., 20 for 20%)"
+                        value={distributionPercentage}
+                        onChangeText={setDistributionPercentage}
+                        keyboardType="numeric"
+                    />
                     
                     {/* Conditionally render DateTimePicker for native platforms if showTimePicker is true */}
                     {(() => {

@@ -4,8 +4,7 @@ import { Text, View, ScrollView, StyleSheet, Button } from 'react-native'
 import { FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { SignOutButton } from '@/components/SignOutButton'
-import { Meal } from '@shared/types/foodTypes';
-import { FoodServing } from '@shared/types/foodTypes';
+import { Meal, FoodServing, ServingUnit as SharedServingUnit } from '@shared/types/foodTypes';
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -13,29 +12,42 @@ import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import 'react-native-get-random-values';
 import eventBus from '@/app/storage/eventEmitter';
-import { useUser } from '../hooks/useUser';
-import { ServingUnit } from '@shared/types/foodTypes';
+import { useUserContext } from '../context/UserContext';
+import { UserMealPreference } from '@shared/types/databaseTypes';
+import Colors from '@/styles/colors';
 
 export default function Page() {
   const { 
     meals, 
     addFoodsToMeal, 
     deleteFoodFromMeal,
-    updateFoodPortion
-  } = useUser();
+    updateFoodPortion,
+    userMealPreferences,
+    preferences
+  } = useUserContext();
 
   const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
+  const [activeMealPreferenceDetails, setActiveMealPreferenceDetails] = useState<UserMealPreference | null>(null);
   const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
+
     // Open the food search modal for a specific meal
   const openFoodSearch = (meal: Meal) => {
     setActiveMeal(meal);
+    // Find the corresponding UserMealPreference
+    const matchingUmp = userMealPreferences.find(ump => ump.name === meal.name);
+    if (matchingUmp) {
+      setActiveMealPreferenceDetails(matchingUmp);
+    } else {
+      console.warn(`No UserMealPreference found for meal name: ${meal.name}`);
+      setActiveMealPreferenceDetails(null); // Or handle as an error / default
+    }
   }
 
   // Close the food search modal
   const closeFoodSearch = () => {
-      // Close the modal
       eventBus.emit('foodSearchModalClose');
       setActiveMeal(null);
+      setActiveMealPreferenceDetails(null); // Clear preference details on close
   }
 
   return (
@@ -43,7 +55,7 @@ export default function Page() {
           <FlatList
             style={styles.mealContent}
             data={meals}
-            keyExtractor={(meal: Meal) => meal.id}
+            keyExtractor={(item: Meal) => item.id}
             renderItem={({ item }: { item: Meal }) => (
               <MealDisplay 
                 meal={item} 
@@ -58,15 +70,17 @@ export default function Page() {
           />
           <FoodSearchModal 
             activeMeal={activeMeal} 
+            activeMealPreference={activeMealPreferenceDetails}
             modalCloser={closeFoodSearch} 
             onClose={closeFoodSearch}
             addFoodsToMeal={addFoodsToMeal}
+            dailyMacroPreferences={preferences}
           />
           {editingFood && (
             <EditFoodModal
               foodServing={editingFood}
               onClose={() => setEditingFood(null)}
-              onUpdatePortion={(quantity: number, unit: ServingUnit) => {
+              onUpdatePortion={(quantity: number, unit: SharedServingUnit) => {
                 if (editingFood) {
                   updateFoodPortion(editingFood.id, quantity, unit);
                 }
@@ -79,16 +93,32 @@ export default function Page() {
 
 const styles = StyleSheet.create({
   parentReference: {
-    display: "flex",
-    height: "100%"
+    flex: 1,
+    position: 'relative',
+    backgroundColor: Colors.white, 
   },
-  macroContainer: {
-
+  container: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: Colors.white, 
   },
   mealContent: {
-    // paddingVertical: 200,
-    width: "90%",
-    marginLeft: "auto",
-    marginRight: "auto",
-  }
-})
+    flex: 1,
+    // backgroundColor: "red",
+    paddingHorizontal: 20,
+  },
+  main: {
+    flex: 1,
+    justifyContent: 'center',
+    maxWidth: 960,
+    marginHorizontal: 'auto',
+  },
+  title: {
+    fontSize: 64,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 36,
+    color: '#38434D',
+  },
+});

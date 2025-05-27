@@ -2,20 +2,24 @@ import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-nativ
 import { PropsWithChildren, useEffect } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Meal, FoodServing } from '@shared/types/foodTypes';
+import { UserMealPreference } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 import AddFood from './AddFood';
 import AnimatedModal from '../AnimatedModal';
 import eventBus from '@/app/storage/eventEmitter';
 import useShoppingCart from '@/app/hooks/useShoppingCart';
+import { MacroPreference } from '@shared/types/macroTypes';
 
 type Props = PropsWithChildren<{
     onClose: () => void,
     modalCloser: () => void,
     activeMeal: Meal | null,
+    activeMealPreference: UserMealPreference | null,
     addFoodsToMeal: (mealId: string, updatedMeal: FoodServing[]) => Promise<void>
+    dailyMacroPreferences: MacroPreference[]
 }>;
 
-export default function FoodSearchModal({ onClose, activeMeal, modalCloser, addFoodsToMeal }: Props) {
+export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
 
     useEffect(() => {
@@ -35,9 +39,9 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, addF
             // };
             
             // Update the meal
+            modalCloser();
             addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
                 clearCart();
-                modalCloser();
             });
         }
     };
@@ -53,9 +57,11 @@ export default function FoodSearchModal({ onClose, activeMeal, modalCloser, addF
                 </View>
                 <View style={styles.contentContainer}>
                     <AddFood
+                        dailyMacroPreferences={dailyMacroPreferences}
                         shoppingCart={shoppingCart}
                         setShoppingCart={setShoppingCart}
                         handleLog={handleLog}
+                        activeMealPreference={activeMealPreference}
                     />
                 </View>
             </View>

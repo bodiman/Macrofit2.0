@@ -15,17 +15,17 @@ declare global {
 }
 
 export const requireAuth = async (req: Request, res: Response, next: NextFunction) => {
-    console.log('Auth Middleware: Entered requireAuth'); 
+    // console.log('Auth Middleware: Entered requireAuth'); 
     const authHeader = req.headers.authorization;
     const sessionToken = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
     if (!sessionToken) {
-        console.log('Auth Middleware: No token provided. Authorization header missing or malformed.');
+        // console.log('Auth Middleware: No token provided. Authorization header missing or malformed.');
         return res.status(401).json({ error: 'No token provided. Authorization header missing or malformed.' });
     }
 
     try {
-        console.log('Auth Middleware: Attempting to verify token.');
+        // console.log('Auth Middleware: Attempting to verify token.');
         if (!process.env.CLERK_SECRET_KEY) {
             console.error('Auth Middleware: CLERK_SECRET_KEY is not set.');
             return res.status(500).json({ error: 'Server configuration error (secret key missing).' });
@@ -45,7 +45,7 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
             // authorizedParties: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : undefined,
         });
 
-        console.log('Auth Middleware: Token verified. Claims:', JSON.stringify(claims, null, 2));
+        // console.log('Auth Middleware: Token verified. Claims:', JSON.stringify(claims, null, 2));
 
         if (!claims.sub || !claims.sid) { 
             console.error('Auth Middleware: Token claims missing sub (userId) or sid (sessionId).');
@@ -58,10 +58,10 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         };
 
         try {
-            console.log(`Auth Middleware: Fetching full user object for userId: ${req.auth.userId}`);
+            // console.log(`Auth Middleware: Fetching full user object for userId: ${req.auth.userId}`);
             const fullUser = await clerkClient.users.getUser(req.auth.userId);
             req.user = fullUser;
-            console.log('Auth Middleware: req.user populated.'); // Simplified log for brevity
+            // console.log('Auth Middleware: req.user populated.'); // Simplified log for brevity
         } catch (userError) {
             console.error(`Auth Middleware: Failed to fetch full user object for userId ${req.auth.userId}:`, userError);
             // Depending on your getUserIdFromRequest logic, this might be acceptable or a hard error.

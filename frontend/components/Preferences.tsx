@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useMetrics } from '@/lib/api/metrics';
 import AddMacroModal from './Preferences/AddMacroModal';
-import AddEditMealPreferenceModal from './Preferences/AddEditMealPreferenceModal';
+import AddEditMealPreferenceModal, { MealPreferenceSubmitData } from './Preferences/AddEditMealPreferenceModal';
 
 export default function Preferences() {
     const { signOut } = useAuth();
@@ -70,14 +70,31 @@ export default function Preferences() {
 
     const handleAddNewMacro = async (macro: { id: string; name: string; unit: string }, min: number, max: number) => {
         try {
-            await addPreference({
+            const newPreference = await addPreference({
                 metric_id: macro.id,
                 min_value: min,
                 max_value: max,
             });
+            
             setShowAddMacroModal(false);
+
+            if (newPreference) {
+                const metricInfo = availableMacros.find(m => m.id === newPreference.metric_id);
+
+                const addedMacroForEditing: MacroPreference = {
+                    id: newPreference.metric_id,
+                    name: metricInfo?.name || 'Unknown Macro',
+                    unit: metricInfo?.unit || 'N/A',
+                    min: newPreference.min_value === null ? undefined : newPreference.min_value,
+                    max: newPreference.max_value === null ? undefined : newPreference.max_value,
+                };
+                setEditingMacro(addedMacroForEditing);
+            } else {
+                console.error('Failed to add macro or retrieve its data for editing.');
+            }
         } catch (err) {
             console.error('Failed to add new macro preference:', err);
+            setShowAddMacroModal(false);
         }
     };
 
@@ -99,12 +116,18 @@ export default function Preferences() {
         }
     };
 
-    const handleSaveMealPreference = async (data: Omit<UserMealPreferenceType, 'id' | 'user_id' | 'macroGoals' | 'display_order'>) => {
+    const handleSaveMealPreference = async (data: MealPreferenceSubmitData) => {
         try {
+            const payload = {
+                name: data.name,
+                default_time: data.default_time,
+                distribution_percentage: data.distribution_percentage,
+            };
+
             if (editingMealPreference) {
-                await updateUserMealPreference(editingMealPreference.id, data);
+                await updateUserMealPreference(editingMealPreference.id, payload);
             } else {
-                await addUserMealPreference(data);
+                await addUserMealPreference(payload);
             }
             setShowAddEditMealPreferenceModal(false);
             setEditingMealPreference(null);

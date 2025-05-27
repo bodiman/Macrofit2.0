@@ -152,14 +152,12 @@ router.get('/search-all', async (req: Request, res: Response) => {
                         },
                     }
                 });
-
-                console.log("retrieved foods", foods.map((food) => food.name));
                 
                 // filter out names that are already in the database under the common_foods kitchen
                 const newNames = names.filter((name: string) => !foods.some((food) => (food.name === name && food.kitchen_id === commonFoodsKitchen.id)))
                     .slice(0, 1);
 
-                console.log("newNames", newNames);
+                console.log("Foods to Add:", newNames);
                 const nutritionixData = await getNutritionixData(newNames);
 
                 if (nutritionixData.length > 0) {
@@ -168,10 +166,25 @@ router.get('/search-all', async (req: Request, res: Response) => {
 
                         try {
                             // write data to database  
-                            console.log(`Writing Food ${food.name} to database`);              
+                            let servingUnits = food.serving_units.map((unit: any) => ({
+                                id: uuidv4(),
+                                name: unit.name,
+                                grams: unit.grams
+                            }))
+
+                            // only keep one of each unique serving unit name
+                            servingUnits = servingUnits.reduce((acc: any, unit: any) => {
+                                if (!acc.some((u: any) => u.name === unit.name)) {
+                                    acc.push(unit);
+                                }
+                                return acc;
+                            }, []);
+                            
+                            console.log("servingUnits", servingUnits);
+                            console.log(`Writing Food ${food.name} to database`);            
                             await prisma.food.create({
                                 data: {
-                                    id: food.id,
+                                    id: uuidv4(),
                                     name: food.name,
                                     description: `${food.name} from Common Foods`,
                                     active: false,
@@ -185,17 +198,10 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                         }))
                                     },
                                     servingUnits: {
-                                        create: [
-                                            {
-                                                id: uuidv4(),
-                                                name: "g",
-                                                grams: 1,
-                                            }
-                                        ]
+                                        create: servingUnits
                                     }
                                 }
                             });
-                            console.log("food written to database with default 'g' serving unit");
                         } catch (error) {
                             console.error('Error writing food to database:', error);
                         }

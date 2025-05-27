@@ -84,6 +84,6 @@ const styles = StyleSheet.create({
         display: "flex",
         flexDirection: "column",
         // backgroundColor: Colors.white,
-        backgroundColor: "red"
+        // backgroundColor: "red"
     }
 })

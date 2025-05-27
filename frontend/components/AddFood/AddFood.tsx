@@ -5,7 +5,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { FoodServing, ServingUnit } from "@shared/types/foodTypes";
 import { FlatList } from "react-native";
 import FoodCard from "./FoodCard";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import storage from "@/app/storage/storage";
 import MacrosDisplay from "../MacroDisplay/MacrosDisplay";
 import ResultContent from "./ResultContent";
@@ -13,20 +13,69 @@ import React from "react";
 import useMacros from "@/app/hooks/useMacros";
 import eventBus from "@/app/storage/eventEmitter";
 import useUser from "@/app/hooks/useUser";
+import { UserMealPreference, NutritionalMetric, UserPreference as DailyUserPreference } from "@shared/types/databaseTypes";
+import { MacroPreference as DisplayMacroPreference } from "@/tempdata";
+import { MacroPreference } from "@shared/types/macroTypes";
 
 type Props = {
     shoppingCart: FoodServing[],
     setShoppingCart: (cart: FoodServing[]) => void
     handleLog: () => void
+    activeMealPreference: UserMealPreference | null
+    dailyMacroPreferences: MacroPreference[]
 }
 
-export default function AddFood({ shoppingCart, setShoppingCart, handleLog }: Props) {
+export default function AddFood({ shoppingCart, setShoppingCart, handleLog, activeMealPreference, dailyMacroPreferences }: Props) {
     const [displayResults, setDisplayResults] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
-    const totalMacros = useMacros(shoppingCart);
+    const totalMacrosInCart = useMacros(shoppingCart);
     const searchBarRef = useRef<TextInput>(null);
-    const { preferences } = useUser();
+
+    const mealSpecificMacroTargets = useMemo((): DisplayMacroPreference[] => {
+        if (!activeMealPreference || typeof activeMealPreference.distribution_percentage !== 'number') {
+            return dailyMacroPreferences;
+        }
+
+        const mealDistribution = activeMealPreference.distribution_percentage;
+        let calculatedTargets: DisplayMacroPreference[] = [];
+
+        if (activeMealPreference.macroGoals && activeMealPreference.macroGoals.length > 0) {
+            calculatedTargets = activeMealPreference.macroGoals.map(mealGoal => {
+                const dailyTargetForMetric = dailyMacroPreferences.find(dp => dp.id === mealGoal.metric_id);
+                let mealMetricMin: number | undefined = undefined;
+                let mealMetricMax: number | undefined = undefined;
+
+                if (dailyTargetForMetric) {
+                    const dailyMin = dailyTargetForMetric.min ?? 0;
+                    const dailyMax = dailyTargetForMetric.max ?? dailyMin;
+                    
+                    const mealShareOfDailyMin = dailyMin * mealDistribution;
+                    const mealShareOfDailyMax = dailyMax * mealDistribution;
+
+                    mealMetricMin = mealShareOfDailyMin * mealGoal.target_percentage;
+                    mealMetricMax = mealShareOfDailyMax * mealGoal.target_percentage;
+                }
+
+                return {
+                    id: mealGoal.metric_id,
+                    name: mealGoal.metric.name,
+                    unit: mealGoal.metric.unit,
+                    min: mealMetricMin,
+                    max: mealMetricMax,
+                };
+            });
+
+        } else {
+            calculatedTargets = dailyMacroPreferences.map(dailyPref => ({
+                ...dailyPref,
+                min: dailyPref.min !== undefined ? dailyPref.min * mealDistribution : undefined,
+                max: dailyPref.max !== undefined ? dailyPref.max * mealDistribution : undefined,
+            }));
+        }
+        return calculatedTargets;
+
+    }, [activeMealPreference, dailyMacroPreferences]);
 
     const handleAddToCart = (foodServing: FoodServing) => {
         setShoppingCart([...shoppingCart, foodServing]);
@@ -60,8 +109,8 @@ export default function AddFood({ shoppingCart, setShoppingCart, handleLog }: Pr
         <View style={styles.container}>
             <View style={styles.macroContainer}>
                 <MacrosDisplay 
-                    macroPreferences={preferences} 
-                    macroValues={totalMacros}
+                    macroPreferences={mealSpecificMacroTargets}
+                    macroValues={totalMacrosInCart}
                     indicators={4} 
                     radius={30} 
                 />
@@ -88,6 +137,7 @@ export default function AddFood({ shoppingCart, setShoppingCart, handleLog }: Pr
             {displayResults && (
                 <View style={[styles.resultsContainer]}>
                     <ResultContent 
+                        preferences={dailyMacroPreferences}
                         visible={displayResults} 
                         closeModal={()=>handleCloseResults()} 
                         searchQuery={searchQuery}
