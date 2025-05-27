@@ -15,21 +15,22 @@ import eventBus from "@/app/storage/eventEmitter";
 import useUser from "@/app/hooks/useUser";
 import { UserMealPreference, NutritionalMetric, UserPreference as DailyUserPreference } from "@shared/types/databaseTypes";
 import { MacroPreference as DisplayMacroPreference } from "@/tempdata";
+import { MacroPreference } from "@shared/types/macroTypes";
 
 type Props = {
     shoppingCart: FoodServing[],
     setShoppingCart: (cart: FoodServing[]) => void
     handleLog: () => void
     activeMealPreference: UserMealPreference | null
+    dailyMacroPreferences: MacroPreference[]
 }
 
-export default function AddFood({ shoppingCart, setShoppingCart, handleLog, activeMealPreference }: Props) {
+export default function AddFood({ shoppingCart, setShoppingCart, handleLog, activeMealPreference, dailyMacroPreferences }: Props) {
     const [displayResults, setDisplayResults] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
 
     const totalMacrosInCart = useMacros(shoppingCart);
     const searchBarRef = useRef<TextInput>(null);
-    const { preferences: dailyMacroPreferences } = useUser();
 
     const mealSpecificMacroTargets = useMemo((): DisplayMacroPreference[] => {
         if (!activeMealPreference || typeof activeMealPreference.distribution_percentage !== 'number') {
@@ -136,6 +137,7 @@ export default function AddFood({ shoppingCart, setShoppingCart, handleLog, acti
             {displayResults && (
                 <View style={[styles.resultsContainer]}>
                     <ResultContent 
+                        preferences={dailyMacroPreferences}
                         visible={displayResults} 
                         closeModal={()=>handleCloseResults()} 
                         searchQuery={searchQuery}

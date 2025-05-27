@@ -6,13 +6,15 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import UnitSpinner from '../Spinner/UnitSpinner';
 import useUser from '@/app/hooks/useUser';
+import { MacroPreference } from '@shared/types/macroTypes';
 
 type Props = {
     food: Food,
+    preferences: MacroPreference[],
     onAdd: (food: Food, quantity: number, unit: ServingUnit) => void
 }
 
-export default function SearchFoodCard({ food, onAdd }: Props) {
+export default function SearchFoodCard({ food, preferences, onAdd }: Props) {
 
     // console.log("food", food)
     const [unit, setUnit] = useState<ServingUnit | undefined>(() => {
@@ -22,7 +24,6 @@ export default function SearchFoodCard({ food, onAdd }: Props) {
         console.warn(`Food item "${food.name}" (id: ${food.id}) has no valid serving units or the first unit is missing 'grams'. Defaulting to undefined.`);
         return undefined;
     });
-    const { preferences } = useUser();
 
     const handleAdd = () => {
         if (unit) { // Only call onAdd if a valid unit is set

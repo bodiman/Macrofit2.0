@@ -23,6 +23,7 @@ export default function Page() {
     deleteFoodFromMeal,
     updateFoodPortion,
     userMealPreferences,
+    preferences
   } = useUser();
 
   const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
@@ -73,6 +74,7 @@ export default function Page() {
             modalCloser={closeFoodSearch} 
             onClose={closeFoodSearch}
             addFoodsToMeal={addFoodsToMeal}
+            dailyMacroPreferences={preferences}
           />
           {editingFood && (
             <EditFoodModal

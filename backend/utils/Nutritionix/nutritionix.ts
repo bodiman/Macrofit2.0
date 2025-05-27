@@ -76,18 +76,19 @@ export async function getNutritionixData(commonFoods: string[]) {
 
             const foodData = result['foods'][0];
 
+            console.log("foodData", foodData);
+
             const serving_units = foodData['alt_measures'].map((unit: any) => {
                 return {
                     name: unit.measure,
-                    grams: unit.serving_weight
+                    grams: unit.serving_weight / unit.qty
                 }
             });
-            console.log("foodData", foodData.alt_measures);
-            console.log("serving_units", serving_units);
+            // console.log("foodData", foodData.alt_measures);
+            // console.log("serving_units", serving_units);
             
             return {
                 name: foodData['food_name'],
-                id: `common-${foodData['food_name'].toLowerCase().replace(/ /g, '-')}`,
                 serving_size: foodData['serving_weight_grams'],
                 serving_units: serving_units,
                 macros: foodData['full_nutrients']

@@ -12,26 +12,21 @@ router.use((req, res, next) => {
 const getUserIdFromRequest = async (req: Request): Promise<number | null> => {
     if ((req as any).auth?.userId) {
         const clerkUserId = (req as any).auth.userId;
-        console.log(`getUserIdFromRequest: Clerk User ID from req.auth: ${clerkUserId}`);
 
         const reqUser = (req as any).user;
         if (reqUser) {
-            // console.log('getUserIdFromRequest: req.user object for debugging:', JSON.stringify(reqUser, null, 2));
-
             let emailToQuery: string | undefined = undefined;
 
             if (reqUser.primaryEmailAddress && typeof reqUser.primaryEmailAddress.emailAddress === 'string') {
                 emailToQuery = reqUser.primaryEmailAddress.emailAddress;
-                console.log(`getUserIdFromRequest: Email from primaryEmailAddress: '${emailToQuery}'`);
             } 
             else if (Array.isArray(reqUser.emailAddresses) && reqUser.emailAddresses.length > 0 && reqUser.emailAddresses[0] && typeof reqUser.emailAddresses[0].emailAddress === 'string') {
                 emailToQuery = reqUser.emailAddresses[0].emailAddress;
-                console.warn(`getUserIdFromRequest: Using first email from emailAddresses array: '${emailToQuery}' (Primary email might be missing, not a string, or different)`);
+                // console.warn(`getUserIdFromRequest: Using first email from emailAddresses array: '${emailToQuery}' (Primary email might be missing, not a string, or different)`);
             }
 
             if (emailToQuery) {
                 const normalizedEmail = emailToQuery.toLowerCase().trim();
-                console.log(`getUserIdFromRequest: Normalized email for Prisma query: '${normalizedEmail}'`);
 
                 try {
                     const appUser = await prisma.user.findFirst({
@@ -44,7 +39,6 @@ const getUserIdFromRequest = async (req: Request): Promise<number | null> => {
                     });
 
                     if (appUser) {
-                        console.log(`getUserIdFromRequest: Found appUser.user_id: ${appUser.user_id} for email: '${normalizedEmail}' (using case-insensitive search)`);
                         return appUser.user_id;
                     } else {
                         console.warn(`getUserIdFromRequest: No appUser found for NORMALIZED email: '${normalizedEmail}' (Clerk User ID: ${clerkUserId}). Case-insensitive search failed.`);
@@ -63,7 +57,6 @@ const getUserIdFromRequest = async (req: Request): Promise<number | null> => {
     }
     // Fallback for existing req.appUser or query param (less secure, review usage)
      if ((req as any).appUser && (req as any).appUser.user_id) { 
-        console.log(`getUserIdFromRequest: Using pre-set req.appUser.user_id: ${(req as any).appUser.user_id}`);
         return (req as any).appUser.user_id;
     }
     if (req.method === 'GET' && req.query.user_id && !isNaN(parseInt(req.query.user_id as string))) { 

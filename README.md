@@ -1,3 +1,40 @@
+May 27
+------
+
+Okay, some kind of big issues here. When I go to log a food, the following happens.
+
+1. The macros are put into meals, but not immediately removed from the shopping cart, resulting in the global macros updating doubly
+
+2. The modal closes, and the food seems to be moved back into the shopping cart? At the very least, I know it is removed from the actual meals, because the macros swing back into not counting the food.
+
+3. Finally, the food shows up and everything is correct. Still kind of annoying and wierd to see this dance
+
+Here's what could be happening. Currently, when the user logs the food, 
+1. The foods are added to the meal
+2. The shopping cart is cleared
+3. The modal is closed
+
+The problem lies in the fact that the current flow is
+1. Send the update request
+2. Update meals optimistically
+3. Wait for the actual response
+4. Then and only then clear and close the shopping cart
+
+Perhaps, knowing that the frontend will be updated optimistically, we close the cart immediately, but only clear it if the request succeeds.
+
+
+Okay, now we're onto a new issue, the food is immediately and correctly added, but subsequently deleted from the meal log for just a split second. Not sure what is causing this.
+
+Perhaps it's that
+1. Adding Locally
+2. Calling fetch meals and updating
+3. Then the addition goes through on the database side.
+
+I have noticed that fetchMeals is getting called over and over again, seemingly for no good reason. I think resolving this issue is going to be a matter of understanding why this chain of "fetchmeals" calls is being triggered, and making sure that the fetch function is only triggered with intention.
+
+Dude, what the actual fuck? The user's data is being fetched for every single food in the search result.
+
+
 May 24
 The user needs to have a way to edit how each meal is distributed. For instance, they may want to eat 20% of their calories during breakfast, 30% during lunch, and 50% at dinner. In the AddFoodModal, the macro preferences ought to reflect the macro preferences for the meal. So if the user wants to eat 1800 to 2000 calories total, and wants to eat 20% of their nutrients at breakfast, this would correspond to a range of 360 to 400 calories during the meal.
 

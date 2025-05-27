@@ -20,12 +20,33 @@ const defaultPreferences: DefaultPreferences = {
   'Saturated Fat': { min: 0, max: 20 },
 };
 
+const defaultMeals = [
+    {
+        name: "Breakfast",
+        default_time: "08:00:00",
+        distribution_percentage: 0.2
+    },
+    {
+        name: "Lunch",
+        default_time: "12:00:00",
+        distribution_percentage: 0.3
+    },
+    {
+        name: "Dinner",
+        default_time: "20:00:00",
+        distribution_percentage: 0.5
+    }
+]
+
 export const createUser = async (email: string, name?: string) => {
     // Create the user
     const user = await prisma.user.create({
         data: { 
             email,
             name,
+            mealPreferences: {
+                create: defaultMeals,
+            }
         },
     });
 

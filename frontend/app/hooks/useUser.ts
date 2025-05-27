@@ -65,7 +65,6 @@ function loadMeals(): FoodTypeMeal[] { // Expecting FoodTypeMeal structure from 
 }
 
 export function useUser() {
-  const serverAddress = Constants.expoConfig?.extra?.SERVER_ADDRESS;
   const { user: clerkUser, isLoaded } = useClerkUser();
   const api = useApi();
 
@@ -285,7 +284,8 @@ export function useUser() {
         setLoading(false);
       }
     };
-
+    
+    console.log("fetching app user and data", isLoaded, clerkUser === null)
     fetchAppUserAndData();
   }, [isLoaded, clerkUser]); // api should be stable, fetchX functions depend on appUser or passed params
 
@@ -318,12 +318,11 @@ export function useUser() {
   };
 
   const addFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
+    console.log("adding foods to meal", foodsToAdd)
       const originalMeals = meals;
       // Optimistically update UI
       const updatedMeals = meals.map(meal => {
         if (meal.id === mealId) {
-          // Ensure IDs are unique if generating client-side before sending to backend
-          // For now, assuming backend generates IDs or they are passed correctly
           return {
             ...meal,
             servings: [...meal.servings, ...foodsToAdd]
@@ -336,15 +335,13 @@ export function useUser() {
       storage.set(CACHED_MEALS_KEY, JSON.stringify(updatedMeals));
       eventBus.emit('mealsUpdated');
 
+      // console.log("done locally")
+
       try {
         // API expects an array of food servings
-        const response = await api.post(`/api/user/meals/${mealId}/servings`, {
+        await api.post(`/api/user/meals/${mealId}/servings`, {
           foodServings: foodsToAdd
         });
-        // Optionally, update local state with response from server (e.g., if IDs are generated server-side)
-        // For now, refetching meals or relying on optimistic update.
-        // Consider a full refetch if IDs change or for data consistency:
-        // if (appUser) await fetchMeals(appUser.user_id, new Date(updatedMeals.find(m => m.id === mealId)!.date));
 
       } catch (err) {
         setMeals(originalMeals); // Revert on error
@@ -352,6 +349,8 @@ export function useUser() {
         eventBus.emit('mealsUpdated');
         console.error('Failed to add foods to meal:', err);
         setError('Failed to add foods to meal');
+      } finally {
+        // console.log("done in database")
       }
   };
 
@@ -470,6 +469,7 @@ export function useUser() {
       eventBus.emit('userMealPreferencesUpdated');
 
       // Optimistically update meals for today
+      console.log("Fetching meals from addUserMealPreference")
       await fetchMeals(appUser.user_id, new Date());
 
       return newPreference;
@@ -494,8 +494,8 @@ export function useUser() {
       setUserMealPreferencesState(updatedPreferences);
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
-
       // Optimistically update meals for today
+      console.log("Fetching meals from updateUserMealPreference")
       await fetchMeals(appUser.user_id, new Date());
 
       return updatedPreference;
@@ -518,6 +518,7 @@ export function useUser() {
 
       // Optimistically update meals for today
       if (appUser) { // Check appUser again just in case, though outer check should cover
+        console.log("Fetching meals from deleteUserMealPreference")
         await fetchMeals(appUser.user_id, new Date());
       }
 
@@ -553,7 +554,6 @@ export function useUser() {
 
     // Meals & Servings
     meals,
-    fetchMeals, // Expose if manual refresh by date is needed
     addFoodsToMeal,
     deleteFoodFromMeal,
     updateFoodPortion,

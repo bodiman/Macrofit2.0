@@ -8,6 +8,7 @@ import AddFood from './AddFood';
 import AnimatedModal from '../AnimatedModal';
 import eventBus from '@/app/storage/eventEmitter';
 import useShoppingCart from '@/app/hooks/useShoppingCart';
+import { MacroPreference } from '@shared/types/macroTypes';
 
 type Props = PropsWithChildren<{
     onClose: () => void,
@@ -15,9 +16,10 @@ type Props = PropsWithChildren<{
     activeMeal: Meal | null,
     activeMealPreference: UserMealPreference | null,
     addFoodsToMeal: (mealId: string, updatedMeal: FoodServing[]) => Promise<void>
+    dailyMacroPreferences: MacroPreference[]
 }>;
 
-export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal }: Props) {
+export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
 
     useEffect(() => {
@@ -37,9 +39,10 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
             // };
             
             // Update the meal
+            console.log(shoppingCart)
+            modalCloser();
             addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
                 clearCart();
-                modalCloser();
             });
         }
     };
@@ -55,6 +58,7 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                 </View>
                 <View style={styles.contentContainer}>
                     <AddFood
+                        dailyMacroPreferences={dailyMacroPreferences}
                         shoppingCart={shoppingCart}
                         setShoppingCart={setShoppingCart}
                         handleLog={handleLog}
