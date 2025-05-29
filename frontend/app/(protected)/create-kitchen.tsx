@@ -40,7 +40,7 @@ export default function CreateKitchen() {
     setLoading(true)
     try {
       // TODO: Implement create kitchen API call
-      router.replace('./(protected)/menus')
+      router.replace('../(protected)/menus')
     } catch (error) {
       console.error('Error creating kitchen:', error)
     } finally {
