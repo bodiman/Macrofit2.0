@@ -53,10 +53,14 @@ export default function AddKitchenFoodModal({ onClose, kitchenName, preferences,
                             keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
                                 <View style={styles.foodItem}>
-                                    <Text style={styles.foodName}>{item.name}</Text>
-                                    <Pressable onPress={() => handleRemoveFood(item.id)}>
-                                        <MaterialIcons name="close" color={Colors.gray} size={20} />
-                                    </Pressable>
+                                    <View style={styles.foodTitleSection}>
+                                        <Text style={styles.foodName}>
+                                            {item.name}
+                                        </Text>
+                                        <Pressable onPress={() => handleRemoveFood(item.id)}>
+                                            <MaterialIcons name="close" color={Colors.gray} size={24} />
+                                        </Pressable>
+                                    </View>
                                 </View>
                             )}
                             style={styles.list}
@@ -122,16 +126,39 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     foodItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 10,
         backgroundColor: Colors.coolgray,
-        borderRadius: 8,
+        borderRadius: 10,
+        padding: 10,
+        display: "flex",
+        flexDirection: "row",
+        flexWrap: "wrap",
+        alignItems: "center",
+        justifyContent: "space-between",
+        shadowColor: Colors.black,
+        shadowOpacity: 0.5,
+        shadowRadius: 2,
+        shadowOffset: {
+            width: 1,
+            height: 1
+        },
+        gap: 10,
+    },
+    foodTitleSection: {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10,
+        flexShrink: 1,
+        flexGrow: 1,
+        width: "100%",
     },
     foodName: {
-        fontSize: 16,
+        textTransform: "capitalize",
+        fontSize: 18,
+        fontWeight: 600,
         color: Colors.black,
+        flexGrow: 1
     },
     buttonContainer: {
         width: "100%",

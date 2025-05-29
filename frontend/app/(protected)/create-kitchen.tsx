@@ -83,7 +83,7 @@ export default function CreateKitchen() {
 
         <View style={styles.foodSection}>
           <View style={styles.foodHeader}>
-            <Text style={styles.label}>Foods</Text>
+            <Text style={styles.label}>Foods ({selectedFoods.length})</Text>
             <TouchableOpacity 
               style={[styles.addButton, (!name.trim() || loading) && styles.buttonDisabled]}
               onPress={() => setShowAddFoodModal(true)}
@@ -94,29 +94,25 @@ export default function CreateKitchen() {
           </View>
 
           {selectedFoods.length > 0 ? (
-            <FlatList
-              data={selectedFoods}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.foodItem}>
+            <View style={styles.foodList}>
+              {selectedFoods.map((item) => (
+                <View key={item.id} style={styles.foodItem}>
                   <Text style={styles.foodName}>{item.name}</Text>
                   <Pressable onPress={() => handleRemoveFood(item.id)}>
                     <MaterialIcons name="close" color={Colors.gray} size={20} />
                   </Pressable>
                 </View>
-              )}
-              style={styles.foodList}
-              contentContainerStyle={styles.foodListContent}
-            />
+              ))}
+            </View>
           ) : (
             <Text style={styles.noFoodsText}>No foods added yet</Text>
           )}
         </View>
 
         <TouchableOpacity 
-          style={[styles.button, (!name.trim() || loading) && styles.buttonDisabled]}
+          style={[styles.button, (!name.trim() || selectedFoods.length === 0 || loading) && styles.buttonDisabled]}
           onPress={handleCreate}
-          disabled={!name.trim() || loading}
+          disabled={!name.trim() || loading || selectedFoods.length === 0}
         >
           <Text style={styles.buttonText}>
             {loading ? 'Creating...' : 'Create Kitchen'}
@@ -189,9 +185,10 @@ const styles = StyleSheet.create({
   },
   foodList: {
     maxHeight: 200,
-  },
-  foodListContent: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
+    padding: 4,
   },
   foodItem: {
     flexDirection: 'row',
@@ -200,10 +197,13 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: Colors.coolgray,
     borderRadius: 8,
+    alignSelf: 'flex-start',
   },
   foodName: {
     fontSize: 16,
     color: Colors.black,
+    textTransform: 'capitalize',
+    marginRight: 8,
   },
   noFoodsText: {
     color: Colors.gray,
