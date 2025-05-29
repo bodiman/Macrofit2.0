@@ -98,7 +98,6 @@ router.get('/:menuId/foods', async (req, res) => {
                         id: menuId
                     }
                 },
-                active: true,
                 ...(search ? {
                     name: {
                         contains: search as string,

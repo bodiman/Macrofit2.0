@@ -17,7 +17,8 @@ export default function KitchenDetail() {
 
   const loadKitchenFoods = async () => {
     try {
-      const data = await menuApi.getMenuFoods(id)
+      const data = await menuApi.getMenuFoods(id);
+      console.log("data", data);
       setFoods(data)
     } catch (error) {
       console.error('Error loading kitchen foods:', error)
@@ -29,11 +30,11 @@ export default function KitchenDetail() {
   const renderFoodItem = ({ item }: { item: Food }) => (
     <View style={styles.foodItem}>
       <Text style={styles.foodName}>{item.name}</Text>
-      <Text style={styles.foodMacros}>
+      {/* <Text style={styles.foodMacros}>
         {Object.entries(item.macros)
           .map(([key, value]) => `${key}: ${value}g`)
           .join(' | ')}
-      </Text>
+      </Text> */}
     </View>
   )
 
