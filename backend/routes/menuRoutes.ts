@@ -66,6 +66,14 @@ router.get('/', async (req, res) => {
                 foods: {
                     where: {
                         active: true
+                    },
+                    include: {
+                        macros: {
+                            include: {
+                                metric: true
+                            }
+                        },
+                        servingUnits: true
                     }
                 }
             }
@@ -85,7 +93,11 @@ router.get('/:menuId/foods', async (req, res) => {
 
         const dbFoods = await prisma.food.findMany({
             where: {
-                kitchen_id: menuId,
+                kitchens: {
+                    some: {
+                        id: menuId
+                    }
+                },
                 active: true,
                 ...(search ? {
                     name: {
@@ -105,7 +117,6 @@ router.get('/:menuId/foods', async (req, res) => {
         });
 
         const foods: Food[] = toFoods(dbFoods);
-
         res.json(foods);
     } catch (error) {
         console.error('Error fetching foods:', error);

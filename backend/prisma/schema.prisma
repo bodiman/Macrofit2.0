@@ -28,15 +28,12 @@ model Food {
   id                String          @id
   name              String
   description       String?
-  kitchen_id        String
   active            Boolean
   updated           DateTime        @default(now()) @updatedAt
-  kitchen           Kitchen         @relation(fields: [kitchen_id], references: [id])
+  kitchens          Kitchen[]
   servingUnits      ServingUnit[]
   macros            FoodMacro[]
   foodServings      FoodServing[]
-
-  @@unique([name, kitchen_id])
 }
 
 model FoodMacro {
