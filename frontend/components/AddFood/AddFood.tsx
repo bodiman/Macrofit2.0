@@ -22,7 +22,7 @@ export default function AddFood({ onAddFood, preferences }: Props) {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, displayResults && styles.containerExpanded]}>
             <View style={styles.searchContainer}>
                 <View style={styles.headerContainer}>
                     <View style={styles.searchBarContainer}>
@@ -58,8 +58,16 @@ export default function AddFood({ onAddFood, preferences }: Props) {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
         backgroundColor: Colors.white,
+        zIndex: 1,
+    },
+    containerExpanded: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1000,
     },
     searchContainer: {
         padding: 10,
