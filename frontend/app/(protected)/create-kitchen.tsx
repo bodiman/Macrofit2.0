@@ -1,16 +1,19 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, Pressable } from 'react-native'
 import { router } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useState } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import AddKitchenFoodModal from '@/components/Kitchen/AddKitchenFoodModal'
 import { MacroPreference } from '@shared/types/macroTypes'
+import { Food } from '@shared/types/foodTypes'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 
 export default function CreateKitchen() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [showAddFoodModal, setShowAddFoodModal] = useState(false)
+  const [selectedFoods, setSelectedFoods] = useState<Food[]>([])
   const menuApi = useMenuApi()
 
   // TODO: Replace with actual preferences from user settings
@@ -45,6 +48,14 @@ export default function CreateKitchen() {
     }
   }
 
+  const handleSaveFoods = (foods: Food[]) => {
+    setSelectedFoods(foods)
+  }
+
+  const handleRemoveFood = (foodId: string) => {
+    setSelectedFoods(selectedFoods.filter(food => food.id !== foodId))
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create New Kitchen</Text>
@@ -70,15 +81,37 @@ export default function CreateKitchen() {
           numberOfLines={4}
         />
 
-        <TouchableOpacity 
-          style={[styles.button, (!name.trim() || loading) && styles.buttonDisabled]}
-          onPress={() => setShowAddFoodModal(true)}
-          disabled={!name.trim() || loading}
-        >
-          <Text style={styles.buttonText}>
-            Add Foods
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.foodSection}>
+          <View style={styles.foodHeader}>
+            <Text style={styles.label}>Foods</Text>
+            <TouchableOpacity 
+              style={[styles.addButton, (!name.trim() || loading) && styles.buttonDisabled]}
+              onPress={() => setShowAddFoodModal(true)}
+              disabled={!name.trim() || loading}
+            >
+              <Text style={styles.addButtonText}>Add Foods</Text>
+            </TouchableOpacity>
+          </View>
+
+          {selectedFoods.length > 0 ? (
+            <FlatList
+              data={selectedFoods}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View style={styles.foodItem}>
+                  <Text style={styles.foodName}>{item.name}</Text>
+                  <Pressable onPress={() => handleRemoveFood(item.id)}>
+                    <MaterialIcons name="close" color={Colors.gray} size={20} />
+                  </Pressable>
+                </View>
+              )}
+              style={styles.foodList}
+              contentContainerStyle={styles.foodListContent}
+            />
+          ) : (
+            <Text style={styles.noFoodsText}>No foods added yet</Text>
+          )}
+        </View>
 
         <TouchableOpacity 
           style={[styles.button, (!name.trim() || loading) && styles.buttonDisabled]}
@@ -96,6 +129,7 @@ export default function CreateKitchen() {
           onClose={() => setShowAddFoodModal(false)}
           kitchenName={name}
           preferences={mockPreferences}
+          onSave={handleSaveFoods}
         />
       )}
     </View>
@@ -132,6 +166,50 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+  },
+  foodSection: {
+    marginTop: 20,
+  },
+  foodHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  addButton: {
+    backgroundColor: Colors.blue,
+    padding: 8,
+    paddingHorizontal: 16,
+    borderRadius: 5,
+  },
+  addButtonText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  foodList: {
+    maxHeight: 200,
+  },
+  foodListContent: {
+    gap: 8,
+  },
+  foodItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
+  },
+  foodName: {
+    fontSize: 16,
+    color: Colors.black,
+  },
+  noFoodsText: {
+    color: Colors.gray,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 20,
   },
   button: {
     backgroundColor: Colors.orange,

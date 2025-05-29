@@ -1,48 +1,34 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { PropsWithChildren, useEffect, useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { FoodServing, ServingUnit } from '@shared/types/foodTypes';
+import { Food, FoodServing } from '@shared/types/foodTypes';
 import Colors from '@/styles/colors';
 import AddFood from '../AddFood/AddFood';
 import AnimatedModal from '../AnimatedModal';
-import FoodCard from '../AddFood/FoodCard';
 import { MacroPreference } from '@shared/types/macroTypes';
 
 type Props = PropsWithChildren<{
     onClose: () => void,
     kitchenName: string,
-    preferences: MacroPreference[]
+    preferences: MacroPreference[],
+    onSave: (foods: Food[]) => void
 }>;
 
-export default function AddKitchenFoodModal({ onClose, kitchenName, preferences }: Props) {
-    const [selectedFoods, setSelectedFoods] = useState<FoodServing[]>([]);
+export default function AddKitchenFoodModal({ onClose, kitchenName, preferences, onSave }: Props) {
+    const [selectedFoods, setSelectedFoods] = useState<Food[]>([]);
 
     const handleAddFood = (foodServing: FoodServing) => {
-        setSelectedFoods([...selectedFoods, foodServing]);
+        const food = foodServing.food
+        setSelectedFoods([...selectedFoods, food]);
     };
 
-    const handleRemoveFromCart = (foodId: string) => {
+    const handleRemoveFood = (foodId: string) => {
         const updatedFoods = selectedFoods.filter(item => item.id !== foodId);
         setSelectedFoods(updatedFoods);
     };
 
-    const handleUpdatePortion = (foodId: string, quantity: number, unit: ServingUnit) => {
-        const updatedFoods = selectedFoods.map(item => {
-            if (item.id === foodId) {
-                return {
-                    ...item,
-                    quantity,
-                    unit
-                };
-            }
-            return item;
-        });
-        setSelectedFoods(updatedFoods);
-    };
-
     const handleSave = () => {
-        // TODO: Implement saving foods to kitchen
-        console.log('Saving foods to kitchen:', selectedFoods);
+        onSave(selectedFoods);
         onClose();
     };
 
@@ -61,19 +47,20 @@ export default function AddKitchenFoodModal({ onClose, kitchenName, preferences 
                         onAddFood={handleAddFood}
                     />
 
-                    <View style={styles.shoppingCart}>
+                    <View style={styles.foodList}>
                         <FlatList 
                             data={selectedFoods}
                             keyExtractor={(item) => item.id}
                             renderItem={({ item }) => (
-                                <FoodCard 
-                                    food={item}
-                                    onUpdatePortion={(quantity: number, unit: ServingUnit) => handleUpdatePortion(item.id, quantity, unit)}
-                                    onRemove={() => handleRemoveFromCart(item.id)}
-                                />
+                                <View style={styles.foodItem}>
+                                    <Text style={styles.foodName}>{item.name}</Text>
+                                    <Pressable onPress={() => handleRemoveFood(item.id)}>
+                                        <MaterialIcons name="close" color={Colors.gray} size={20} />
+                                    </Pressable>
+                                </View>
                             )}
-                            style={styles.cartList}
-                            contentContainerStyle={styles.cartContent}
+                            style={styles.list}
+                            contentContainerStyle={styles.listContent}
                         />
                     </View>
 
@@ -121,18 +108,30 @@ const styles = StyleSheet.create({
         zIndex: 2,
         backgroundColor: Colors.white,
     },
-    shoppingCart: {
+    foodList: {
         flex: 1,
         width: "100%",
         backgroundColor: Colors.white,
         paddingBottom: 40,
     },
-    cartList: {
+    list: {
         flex: 1,
     },
-    cartContent: {
+    listContent: {
         padding: 10,
         gap: 10,
+    },
+    foodItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+        backgroundColor: Colors.coolgray,
+        borderRadius: 8,
+    },
+    foodName: {
+        fontSize: 16,
+        color: Colors.black,
     },
     buttonContainer: {
         width: "100%",
