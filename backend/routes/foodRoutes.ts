@@ -91,12 +91,13 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 },
             },
             include: {
+                kitchens: true,
+                servingUnits: true,
                 macros: {
                     include: {
                         metric: true
                     }
-                },
-                servingUnits: true
+                }
             }
         });
 
@@ -150,11 +151,23 @@ router.get('/search-all', async (req: Request, res: Response) => {
                             contains: query,
                             mode: 'insensitive'
                         },
+                    },
+                    include: {
+                        kitchens: true,
+                        servingUnits: true,
+                        macros: {
+                            include: {
+                                metric: true
+                            }
+                        }
                     }
                 });
                 
                 // filter out names that are already in the database under the common_foods kitchen
-                const newNames = names.filter((name: string) => !foods.some((food) => (food.name === name && food.kitchen_id === commonFoodsKitchen.id)))
+                const newNames = names.filter((name: string) => !foods.some((food) => (
+                    food.name === name && 
+                    food.kitchens.some(kitchen => kitchen.id === commonFoodsKitchen.id)
+                )))
                     .slice(0, 1);
 
                 console.log("Foods to Add:", newNames);
@@ -188,7 +201,11 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                     name: food.name,
                                     description: `${food.name} from Common Foods`,
                                     active: false,
-                                    kitchen_id: commonFoodsKitchen.id,
+                                    kitchens: {
+                                        connect: {
+                                            id: commonFoodsKitchen.id
+                                        }
+                                    },
                                     macros: {
                                         create: food.macros.map((macro: any) => ({
                                             value: macro.value,
