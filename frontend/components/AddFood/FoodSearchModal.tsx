@@ -1,7 +1,7 @@
-import { View, Text, Pressable, StyleSheet, TouchableOpacity } from 'react-native';
-import { PropsWithChildren, useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { PropsWithChildren, useEffect, useState } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Meal, FoodServing } from '@shared/types/foodTypes';
+import { Meal, FoodServing, ServingUnit } from '@shared/types/foodTypes';
 import { UserMealPreference } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 import AddFood from './AddFood';
@@ -9,6 +9,9 @@ import AnimatedModal from '../AnimatedModal';
 import eventBus from '@/app/storage/eventEmitter';
 import useShoppingCart from '@/app/hooks/useShoppingCart';
 import { MacroPreference } from '@shared/types/macroTypes';
+import FoodCard from './FoodCard';
+import MacrosDisplay from '../MacroDisplay/MacrosDisplay';
+import useMacros from '@/app/hooks/useMacros';
 
 type Props = PropsWithChildren<{
     onClose: () => void,
@@ -21,6 +24,7 @@ type Props = PropsWithChildren<{
 
 export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
+    const totalMacrosInCart = useMacros(shoppingCart);
 
     useEffect(() => {
         if (activeMeal !== null) {
@@ -30,15 +34,31 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
 
     if (activeMeal === null) return null;
 
+    const handleAddFood = (foodServing: FoodServing) => {
+        setShoppingCart([...shoppingCart, foodServing]);
+    };
+
+    const handleRemoveFromCart = (foodId: string) => {
+        const updatedCart = shoppingCart.filter(item => item.id !== foodId);
+        setShoppingCart(updatedCart);
+    };
+
+    const handleUpdatePortion = (foodId: string, quantity: number, unit: ServingUnit) => {
+        const updatedCart = shoppingCart.map(item => {
+            if (item.id === foodId) {
+                return {
+                    ...item,
+                    quantity,
+                    unit
+                };
+            }
+            return item;
+        });
+        setShoppingCart(updatedCart);
+    };
+
     const handleLog = () => {
         if (activeMeal) {
-            // Add foods from shopping cart to the meal
-            // const updatedMeal = {
-            //     ...activeMeal,
-            //     foods: [...activeMeal.servings, ...shoppingCart]
-            // };
-            
-            // Update the meal
             modalCloser();
             addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
                 clearCart();
@@ -56,13 +76,45 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                     </Pressable>
                 </View>
                 <View style={styles.contentContainer}>
+                    <View style={styles.macroContainer}>
+                        <MacrosDisplay 
+                            macroPreferences={dailyMacroPreferences}
+                            macroValues={totalMacrosInCart}
+                            indicators={4} 
+                            radius={30} 
+                        />
+                    </View>
+
                     <AddFood
-                        dailyMacroPreferences={dailyMacroPreferences}
-                        shoppingCart={shoppingCart}
-                        setShoppingCart={setShoppingCart}
-                        handleLog={handleLog}
-                        activeMealPreference={activeMealPreference}
+                        preferences={dailyMacroPreferences}
+                        onAddFood={handleAddFood}
                     />
+
+                    <View style={styles.shoppingCart}>
+                        <FlatList 
+                            data={shoppingCart}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => (
+                                <FoodCard 
+                                    food={item}
+                                    onUpdatePortion={(quantity: number, unit: ServingUnit) => handleUpdatePortion(item.id, quantity, unit)}
+                                    onRemove={() => handleRemoveFromCart(item.id)}
+                                />
+                            )}
+                            style={styles.cartList}
+                            contentContainerStyle={styles.cartContent}
+                        />
+                    </View>
+
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity 
+                            style={[styles.button, shoppingCart.length === 0 && styles.buttonDisabled]} 
+                            onPress={handleLog}
+                            disabled={shoppingCart.length === 0}
+                        >
+                            <Text style={styles.buttonText}>Log</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </View>
         </AnimatedModal>
@@ -71,15 +123,13 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
 
 const styles = StyleSheet.create({
     modalContent: {
-      height: '100%',
-      width: '100%',
-    //   backgroundColor: "red",
-    //   paddingHorizontal: 20,
-      borderTopRightRadius: 18,
-      borderTopLeftRadius: 18,
-      position: 'absolute',
-      bottom: 0,
-      justifyContent: 'center',
+        height: '100%',
+        width: '100%',
+        borderTopRightRadius: 18,
+        borderTopLeftRadius: 18,
+        position: 'absolute',
+        bottom: 0,
+        justifyContent: 'center',
     },
     titleContainer: {
         backgroundColor: Colors.gray,
@@ -98,16 +148,32 @@ const styles = StyleSheet.create({
     contentContainer: {
         flex: 1,
         zIndex: 2,
-        // bottom: 0
-        // paddingBottom: 110,
-        // maxHeight: '80%',
-        // backgroundColor: "red",
+        backgroundColor: Colors.white,
+    },
+    macroContainer: {
+        padding: 10,
+        width: "100%",
+        borderBottomWidth: 1,
+        borderBottomColor: Colors.gray,
+        zIndex: 1000,
+    },
+    shoppingCart: {
+        flex: 1,
+        width: "100%",
+        backgroundColor: Colors.white,
+        paddingBottom: 40,
+    },
+    cartList: {
+        flex: 1,
+    },
+    cartContent: {
+        padding: 10,
+        gap: 10,
     },
     buttonContainer: {
         width: "100%",
         margin: "auto",
         gap: 20,
-        // paddingVertical: 20,
         flexDirection: "row",
         justifyContent: "space-between",
         backgroundColor: Colors.white,
@@ -116,14 +182,14 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1,
-        // elevation: 0,
+        padding: 20,
     },
     button: {
         backgroundColor: Colors.blue,
         padding: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
-        marginHorizontal: "auto",
+        width: "100%",
     },
     buttonDisabled: {
         opacity: 0.5,
