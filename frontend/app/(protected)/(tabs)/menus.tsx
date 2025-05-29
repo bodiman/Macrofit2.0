@@ -40,15 +40,18 @@ export default function Page() {
     </Link>
   )
 
+  const renderCreateKitchenButton = () => (
+    <Link href="../create-kitchen" asChild>
+      <TouchableOpacity style={styles.createButton}>
+        <Text style={styles.createButtonText}>Create Kitchen</Text>
+      </TouchableOpacity>
+    </Link>
+  )
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>My Kitchens ({kitchens.length})</Text>
-        <Link href="../create-kitchen" asChild>
-          <TouchableOpacity style={styles.createButton}>
-            <Text style={styles.createButtonText}>Create Kitchen</Text>
-          </TouchableOpacity>
-        </Link>
       </View>
 
       {loading ? (
@@ -57,11 +60,14 @@ export default function Page() {
         <View style={styles.emptyState}>
           <Text style={styles.message}>You have no kitchens yet</Text>
           <Text style={styles.subMessage}>Create your first kitchen to start adding foods</Text>
+
+          {renderCreateKitchenButton()}
         </View>
       ) : (
         <FlatList
           data={kitchens}
           renderItem={renderKitchenItem}
+          ListFooterComponent={renderCreateKitchenButton}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
         />
@@ -136,5 +142,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.gray,
     textAlign: 'center',
+    paddingBottom: 50,
   },
 })

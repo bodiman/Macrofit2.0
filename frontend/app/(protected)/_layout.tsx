@@ -1,12 +1,7 @@
 import { SignedIn, SignedOut, useAuth, useSSO } from '@clerk/clerk-expo'
 import { Redirect, Stack } from 'expo-router'
-import { Tabs } from 'expo-router'
 import { View, Text } from 'react-native'
-import AppHeader from '@/components/AppHeader'
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import useUser from '../hooks/useUser'
-import { useEffect } from 'react';
 
 export default function Layout() {
   const { signOut } = useAuth();
@@ -45,8 +40,6 @@ export default function Layout() {
   return (
   <View style={{flex: 1}}>
     <SignedIn>
-        <AppHeader />
-        
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen 
