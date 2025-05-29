@@ -1,10 +1,62 @@
-import express from 'express';
+import express, { Request, Response, Router } from 'express';
 import prisma from '../prisma_client';
 import { Food } from '@shared/types/foodTypes';
 import { toFoods } from '../dataTransferObjects';
+import { v4 as uuidv4 } from 'uuid';
 
+const router: Router = express.Router();
 
-const router = express.Router();
+interface CreateKitchenRequest {
+    name: string;
+    description?: string;
+    foods: Food[];
+}
+
+// Create a new kitchen with foods
+router.post('/', async (req: Request<{}, {}, CreateKitchenRequest>, res: Response) => {
+    try {
+        const { name, description, foods } = req.body;
+
+        if (!name) {
+            res.status(400).json({ error: 'Kitchen name is required' });
+            return;
+        }
+
+        if (!foods || !Array.isArray(foods) || foods.length === 0) {
+            res.status(400).json({ error: 'At least one food is required' });
+            return;
+        }
+
+        // Create the kitchen and connect existing foods
+        const kitchen = await prisma.kitchen.create({
+            data: {
+                id: uuidv4(),
+                name,
+                description: description || '',
+                foods: {
+                    connect: foods.map(food => ({ id: food.id }))
+                }
+            },
+            include: {
+                foods: {
+                    include: {
+                        macros: {
+                            include: {
+                                metric: true
+                            }
+                        },
+                        servingUnits: true
+                    }
+                }
+            }
+        });
+
+        res.status(201).json(kitchen);
+    } catch (error) {
+        console.error('Error creating kitchen:', error);
+        res.status(500).json({ error: 'Failed to create kitchen' });
+    }
+});
 
 // Get all menus (kitchens)
 router.get('/', async (req, res) => {

@@ -17,15 +17,15 @@ export default function Page() {
   }, [])
 
   const loadKitchens = async () => {
-    setLoading(false);
-    // try {
-    //   const data = await menuApi.getMenus()
-    //   setKitchens(data)
-    // } catch (error) {
-    //   console.error('Error loading kitchens:', error)
-    // } finally {
-    //   setLoading(false)
-    // }
+    // setLoading(false);
+    try {
+      const data = await menuApi.getMenus()
+      setKitchens(data)
+    } catch (error) {
+      console.error('Error loading kitchens:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const renderKitchenItem = ({ item }: { item: Kitchen }) => (
@@ -95,9 +95,12 @@ const styles = StyleSheet.create({
   },
   createButton: {
     backgroundColor: Colors.orange,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    padding: 16,
     borderRadius: 8,
+    alignItems: 'center',
+    textAlign: 'center',
+    marginHorizontal: 'auto',
+    width: '100%',
   },
   createButtonText: {
     color: Colors.white,
