@@ -12,7 +12,7 @@ import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import 'react-native-get-random-values';
 import eventBus from '@/app/storage/eventEmitter';
-import { useUserContext } from '../context/UserContext';
+import { useUserContext } from '../../context/UserContext';
 import { UserMealPreference } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 

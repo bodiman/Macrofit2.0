@@ -23,17 +23,17 @@ const defaultPreferences: DefaultPreferences = {
 const defaultMeals = [
     {
         name: "Breakfast",
-        default_time: "08:00:00",
+        default_time: "08:00",
         distribution_percentage: 0.2
     },
     {
         name: "Lunch",
-        default_time: "12:00:00",
+        default_time: "12:00",
         distribution_percentage: 0.3
     },
     {
         name: "Dinner",
-        default_time: "20:00:00",
+        default_time: "20:00",
         distribution_percentage: 0.5
     }
 ]

@@ -4,6 +4,12 @@ import { toMacros } from '@/lib/utils/toMacros';
 import { dbFood } from '@shared/types/databaseTypes';
 import { useApi } from './client';
 
+interface CreateKitchenRequest {
+    name: string;
+    description?: string;
+    foods: Food[];
+}
+
 export const useMenuApi = () => {
     const api = useApi();
 
@@ -21,8 +27,14 @@ export const useMenuApi = () => {
         return res.json();
     };
 
+    const createKitchen = async (data: CreateKitchenRequest): Promise<Kitchen> => {
+        const res = await api.post('/api/menus', data);
+        return res.json();
+    };
+
     return {
         getMenus,
         getMenuFoods,
+        createKitchen,
     };
 }; 

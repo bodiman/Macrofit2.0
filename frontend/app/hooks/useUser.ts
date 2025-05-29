@@ -285,7 +285,6 @@ export function useUser() {
       }
     };
     
-    console.log("fetching app user and data", isLoaded, clerkUser === null)
     fetchAppUserAndData();
   }, [isLoaded, clerkUser]); // api should be stable, fetchX functions depend on appUser or passed params
 
@@ -493,7 +492,6 @@ export function useUser() {
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
       // Optimistically update meals for today
-      console.log("Fetching meals from updateUserMealPreference")
       await fetchMeals(appUser.user_id, new Date());
 
       return updatedPreference;

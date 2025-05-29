@@ -141,17 +141,19 @@ const AddEditMealPreferenceModal: React.FC<AddEditMealPreferenceModalProps> = ({
     };
 
     const handleSubmit = () => {
-        console.log('Submit button pressed.');
+        console.log("handleSubmit")
         if (!name.trim() || !defaultTime.match(/^([01]\d|2[0-3]):([0-5]\d)$/)) {
-            Alert.alert('Validation Error', 'Please enter a valid name and a valid default time in HH:MM format.');
+            console.log("time", defaultTime)
             return;
         }
+        // console.log("name", name)
 
         let distPercentNum: number | null | undefined = undefined;
         if (distributionPercentage.trim() !== '') {
+            console.log("distributionPercentage", distributionPercentage)
             const parsedNum = parseFloat(distributionPercentage);
             if (isNaN(parsedNum) || parsedNum < 0 || parsedNum > 100) {
-                Alert.alert('Validation Error', 'Distribution percentage must be a number between 0 and 100, or left blank.');
+                console.log("parsedNum", parsedNum)
                 return;
             }
             distPercentNum = parsedNum / 100; // Convert to decimal for submission (e.g., 0.20)
