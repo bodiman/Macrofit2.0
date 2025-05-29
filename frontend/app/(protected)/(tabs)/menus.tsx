@@ -29,7 +29,7 @@ export default function Page() {
   }
 
   const renderKitchenItem = ({ item }: { item: Kitchen }) => (
-    <Link href={`../(protected)/kitchen/${item.id}`} asChild>
+    <Link href={`../kitchen/${item.id}`} asChild>
       <TouchableOpacity style={styles.kitchenItem}>
         <Text style={styles.kitchenName}>{item.name}</Text>
         {item.description && (
@@ -44,7 +44,7 @@ export default function Page() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>My Kitchens ({kitchens.length})</Text>
-        <Link href="../(protected)/create-kitchen" asChild>
+        <Link href="../create-kitchen" asChild>
           <TouchableOpacity style={styles.createButton}>
             <Text style={styles.createButtonText}>Create Kitchen</Text>
           </TouchableOpacity>
