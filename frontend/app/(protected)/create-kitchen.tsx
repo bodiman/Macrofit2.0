@@ -3,12 +3,33 @@ import { router } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useState } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
+import AddKitchenFoodModal from '@/components/Kitchen/AddKitchenFoodModal'
+import { MacroPreference } from '@shared/types/macroTypes'
 
 export default function CreateKitchen() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showAddFoodModal, setShowAddFoodModal] = useState(false)
   const menuApi = useMenuApi()
+
+  // TODO: Replace with actual preferences from user settings
+  const mockPreferences: MacroPreference[] = [
+    {
+      id: '1',
+      name: 'Calories',
+      unit: 'kcal',
+      min: 2000,
+      max: 2500
+    },
+    {
+      id: '2',
+      name: 'Protein',
+      unit: 'g',
+      min: 150,
+      max: 200
+    }
+  ]
 
   const handleCreate = async () => {
     if (!name.trim()) return
@@ -51,6 +72,16 @@ export default function CreateKitchen() {
 
         <TouchableOpacity 
           style={[styles.button, (!name.trim() || loading) && styles.buttonDisabled]}
+          onPress={() => setShowAddFoodModal(true)}
+          disabled={!name.trim() || loading}
+        >
+          <Text style={styles.buttonText}>
+            Add Foods
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.button, (!name.trim() || loading) && styles.buttonDisabled]}
           onPress={handleCreate}
           disabled={!name.trim() || loading}
         >
@@ -59,6 +90,14 @@ export default function CreateKitchen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {showAddFoodModal && (
+        <AddKitchenFoodModal
+          onClose={() => setShowAddFoodModal(false)}
+          kitchenName={name}
+          preferences={mockPreferences}
+        />
+      )}
     </View>
   )
 }
