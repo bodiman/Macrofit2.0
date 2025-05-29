@@ -254,6 +254,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1,
+        padding: 20,
         // elevation: 0,
     },
     button: {

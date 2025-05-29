@@ -118,6 +118,8 @@ export default function Preferences() {
 
     const handleSaveMealPreference = async (data: MealPreferenceSubmitData) => {
         try {
+            console.log("data", data)
+
             const payload = {
                 name: data.name,
                 default_time: data.default_time,
