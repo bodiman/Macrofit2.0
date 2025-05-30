@@ -4,7 +4,6 @@ import Colors from '@/styles/colors'
 import { useEffect, useState } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { Food } from '@shared/types/foodTypes'
-import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 
 interface KitchenWithFoods {
   name: string
@@ -46,10 +45,8 @@ export default function KitchenDetail() {
   }, [id])
 
   const handleToggleActive = async (foodId: string, currentActive: boolean) => {
-    // Set loading state for this specific food
     setUpdatingFoods(prev => ({ ...prev, [foodId]: true }))
 
-    // Optimistically update the UI
     setKitchen(prev => {
       if (!prev) return null
       return {
@@ -62,10 +59,8 @@ export default function KitchenDetail() {
 
     try {
       const updatedFood = await menuApi.toggleFoodActive(id as string, foodId, !currentActive)
-      // No need to update state again since we already did it optimistically
     } catch (error) {
       console.error('Error toggling food active state:', error)
-      // Revert the optimistic update on error
       setKitchen(prev => {
         if (!prev) return null
         return {
@@ -76,7 +71,6 @@ export default function KitchenDetail() {
         }
       })
     } finally {
-      // Clear loading state for this food
       setUpdatingFoods(prev => ({ ...prev, [foodId]: false }))
     }
   }
@@ -127,15 +121,14 @@ export default function KitchenDetail() {
                     onPress={() => handleToggleActive(item.id, item.active)}
                     disabled={updatingFoods[item.id]}
                   >
-                    <Text style={styles.foodName}>{item.name}</Text>
-                    {updatingFoods[item.id] ? (
+                    <Text style={[
+                      styles.foodName,
+                      item.active && styles.foodNameActive
+                    ]}>
+                      {item.name}
+                    </Text>
+                    {updatingFoods[item.id] && (
                       <ActivityIndicator size="small" color={Colors.calgold} />
-                    ) : (
-                      <MaterialIcons 
-                        name={item.active ? "check-circle" : "radio-button-unchecked"} 
-                        size={24} 
-                        color={item.active ? Colors.green : Colors.gray} 
-                      />
                     )}
                   </Pressable>
                 ))}
@@ -194,21 +187,28 @@ const styles = StyleSheet.create({
   },
   foodItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
+    padding: 8,
+    paddingHorizontal: 12,
     backgroundColor: Colors.coolgray,
     borderRadius: 8,
-    minWidth: '100%',
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.gray,
+    marginRight: 8,
+    marginBottom: 8,
   },
   foodItemActive: {
-    backgroundColor: '#E8F5E9', // Light green background for active foods
+    backgroundColor: '#E8F5E9',
+    borderLeftColor: Colors.green,
   },
   foodName: {
-    fontSize: 16,
-    color: Colors.black,
+    fontSize: 14,
+    color: Colors.gray,
     textTransform: 'capitalize',
-    marginHorizontal: 4,
+  },
+  foodNameActive: {
+    color: Colors.green,
+    fontWeight: '500',
   },
   noFoodsText: {
     color: Colors.gray,
