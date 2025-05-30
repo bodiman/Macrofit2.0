@@ -15,7 +15,6 @@ export default function KitchenDetail() {
   const { id } = useLocalSearchParams()
   const [kitchen, setKitchen] = useState<KitchenWithFoods | null>(null)
   const [loading, setLoading] = useState(true)
-  const [updatingFoods, setUpdatingFoods] = useState<Record<string, boolean>>({})
   const menuApi = useMenuApi()
 
   useEffect(() => {
@@ -45,8 +44,6 @@ export default function KitchenDetail() {
   }, [id])
 
   const handleToggleActive = async (foodId: string, currentActive: boolean) => {
-    setUpdatingFoods(prev => ({ ...prev, [foodId]: true }))
-
     setKitchen(prev => {
       if (!prev) return null
       return {
@@ -58,7 +55,7 @@ export default function KitchenDetail() {
     })
 
     try {
-      const updatedFood = await menuApi.toggleFoodActive(id as string, foodId, !currentActive)
+      await menuApi.toggleFoodActive(id as string, foodId, !currentActive)
     } catch (error) {
       console.error('Error toggling food active state:', error)
       setKitchen(prev => {
@@ -70,8 +67,6 @@ export default function KitchenDetail() {
           )
         }
       })
-    } finally {
-      setUpdatingFoods(prev => ({ ...prev, [foodId]: false }))
     }
   }
 
@@ -119,7 +114,6 @@ export default function KitchenDetail() {
                       item.active && styles.foodItemActive
                     ]}
                     onPress={() => handleToggleActive(item.id, item.active)}
-                    disabled={updatingFoods[item.id]}
                   >
                     <Text style={[
                       styles.foodName,
@@ -127,9 +121,6 @@ export default function KitchenDetail() {
                     ]}>
                       {item.name}
                     </Text>
-                    {updatingFoods[item.id] && (
-                      <ActivityIndicator size="small" color={Colors.calgold} />
-                    )}
                   </Pressable>
                 ))}
               </View>
@@ -192,13 +183,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: Colors.coolgray,
     borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.gray,
     marginRight: 8,
     marginBottom: 8,
   },
   foodItemActive: {
     backgroundColor: '#E8F5E9',
+    borderLeftWidth: 4,
     borderLeftColor: Colors.green,
   },
   foodName: {
