@@ -20,6 +20,7 @@ export default function Page() {
     // setLoading(false);
     try {
       const data = await menuApi.getMenus()
+      console.log("data", data);
       setKitchens(data)
     } catch (error) {
       console.error('Error loading kitchens:', error)
@@ -28,7 +29,9 @@ export default function Page() {
     }
   }
 
-  const renderKitchenItem = ({ item }: { item: Kitchen }) => (
+  const renderKitchenItem = ({ item }: { item: Kitchen }) => {
+    console.log("item", item);
+    return (
     <Link href={`../kitchen/${item.id}`} asChild>
       <TouchableOpacity style={styles.kitchenItem}>
         <Text style={styles.kitchenName}>{item.name}</Text>
@@ -38,7 +41,7 @@ export default function Page() {
         <Text style={styles.foodCount}>{item.foods.length} foods</Text>
       </TouchableOpacity>
     </Link>
-  )
+  )}
 
   const renderCreateKitchenButton = () => (
     <Link href="../create-kitchen" asChild>

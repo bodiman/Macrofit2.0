@@ -64,9 +64,6 @@ router.get('/', async (req, res) => {
         const menus = await prisma.kitchen.findMany({
             include: {
                 foods: {
-                    where: {
-                        active: true
-                    },
                     include: {
                         macros: {
                             include: {
