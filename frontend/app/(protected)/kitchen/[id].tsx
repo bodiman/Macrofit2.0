@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useEffect, useState } from 'react'
@@ -16,6 +16,7 @@ export default function KitchenDetail() {
   const { id } = useLocalSearchParams()
   const [kitchen, setKitchen] = useState<KitchenWithFoods | null>(null)
   const [loading, setLoading] = useState(true)
+  const [updatingFoods, setUpdatingFoods] = useState<Record<string, boolean>>({})
   const menuApi = useMenuApi()
 
   useEffect(() => {
@@ -45,26 +46,45 @@ export default function KitchenDetail() {
   }, [id])
 
   const handleToggleActive = async (foodId: string, currentActive: boolean) => {
+    // Set loading state for this specific food
+    setUpdatingFoods(prev => ({ ...prev, [foodId]: true }))
+
+    // Optimistically update the UI
+    setKitchen(prev => {
+      if (!prev) return null
+      return {
+        ...prev,
+        foods: prev.foods.map(food => 
+          food.id === foodId ? { ...food, active: !currentActive } : food
+        )
+      }
+    })
+
     try {
       const updatedFood = await menuApi.toggleFoodActive(id as string, foodId, !currentActive)
+      // No need to update state again since we already did it optimistically
+    } catch (error) {
+      console.error('Error toggling food active state:', error)
+      // Revert the optimistic update on error
       setKitchen(prev => {
         if (!prev) return null
         return {
           ...prev,
           foods: prev.foods.map(food => 
-            food.id === foodId ? { ...food, active: !currentActive } : food
+            food.id === foodId ? { ...food, active: currentActive } : food
           )
         }
       })
-    } catch (error) {
-      console.error('Error toggling food active state:', error)
+    } finally {
+      // Clear loading state for this food
+      setUpdatingFoods(prev => ({ ...prev, [foodId]: false }))
     }
   }
 
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text>Loading...</Text>
+        <ActivityIndicator size="large" color={Colors.calgold} />
       </View>
     )
   }
@@ -105,13 +125,18 @@ export default function KitchenDetail() {
                       item.active && styles.foodItemActive
                     ]}
                     onPress={() => handleToggleActive(item.id, item.active)}
+                    disabled={updatingFoods[item.id]}
                   >
                     <Text style={styles.foodName}>{item.name}</Text>
-                    <MaterialIcons 
-                      name={item.active ? "check-circle" : "radio-button-unchecked"} 
-                      size={24} 
-                      color={item.active ? Colors.green : Colors.gray} 
-                    />
+                    {updatingFoods[item.id] ? (
+                      <ActivityIndicator size="small" color={Colors.calgold} />
+                    ) : (
+                      <MaterialIcons 
+                        name={item.active ? "check-circle" : "radio-button-unchecked"} 
+                        size={24} 
+                        color={item.active ? Colors.green : Colors.gray} 
+                      />
+                    )}
                   </Pressable>
                 ))}
               </View>
