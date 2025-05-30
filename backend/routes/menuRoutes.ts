@@ -3,6 +3,7 @@ import prisma from '../prisma_client';
 import { Food } from '@shared/types/foodTypes';
 import { toFoods } from '../dataTransferObjects';
 import { v4 as uuidv4 } from 'uuid';
+import { Prisma } from '@prisma/client';
 
 const router: Router = express.Router();
 
@@ -34,24 +35,38 @@ router.post('/', async (req: Request<{}, {}, CreateKitchenRequest>, res: Respons
                 name,
                 description: description || '',
                 foods: {
-                    connect: foods.map(food => ({ id: food.id }))
+                    create: foods.map(food => ({
+                        id: uuidv4(),
+                        food_id: food.id,
+                        active: false
+                    }))
                 }
             },
             include: {
                 foods: {
                     include: {
-                        macros: {
+                        food: {
                             include: {
-                                metric: true
+                                macros: {
+                                    include: {
+                                        metric: true
+                                    }
+                                },
+                                servingUnits: true
                             }
-                        },
-                        servingUnits: true
+                        }
                     }
                 }
             }
         });
 
-        res.status(201).json(kitchen);
+        // Transform the foods using toFoods
+        const transformedKitchen = {
+            ...kitchen,
+            foods: toFoods(kitchen.foods.map(kf => kf.food))
+        };
+
+        res.status(201).json(transformedKitchen);
     } catch (error) {
         console.error('Error creating kitchen:', error);
         res.status(500).json({ error: 'Failed to create kitchen' });
@@ -64,21 +79,29 @@ router.get('/', async (req, res) => {
         const menus = await prisma.kitchen.findMany({
             include: {
                 foods: {
-                    where: {
-                        active: true
-                    },
                     include: {
-                        macros: {
+                        food: {
                             include: {
-                                metric: true
+                                macros: {
+                                    include: {
+                                        metric: true
+                                    }
+                                },
+                                servingUnits: true
                             }
-                        },
-                        servingUnits: true
+                        }
                     }
                 }
             }
         });
-        res.json(menus);
+
+        // Transform each kitchen's foods using toFoods
+        const transformedMenus = menus.map(menu => ({
+            ...menu,
+            foods: toFoods(menu.foods.map(kf => kf.food))
+        }));
+
+        res.json(transformedMenus);
     } catch (error) {
         console.error('Error fetching menus:', error);
         res.status(500).json({ error: 'Failed to fetch menus' });
@@ -91,36 +114,90 @@ router.get('/:menuId/foods', async (req, res) => {
         const { menuId } = req.params;
         const { search } = req.query;
 
-        const dbFoods = await prisma.food.findMany({
+        const kitchenFoods = await prisma.kitchenFood.findMany({
             where: {
-                kitchens: {
-                    some: {
-                        id: menuId
-                    }
-                },
-                active: true,
+                kitchen_id: menuId,
                 ...(search ? {
-                    name: {
-                        contains: search as string,
-                        mode: 'insensitive'
+                    food: {
+                        name: {
+                            contains: search as string,
+                            mode: 'insensitive'
+                        }
                     }
                 } : {})
             },
             include: {
-                macros: {
+                food: {
                     include: {
-                        metric: true
+                        macros: {
+                            include: {
+                                metric: true
+                            }
+                        },
+                        servingUnits: true
                     }
-                },
-                servingUnits: true
+                }
             }
         });
 
-        const foods: Food[] = toFoods(dbFoods);
+        // Transform the foods using toFoods and include active state
+        const foods = kitchenFoods.map(kitchenFood => ({
+            food: toFoods([kitchenFood.food])[0],
+            active: kitchenFood.active
+        }));
+
         res.json(foods);
     } catch (error) {
         console.error('Error fetching foods:', error);
         res.status(500).json({ error: 'Failed to fetch foods' });
+    }
+});
+
+// Toggle food active state in a kitchen
+router.put('/:menuId/foods/:foodId/active', async (req, res) => {
+    try {
+        const { menuId, foodId } = req.params;
+        const { active } = req.body;
+
+        if (typeof active !== 'boolean') {
+            res.status(400).json({ error: 'Active state must be a boolean' });
+            return;
+        }
+
+        const kitchenFood = await prisma.kitchenFood.update({
+            where: {
+                kitchen_id_food_id: {
+                    kitchen_id: menuId,
+                    food_id: foodId
+                }
+            },
+            data: {
+                active
+            },
+            include: {
+                food: {
+                    include: {
+                        macros: {
+                            include: {
+                                metric: true
+                            }
+                        },
+                        servingUnits: true
+                    }
+                }
+            }
+        });
+
+        // Transform the food using toFoods and include active state
+        const transformedFood = {
+            ...toFoods([kitchenFood.food])[0],
+            active: kitchenFood.active
+        };
+
+        res.json(transformedFood);
+    } catch (error) {
+        console.error('Error updating food active state:', error);
+        res.status(500).json({ error: 'Failed to update food active state' });
     }
 });
 

@@ -60,15 +60,12 @@ router.get('/search', async (req: Request, res: Response) => {
             }
         });
 
-
         res.json(transformedFoods);
     } catch (error) {
         console.error('Error searching foods:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-
 
 let timeout: NodeJS.Timeout | null = null;
 let writing = false;
@@ -91,7 +88,11 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 },
             },
             include: {
-                kitchens: true,
+                kitchens: {
+                    include: {
+                        kitchen: true
+                    }
+                },
                 servingUnits: true,
                 macros: {
                     include: {
@@ -102,22 +103,6 @@ router.get('/search-all', async (req: Request, res: Response) => {
         });
 
         const transformedFoods: Food[] = toFoods(foods);
-
-        // // convert foods from database into Food type
-        // const transformedFoods: Food[] = foods.map((food) => ({
-        //     id: food.id,
-        //     name: food.name,
-        //     description: food.description,
-        //     kitchen_id: food.kitchen_id,
-        //     active: false,
-        //     updated_at: new Date(),
-        //     macros: Object.fromEntries(
-        //         food.macros.map(macro => [
-        //             macro.metric.id,
-        //             macro.value
-        //         ])
-        //     )
-        // }));
 
         // Add common foods to database if they don't exist
         if (query.length >= 3 && !writing) {
@@ -153,7 +138,11 @@ router.get('/search-all', async (req: Request, res: Response) => {
                         },
                     },
                     include: {
-                        kitchens: true,
+                        kitchens: {
+                            include: {
+                                kitchen: true
+                            }
+                        },
                         servingUnits: true,
                         macros: {
                             include: {
@@ -166,7 +155,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 // filter out names that are already in the database under the common_foods kitchen
                 const newNames = names.filter((name: string) => !foods.some((food) => (
                     food.name === name && 
-                    food.kitchens.some(kitchen => kitchen.id === commonFoodsKitchen.id)
+                    food.kitchens.some(kf => kf.kitchen.id === commonFoodsKitchen.id)
                 )))
                     .slice(0, 1);
 
@@ -176,14 +165,13 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 if (nutritionixData.length > 0) {
                     const food = nutritionixData[0];
                     if (food) {
-
                         try {
                             // write data to database  
                             let servingUnits = food.serving_units.map((unit: any) => ({
                                 id: uuidv4(),
                                 name: unit.name,
                                 grams: unit.grams
-                            }))
+                            }));
 
                             // only keep one of each unique serving unit name
                             servingUnits = servingUnits.reduce((acc: any, unit: any) => {
@@ -202,8 +190,10 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                     description: `${food.name} from Common Foods`,
                                     active: false,
                                     kitchens: {
-                                        connect: {
-                                            id: commonFoodsKitchen.id
+                                        create: {
+                                            id: uuidv4(),
+                                            kitchen_id: commonFoodsKitchen.id,
+                                            active: false
                                         }
                                     },
                                     macros: {
