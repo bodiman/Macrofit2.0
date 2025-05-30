@@ -1,60 +1,90 @@
-import { View, Text, StyleSheet, FlatList } from 'react-native'
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useEffect, useState } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { Food } from '@shared/types/foodTypes'
+import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 
 export default function KitchenDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>()
-  const [foods, setFoods] = useState<Food[]>([])
+  const { id } = useLocalSearchParams()
+  const [kitchen, setKitchen] = useState<{ name: string; description: string; foods: Food[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const menuApi = useMenuApi()
 
   useEffect(() => {
-    loadKitchenFoods()
+    const fetchKitchen = async () => {
+      try {
+        const foods = await menuApi.getMenuFoods(id as string)
+        const menus = await menuApi.getMenus()
+        const kitchenData = menus.find(menu => menu.id === id)
+        if (kitchenData) {
+          setKitchen({
+            name: kitchenData.name,
+            description: kitchenData.description || '',
+            foods
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching kitchen:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchKitchen()
   }, [id])
 
-  const loadKitchenFoods = async () => {
-    try {
-      const data = await menuApi.getMenuFoods(id);
-      console.log("data", data);
-      setFoods(data)
-    } catch (error) {
-      console.error('Error loading kitchen foods:', error)
-    } finally {
-      setLoading(false)
-    }
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    )
   }
 
-  const renderFoodItem = ({ item }: { item: Food }) => (
-    <View style={styles.foodItem}>
-      <Text style={styles.foodName}>{item.name}</Text>
-      {/* <Text style={styles.foodMacros}>
-        {Object.entries(item.macros)
-          .map(([key, value]) => `${key}: ${value}g`)
-          .join(' | ')}
-      </Text> */}
-    </View>
-  )
+  if (!kitchen) {
+    return (
+      <View style={styles.container}>
+        <Text>Kitchen not found</Text>
+      </View>
+    )
+  }
 
   return (
     <View style={styles.container}>
-      {loading ? (
-        <Text style={styles.message}>Loading foods...</Text>
-      ) : foods.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.message}>No foods in this kitchen yet</Text>
-          <Text style={styles.subMessage}>Add foods to get started</Text>
+      <Text style={styles.title}>{kitchen.name}</Text>
+      
+      <View style={styles.form}>
+        {kitchen.description ? (
+          <View style={styles.descriptionSection}>
+            <Text style={styles.description}>{kitchen.description}</Text>
+          </View>
+        ) : null}
+
+        <View style={styles.foodSection}>
+          <View style={styles.foodHeader}>
+            <Text style={styles.label}>Foods ({kitchen.foods.length})</Text>
+          </View>
+
+          {kitchen.foods.length > 0 ? (
+            <ScrollView 
+              style={styles.foodListContainer}
+              contentContainerStyle={styles.foodListContent}
+            >
+              <View style={styles.foodList}>
+                {kitchen.foods.map((item) => (
+                  <View key={item.id} style={styles.foodItem}>
+                    <Text style={styles.foodName}>{item.name}</Text>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          ) : (
+            <Text style={styles.noFoodsText}>No foods in this kitchen</Text>
+          )}
         </View>
-      ) : (
-        <FlatList
-          data={foods}
-          renderItem={renderFoodItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-        />
-      )}
+      </View>
     </View>
   )
 }
@@ -65,39 +95,72 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     padding: 20,
   },
-  list: {
-    paddingBottom: 20,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: Colors.black,
+    marginBottom: 20,
   },
-  foodItem: {
-    backgroundColor: Colors.coolgray,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
+  form: {
+    flex: 1,
+    gap: 12,
   },
-  foodName: {
-    fontSize: 18,
-    fontWeight: '600',
+  descriptionSection: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
     color: Colors.black,
     marginBottom: 4,
   },
-  foodMacros: {
-    fontSize: 14,
-    color: Colors.gray,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  message: {
-    fontSize: 18,
+  description: {
+    fontSize: 16,
     color: Colors.black,
-    textAlign: 'center',
-    marginBottom: 8,
+    backgroundColor: Colors.coolgray,
+    padding: 12,
+    borderRadius: 8,
   },
-  subMessage: {
-    fontSize: 14,
+  foodSection: {
+    flex: 1,
+    marginTop: 20,
+  },
+  foodHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  foodListContainer: {
+    flex: 1,
+  },
+  foodListContent: {
+    flexGrow: 1,
+  },
+  foodList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    padding: 4,
+  },
+  foodItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  foodName: {
+    fontSize: 16,
+    color: Colors.black,
+    textTransform: 'capitalize',
+    marginRight: 8,
+  },
+  noFoodsText: {
     color: Colors.gray,
+    fontStyle: 'italic',
     textAlign: 'center',
+    padding: 20,
   },
 }) 
