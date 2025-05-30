@@ -9,6 +9,11 @@ interface Menu {
     foods: Food[];
 }
 
+interface KitchenFoodResponse {
+    food: Food;
+    active: boolean;
+}
+
 export function useMenu() {
     const [menus, setMenus] = useState<Menu[]>([]);
     const [loading, setLoading] = useState(true);
@@ -33,8 +38,11 @@ export function useMenu() {
 
     const searchMenuFoods = async (menuId: string, searchQuery: string = '') => {
         try {
-            const foods: Food[] = await getMenuFoods(menuId, searchQuery);
-            return foods;
+            const responses = await getMenuFoods(menuId, searchQuery);
+            return responses.map(response => ({
+                ...response.food,
+                active: response.active
+            }));
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch menu foods');
             return [];

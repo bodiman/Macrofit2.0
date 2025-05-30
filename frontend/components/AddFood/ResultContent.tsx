@@ -53,6 +53,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                     setIsLoading(false);
                 }
             } else if (selectedMenuId) {
+                // console.log("selectedMenuId", selectedMenuId);
                 setIsLoading(true);
                 try {
                     const results = await searchMenuFoods(selectedMenuId, searchQuery);

@@ -122,6 +122,7 @@ export function useUser() {
     try {
       setLoading(true);
       const res = await api.post('/api/register', userData);
+      console.log("res", res);
       const data = await res.json();
       setAppUser(data.user);
       // Assuming registration might also return initial general preferences and meal preferences

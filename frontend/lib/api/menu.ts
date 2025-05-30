@@ -1,7 +1,5 @@
 import { Kitchen } from '@shared/types/kitchenTypes';
 import { Food } from '@shared/types/foodTypes';
-import { toMacros } from '@/lib/utils/toMacros';
-import { dbFood } from '@shared/types/databaseTypes';
 import { useApi } from './client';
 
 interface CreateKitchenRequest {
@@ -10,31 +8,33 @@ interface CreateKitchenRequest {
     foods: Food[];
 }
 
-export const useMenuApi = () => {
+interface KitchenFoodResponse {
+    food: Food;
+    active: boolean;
+}
+
+export function useMenuApi() {
     const api = useApi();
 
-    const getMenus = async (): Promise<Kitchen[]> => {
-        const res = await api.get('/api/menus');
-        return res.json();
-    };
-
-    const getMenuFoods = async (menuId: string, search?: string): Promise<Food[]> => {
-        const endpoint = search 
-            ? `/api/menus/${menuId}/foods?search=${encodeURIComponent(search)}`
-            : `/api/menus/${menuId}/foods`;
-            
-        const res = await api.get(endpoint);
-        return res.json();
-    };
-
-    const createKitchen = async (data: CreateKitchenRequest): Promise<Kitchen> => {
-        const res = await api.post('/api/menus', data);
-        return res.json();
-    };
-
     return {
-        getMenus,
-        getMenuFoods,
-        createKitchen,
+        getMenus: async (): Promise<Kitchen[]> => {
+            const response = await api.get('/api/menus');
+            return response.json();
+        },
+
+        getMenuFoods: async (menuId: string, search?: string): Promise<KitchenFoodResponse[]> => {
+            const response = await api.get(`/api/menus/${menuId}/foods${search ? `?search=${search}` : ''}`);
+            return response.json();
+        },
+
+        createKitchen: async (data: CreateKitchenRequest): Promise<Kitchen> => {
+            const response = await api.post('/api/menus', data);
+            return response.json();
+        },
+
+        toggleFoodActive: async (kitchenId: string, foodId: string, active: boolean): Promise<Food & { active: boolean }> => {
+            const response = await api.put(`/api/menus/${kitchenId}/foods/${foodId}/active`, { active });
+            return response.json();
+        }
     };
-}; 
+} 

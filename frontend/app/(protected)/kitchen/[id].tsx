@@ -6,9 +6,15 @@ import { useMenuApi } from '@/lib/api/menu'
 import { Food } from '@shared/types/foodTypes'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 
+interface KitchenWithFoods {
+  name: string
+  description: string
+  foods: (Food & { active: boolean })[]
+}
+
 export default function KitchenDetail() {
   const { id } = useLocalSearchParams()
-  const [kitchen, setKitchen] = useState<{ name: string; description: string; foods: Food[] } | null>(null)
+  const [kitchen, setKitchen] = useState<KitchenWithFoods | null>(null)
   const [loading, setLoading] = useState(true)
   const menuApi = useMenuApi()
 
@@ -22,7 +28,10 @@ export default function KitchenDetail() {
           setKitchen({
             name: kitchenData.name,
             description: kitchenData.description || '',
-            foods
+            foods: foods.map(food => ({
+              ...food.food,
+              active: food.active
+            }))
           })
         }
       } catch (error) {
@@ -34,6 +43,23 @@ export default function KitchenDetail() {
 
     fetchKitchen()
   }, [id])
+
+  const handleToggleActive = async (foodId: string, currentActive: boolean) => {
+    try {
+      const updatedFood = await menuApi.toggleFoodActive(id as string, foodId, !currentActive)
+      setKitchen(prev => {
+        if (!prev) return null
+        return {
+          ...prev,
+          foods: prev.foods.map(food => 
+            food.id === foodId ? { ...food, active: !currentActive } : food
+          )
+        }
+      })
+    } catch (error) {
+      console.error('Error toggling food active state:', error)
+    }
+  }
 
   if (loading) {
     return (
@@ -57,7 +83,7 @@ export default function KitchenDetail() {
       
       <View style={styles.form}>
         {kitchen.description ? (
-            <Text style={styles.description}>{kitchen.description}</Text>
+          <Text style={styles.description}>{kitchen.description}</Text>
         ) : null}
 
         <View style={styles.foodSection}>
@@ -72,9 +98,21 @@ export default function KitchenDetail() {
             >
               <View style={styles.foodList}>
                 {kitchen.foods.map((item) => (
-                  <View key={item.id} style={styles.foodItem}>
+                  <Pressable
+                    key={item.id}
+                    style={[
+                      styles.foodItem,
+                      item.active && styles.foodItemActive
+                    ]}
+                    onPress={() => handleToggleActive(item.id, item.active)}
+                  >
                     <Text style={styles.foodName}>{item.name}</Text>
-                  </View>
+                    <MaterialIcons 
+                      name={item.active ? "check-circle" : "radio-button-unchecked"} 
+                      size={24} 
+                      color={item.active ? Colors.green : Colors.gray} 
+                    />
+                  </Pressable>
                 ))}
               </View>
             </ScrollView>
@@ -97,26 +135,15 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: Colors.black,
-    // marginBottom: 20,
   },
   form: {
     flex: 1,
     gap: 12,
   },
-  descriptionSection: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    color: Colors.black,
-    marginBottom: 4,
-  },
   description: {
     fontSize: 16,
     color: Colors.black,
-    // backgroundColor: Colors.coolgray,
     paddingVertical: 12,
-    // borderRadius: 8,
   },
   foodSection: {
     flex: 1,
@@ -147,6 +174,10 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: Colors.coolgray,
     borderRadius: 8,
+    minWidth: '100%',
+  },
+  foodItemActive: {
+    backgroundColor: '#E8F5E9', // Light green background for active foods
   },
   foodName: {
     fontSize: 16,
