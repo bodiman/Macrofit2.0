@@ -57,14 +57,12 @@ export default function KitchenDetail() {
       
       <View style={styles.form}>
         {kitchen.description ? (
-          <View style={styles.descriptionSection}>
             <Text style={styles.description}>{kitchen.description}</Text>
-          </View>
         ) : null}
 
         <View style={styles.foodSection}>
           <View style={styles.foodHeader}>
-            <Text style={styles.label}>Foods ({kitchen.foods.length})</Text>
+            <Text style={styles.title}>Foods ({kitchen.foods.length})</Text>
           </View>
 
           {kitchen.foods.length > 0 ? (
@@ -99,7 +97,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: Colors.black,
-    marginBottom: 20,
+    // marginBottom: 20,
   },
   form: {
     flex: 1,
@@ -116,9 +114,9 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     color: Colors.black,
-    backgroundColor: Colors.coolgray,
-    padding: 12,
-    borderRadius: 8,
+    // backgroundColor: Colors.coolgray,
+    paddingVertical: 12,
+    // borderRadius: 8,
   },
   foodSection: {
     flex: 1,
@@ -149,13 +147,12 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: Colors.coolgray,
     borderRadius: 8,
-    alignSelf: 'flex-start',
   },
   foodName: {
     fontSize: 16,
     color: Colors.black,
     textTransform: 'capitalize',
-    marginRight: 8,
+    marginHorizontal: 4,
   },
   noFoodsText: {
     color: Colors.gray,
