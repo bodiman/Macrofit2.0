@@ -53,10 +53,10 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                     setIsLoading(false);
                 }
             } else if (selectedMenuId) {
-                // console.log("selectedMenuId", selectedMenuId);
                 setIsLoading(true);
                 try {
                     const results = await searchMenuFoods(selectedMenuId, searchQuery);
+                    // The results are already transformed in useMenu hook to include both food and active state
                     setSearchResults(results);
                 } catch (error) {
                     console.error('Error searching foods:', error);
@@ -73,7 +73,6 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
     }, [searchQuery, selectedMenuId]);
 
     const handleAddFood = (food: Food, quantity: number, unit: ServingUnit) => {
-
         const foodServing: FoodServing = {
             id: uuidv4(),
             food: food,
@@ -120,11 +119,7 @@ export default function ResultContent({ visible, searchQuery, onAddToCart, close
                         scrollEnabled={true}
                     />
                 </View>
-
-                
             )}
-
-            {/* <Pressable style={{width: "100%", height: 5000 }} onPress={()=>closeModal()}/> */}
         </Animated.View>
     )
 }
@@ -136,7 +131,6 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         top: 0,
-        // backgroundColor: "pink",
         height: "100%",
         backgroundColor: Colors.white,
         width: "100%",
@@ -159,8 +153,6 @@ const styles = StyleSheet.create({
         padding: 10,
         gap: 10,
         paddingBottom: 40,
-        // backgroundColor: Colors.white,
-        backgroundColor: "red",
     },
     menuPickerContainer: {
         paddingHorizontal: 20,

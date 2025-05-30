@@ -142,7 +142,7 @@ router.get('/:menuId/foods', async (req, res) => {
 
         // Transform the foods using toFoods and include active state
         const foods = kitchenFoods.map(kitchenFood => ({
-            ...toFoods([kitchenFood.food])[0],
+            food: toFoods([kitchenFood.food])[0],
             active: kitchenFood.active
         }));
 
