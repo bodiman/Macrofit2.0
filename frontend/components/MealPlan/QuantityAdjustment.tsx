@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native'
 import { useState } from 'react'
 import { Food } from '@shared/types/foodTypes'
 import Colors from '@/styles/colors'
@@ -29,6 +29,8 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
       selectedUnit: food.servingUnits[0]?.name || 'g'
     }))
   )
+  const [editingMin, setEditingMin] = useState<string | null>(null)
+  const [editingMax, setEditingMax] = useState<string | null>(null)
 
   const handleQuantityChange = (foodId: string, value: number) => {
     setAdjustedFoods(prev => prev.map(food => 
@@ -36,22 +38,70 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
     ))
   }
 
-  const handleMinQuantityChange = (foodId: string, value: number) => {
-    setAdjustedFoods(prev => prev.map(food => 
-      food.id === foodId ? { ...food, minQuantity: value } : food
-    ))
+  const handleMinQuantityChange = (foodId: string, value: string) => {
+    const numValue = parseFloat(value)
+    if (!isNaN(numValue)) {
+      setAdjustedFoods(prev => prev.map(food => {
+        if (food.id === foodId) {
+          const newMin = Math.max(0, Math.min(numValue, food.maxQuantity))
+          return { 
+            ...food, 
+            minQuantity: newMin,
+            quantity: Math.max(newMin, food.quantity)
+          }
+        }
+        return food
+      }))
+    }
   }
 
-  const handleMaxQuantityChange = (foodId: string, value: number) => {
-    setAdjustedFoods(prev => prev.map(food => 
-      food.id === foodId ? { ...food, maxQuantity: value } : food
-    ))
+  const handleMaxQuantityChange = (foodId: string, value: string) => {
+    const numValue = parseFloat(value)
+    if (!isNaN(numValue)) {
+      setAdjustedFoods(prev => prev.map(food => {
+        if (food.id === foodId) {
+          const newMax = Math.max(numValue, food.minQuantity)
+          return { 
+            ...food, 
+            maxQuantity: newMax,
+            quantity: Math.min(newMax, food.quantity)
+          }
+        }
+        return food
+      }))
+    }
   }
 
   const handleUnitChange = (foodId: string, unit: string) => {
     setAdjustedFoods(prev => prev.map(food => 
       food.id === foodId ? { ...food, selectedUnit: unit } : food
     ))
+  }
+
+  const renderMinMaxInput = (food: FoodWithQuantity, isMin: boolean) => {
+    const isEditing = isMin ? editingMin === food.id : editingMax === food.id
+    const value = isMin ? food.minQuantity : food.maxQuantity
+    const setEditing = isMin ? setEditingMin : setEditingMax
+    const handleChange = isMin ? handleMinQuantityChange : handleMaxQuantityChange
+
+    if (isEditing) {
+      return (
+        <TextInput
+          style={styles.minMaxInput}
+          value={value.toString()}
+          onChangeText={(text) => handleChange(food.id, text)}
+          onBlur={() => setEditing(null)}
+          keyboardType="numeric"
+          autoFocus
+        />
+      )
+    }
+
+    return (
+      <Pressable onPress={() => setEditing(food.id)}>
+        <Text style={styles.minMaxLabel}>{value.toFixed(1)}</Text>
+      </Pressable>
+    )
   }
 
   return (
@@ -81,35 +131,14 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
             </View>
 
             <View style={styles.sliderContainer}>
-              <Text style={styles.sliderLabel}>Minimum</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={0}
-                maximumValue={10}
-                value={food.minQuantity}
-                onValueChange={(value: number) => handleMinQuantityChange(food.id, value)}
-                minimumTrackTintColor={Colors.blue}
-                maximumTrackTintColor={Colors.coolgray}
-              />
-              <Text style={styles.sliderValue}>{food.minQuantity.toFixed(1)}</Text>
-            </View>
-
-            <View style={styles.sliderContainer}>
-              <Text style={styles.sliderLabel}>Maximum</Text>
-              <Slider
-                style={styles.slider}
-                minimumValue={0}
-                maximumValue={10}
-                value={food.maxQuantity}
-                onValueChange={(value: number) => handleMaxQuantityChange(food.id, value)}
-                minimumTrackTintColor={Colors.blue}
-                maximumTrackTintColor={Colors.coolgray}
-              />
-              <Text style={styles.sliderValue}>{food.maxQuantity.toFixed(1)}</Text>
-            </View>
-
-            <View style={styles.sliderContainer}>
-              <Text style={styles.sliderLabel}>Quantity</Text>
+              <View style={styles.sliderHeader}>
+                <Text style={styles.sliderLabel}>Range</Text>
+                <View style={styles.minMaxContainer}>
+                  {renderMinMaxInput(food, true)}
+                  <Text style={styles.minMaxSeparator}>-</Text>
+                  {renderMinMaxInput(food, false)}
+                </View>
+              </View>
               <Slider
                 style={styles.slider}
                 minimumValue={food.minQuantity}
@@ -119,7 +148,7 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
                 minimumTrackTintColor={Colors.green}
                 maximumTrackTintColor={Colors.coolgray}
               />
-              <Text style={styles.sliderValue}>{food.quantity.toFixed(1)}</Text>
+              <Text style={styles.quantityValue}>Quantity: {food.quantity.toFixed(1)}</Text>
             </View>
           </View>
         ))}
@@ -186,16 +215,44 @@ const styles = StyleSheet.create({
   sliderContainer: {
     marginBottom: 16,
   },
+  sliderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   sliderLabel: {
     fontSize: 14,
     color: Colors.gray,
-    marginBottom: 4,
+  },
+  minMaxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  minMaxLabel: {
+    fontSize: 14,
+    color: Colors.gray,
+  },
+  minMaxInput: {
+    fontSize: 14,
+    color: Colors.black,
+    borderWidth: 1,
+    borderColor: Colors.blue,
+    borderRadius: 4,
+    padding: 4,
+    width: 60,
+    textAlign: 'center',
+  },
+  minMaxSeparator: {
+    fontSize: 14,
+    color: Colors.gray,
   },
   slider: {
     width: '100%',
     height: 40,
   },
-  sliderValue: {
+  quantityValue: {
     fontSize: 14,
     color: Colors.black,
     textAlign: 'right',
