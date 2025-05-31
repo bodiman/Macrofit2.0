@@ -170,7 +170,6 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
         }
 
         const targetDate = toDate(new Date(dateString));
-
         const userMealPreferences = await prisma.userMealPreference.findMany({
             where: { user_id: userId },
             orderBy: { default_time: 'asc' },
@@ -188,7 +187,7 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
                     },
                     update: { 
                         time: preference.default_time,
-                     },
+                    },
                     create: {
                         id: uuidv4(),
                         user_id: userId,
