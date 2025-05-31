@@ -67,7 +67,7 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
             <View style={styles.unitPicker}>
               <Picker
                 selectedValue={food.selectedUnit}
-                onValueChange={(value) => handleUnitChange(food.id, value)}
+                onValueChange={(value: string) => handleUnitChange(food.id, value)}
                 style={styles.picker}
               >
                 {food.servingUnits.map(unit => (
@@ -87,7 +87,7 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
                 minimumValue={0}
                 maximumValue={10}
                 value={food.minQuantity}
-                onValueChange={(value) => handleMinQuantityChange(food.id, value)}
+                onValueChange={(value: number) => handleMinQuantityChange(food.id, value)}
                 minimumTrackTintColor={Colors.blue}
                 maximumTrackTintColor={Colors.coolgray}
               />
@@ -101,7 +101,7 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
                 minimumValue={0}
                 maximumValue={10}
                 value={food.maxQuantity}
-                onValueChange={(value) => handleMaxQuantityChange(food.id, value)}
+                onValueChange={(value: number) => handleMaxQuantityChange(food.id, value)}
                 minimumTrackTintColor={Colors.blue}
                 maximumTrackTintColor={Colors.coolgray}
               />
@@ -115,7 +115,7 @@ export default function QuantityAdjustment({ foods, onSave, onBack }: Props) {
                 minimumValue={food.minQuantity}
                 maximumValue={food.maxQuantity}
                 value={food.quantity}
-                onValueChange={(value) => handleQuantityChange(food.id, value)}
+                onValueChange={(value: number) => handleQuantityChange(food.id, value)}
                 minimumTrackTintColor={Colors.green}
                 maximumTrackTintColor={Colors.coolgray}
               />
