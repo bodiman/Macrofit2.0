@@ -1,5 +1,5 @@
 import { View, Text, Pressable, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { PropsWithChildren, useEffect, useState } from 'react';
+import { PropsWithChildren, useEffect, useState, useMemo } from 'react';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Meal, FoodServing, ServingUnit } from '@shared/types/foodTypes';
 import { UserMealPreference } from '@shared/types/databaseTypes';
@@ -25,6 +25,17 @@ type Props = PropsWithChildren<{
 export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
     const totalMacrosInCart = useMacros(shoppingCart);
+
+    const adjustedPreferences = useMemo(() => {
+        const distributionPercentage = activeMealPreference?.distribution_percentage;
+        if (!distributionPercentage) return dailyMacroPreferences;
+        
+        return dailyMacroPreferences.map(pref => ({
+            ...pref,
+            min: pref.min ? (pref.min * distributionPercentage) / 100 : undefined,
+            max: pref.max ? (pref.max * distributionPercentage) / 100 : undefined
+        }));
+    }, [dailyMacroPreferences, activeMealPreference]);
 
     useEffect(() => {
         if (activeMeal !== null) {
@@ -78,7 +89,7 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                 <View style={styles.contentContainer}>
                     <View style={styles.macroContainer}>
                         <MacrosDisplay 
-                            macroPreferences={dailyMacroPreferences}
+                            macroPreferences={adjustedPreferences}
                             macroValues={totalMacrosInCart}
                             indicators={4} 
                             radius={30} 
