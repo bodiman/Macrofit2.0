@@ -30,12 +30,6 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
         const distributionPercentage = activeMealPreference?.distribution_percentage;
         // console.log("distributionPercentage", distributionPercentage);
         if (!distributionPercentage) return dailyMacroPreferences;
-
-        console.log("dailyMacroPreferences", dailyMacroPreferences.map(pref => ({
-            ...pref,
-            min: pref.min ? (pref.min * distributionPercentage) : undefined,
-            max: pref.max ? (pref.max * distributionPercentage) : undefined
-        })));
         
         return dailyMacroPreferences.map(pref => ({
             ...pref,

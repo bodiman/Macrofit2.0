@@ -1,171 +1,50 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native'
-import { useState, useEffect } from 'react'
-import { useMenuApi } from '@/lib/api/menu'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { router } from 'expo-router'
 import Colors from '@/styles/colors'
-import { Food } from '@shared/types/foodTypes'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
-import QuantityAdjustment from '@/components/MealPlan/QuantityAdjustment'
-
-interface Kitchen {
-  id: string
-  name: string
-  description?: string
-  foods: Food[]
-}
-
-interface KitchenWithActiveFoods extends Kitchen {
-  foods: (Food & { active: boolean })[]
-}
+import { useUser } from '@/app/hooks/useUser'
 
 export default function MealPlanPage() {
-  const [kitchens, setKitchens] = useState<KitchenWithActiveFoods[]>([])
-  const [selectedKitchens, setSelectedKitchens] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
-  const [showQuantityAdjustment, setShowQuantityAdjustment] = useState(false)
-  const [selectedFoods, setSelectedFoods] = useState<(Food & { active: boolean })[]>([])
-  const menuApi = useMenuApi()
+  const { userMealPreferences } = useUser()
 
-  useEffect(() => {
-    fetchKitchens()
-  }, [])
-
-  const fetchKitchens = async () => {
-    try {
-      const data = await menuApi.getMenus()
-      // Fetch active states for each kitchen's foods
-      const kitchensWithActiveFoods = await Promise.all(
-        data.map(async (kitchen) => {
-          const foods = await menuApi.getMenuFoods(kitchen.id)
-          return {
-            ...kitchen,
-            foods: foods.map(food => ({
-              ...food.food,
-              active: food.active
-            }))
-          }
-        })
-      )
-      setKitchens(kitchensWithActiveFoods)
-    } catch (error) {
-      console.error('Error fetching kitchens:', error)
-    } finally {
-      setLoading(false)
-    }
+  const handleCreateNewPlan = () => {
+    // TODO: Create a new meal plan and navigate to it
+    router.push('/plan/new')
   }
 
-  const toggleKitchenSelection = (kitchenId: string) => {
-    setSelectedKitchens(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(kitchenId)) {
-        newSet.delete(kitchenId)
-      } else {
-        newSet.add(kitchenId)
-      }
-      return newSet
-    })
-  }
-
-  const toggleFoodSelection = async (kitchenId: string, foodId: string, currentActive: boolean) => {
-    try {
-      const updatedFood = await menuApi.toggleFoodActive(kitchenId, foodId, !currentActive)
-      setKitchens(prev => prev.map(kitchen => {
-        if (kitchen.id === kitchenId) {
-          return {
-            ...kitchen,
-            foods: kitchen.foods.map(food => 
-              food.id === foodId ? { ...food, active: !currentActive } : food
-            )
-          }
-        }
-        return kitchen
-      }))
-    } catch (error) {
-      console.error('Error toggling food active state:', error)
-    }
-  }
-
-  const handleNext = () => {
-    // Collect all active foods from selected kitchens
-    const activeFoods = kitchens
-      .filter(kitchen => selectedKitchens.has(kitchen.id))
-      .flatMap(kitchen => kitchen.foods.filter(food => food.active))
-    setSelectedFoods(activeFoods)
-    setShowQuantityAdjustment(true)
-  }
-
-  const handleBack = () => {
-    setShowQuantityAdjustment(false)
-  }
-
-  const handleSave = (foodsWithQuantities: any[]) => {
-    // TODO: Implement saving the meal plan with quantities
-    console.log('Saving meal plan with quantities:', foodsWithQuantities)
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <Text>Loading kitchens...</Text>
-      </View>
-    )
-  }
-
-  if (showQuantityAdjustment) {
-    return (
-      <QuantityAdjustment
-        foods={selectedFoods}
-        onSave={handleSave}
-        onBack={handleBack}
-      />
-    )
+  const handleLoadPlan = () => {
+    // TODO: Show list of existing meal plans
+    router.push('/plan/list')
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Meal Planning</Text>
-      <Text style={styles.subtitle}>Select kitchens and foods to include in your meal plan</Text>
-      
-      <ScrollView style={styles.kitchenList}>
-        {kitchens.map(kitchen => (
-          <View key={kitchen.id} style={styles.kitchenCard}>
-            <Pressable 
-              style={styles.kitchenHeader}
-              onPress={() => toggleKitchenSelection(kitchen.id)}
-            >
-              <View style={styles.kitchenHeaderContent}>
-                <Text style={styles.kitchenName}>{kitchen.name}</Text>
-                <MaterialIcons 
-                  name={selectedKitchens.has(kitchen.id) ? "expand-less" : "expand-more"} 
-                  size={24} 
-                  color={Colors.black} 
-                />
-              </View>
-            </Pressable>
+      <Text style={styles.subtitle}>Create a new meal plan or load an existing one</Text>
 
-            {selectedKitchens.has(kitchen.id) && (
-              <View style={styles.foodList}>
-                {kitchen.foods.map(food => (
-                  <Pressable
-                    key={food.id}
-                    style={[styles.foodItem, food.active && styles.foodItemActive]}
-                    onPress={() => toggleFoodSelection(kitchen.id, food.id, food.active)}
-                  >
-                    <Text style={styles.foodName}>{food.name}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
-        ))}
-      </ScrollView>
+      <View style={styles.optionsContainer}>
+        <Pressable 
+          style={styles.optionCard}
+          onPress={handleCreateNewPlan}
+        >
+          <MaterialIcons name="add-circle-outline" size={32} color={Colors.blue} />
+          <Text style={styles.optionTitle}>Create New Plan</Text>
+          <Text style={styles.optionDescription}>
+            Start fresh with a new meal plan based on your preferences
+          </Text>
+        </Pressable>
 
-      <Pressable 
-        style={[styles.nextButton, selectedKitchens.size === 0 && styles.nextButtonDisabled]}
-        disabled={selectedKitchens.size === 0}
-        onPress={handleNext}
-      >
-        <Text style={styles.nextButtonText}>Next: Adjust Quantities</Text>
-      </Pressable>
+        <Pressable 
+          style={styles.optionCard}
+          onPress={handleLoadPlan}
+        >
+          <MaterialIcons name="folder-open" size={32} color={Colors.blue} />
+          <Text style={styles.optionTitle}>Load Plan</Text>
+          <Text style={styles.optionDescription}>
+            Continue working on a previously saved meal plan
+          </Text>
+        </Pressable>
+      </View>
     </View>
   )
 }
@@ -187,63 +66,27 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     marginBottom: 20,
   },
-  kitchenList: {
-    flex: 1,
+  optionsContainer: {
+    gap: 16,
   },
-  kitchenCard: {
+  optionCard: {
     backgroundColor: Colors.white,
     borderRadius: 12,
-    marginBottom: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: Colors.coolgray,
-    overflow: 'hidden',
-  },
-  kitchenHeader: {
-    padding: 16,
-    backgroundColor: Colors.coolgray,
-  },
-  kitchenHeaderContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  kitchenName: {
+  optionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: Colors.black,
+    marginTop: 12,
+    marginBottom: 8,
   },
-  foodList: {
-    padding: 16,
-    gap: 8,
-  },
-  foodItem: {
-    padding: 12,
-    backgroundColor: Colors.coolgray,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  foodItemActive: {
-    backgroundColor: Colors.green,
-  },
-  foodName: {
-    fontSize: 16,
-    color: Colors.black,
-    flex: 1,
-  },
-  nextButton: {
-    backgroundColor: Colors.blue,
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  nextButtonDisabled: {
-    opacity: 0.5,
-  },
-  nextButtonText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '600',
+  optionDescription: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
   },
 })
