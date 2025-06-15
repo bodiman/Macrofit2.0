@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from 'react-nati
 import Colors from '@/styles/colors'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { Food } from '@shared/types/foodTypes'
+import { useState, useEffect } from 'react'
 
 interface KitchenWithActiveFoods {
   id: string
@@ -24,6 +25,24 @@ interface Props {
 }
 
 export default function KitchenActivationModal({ isVisible, onClose, kitchen, onToggleFood }: Props) {
+  const [localFoods, setLocalFoods] = useState(kitchen.foods)
+
+  useEffect(() => {
+    setLocalFoods(kitchen.foods)
+  }, [kitchen])
+
+  const handleToggleFood = (foodId: string, currentActive: boolean) => {
+    // Optimistically update local state
+    setLocalFoods(prevFoods => 
+      prevFoods.map(food => 
+        food.id === foodId ? { ...food, active: !currentActive } : food
+      )
+    )
+    
+    // Call the parent's toggle function
+    onToggleFood(foodId, currentActive)
+  }
+
   return (
     <Modal
       visible={isVisible}
@@ -42,14 +61,14 @@ export default function KitchenActivationModal({ isVisible, onClose, kitchen, on
 
           <ScrollView style={styles.scrollView}>
             <View style={styles.foodList}>
-              {kitchen.foods.map(food => (
+              {localFoods.map(food => (
                 <Pressable
                   key={food.id}
                   style={[styles.foodItem, food.active && styles.foodItemActive]}
-                  onPress={() => onToggleFood(food.id, food.active)}
+                  onPress={() => handleToggleFood(food.id, food.active)}
                 >
                   <Text style={[styles.foodName, food.active && styles.foodNameActive]}>
-                    {food.name}
+                    {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
                   </Text>
                   <MaterialIcons 
                     name={food.active ? "check-circle" : "add-circle-outline"} 
