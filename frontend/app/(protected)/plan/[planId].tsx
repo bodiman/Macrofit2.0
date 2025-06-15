@@ -9,6 +9,7 @@ import { Food } from '@shared/types/foodTypes'
 import Slider from '@react-native-community/slider'
 import { Picker } from '@react-native-picker/picker'
 import React from 'react'
+import KitchenActivationModal from '@/components/Kitchen/KitchenActivationModal'
 
 interface Kitchen {
   id: string
@@ -34,6 +35,7 @@ export default function MealPlanPage() {
   const { userMealPreferences } = useUser()
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
   const [kitchens, setKitchens] = useState<KitchenWithActiveFoods[]>([])
+  const [selectedKitchens, setSelectedKitchens] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('kitchens')
   const [editingMin, setEditingMin] = useState<string | null>(null)
@@ -44,6 +46,8 @@ export default function MealPlanPage() {
   const minInputRef = useRef<TextInput>(null)
   const maxInputRef = useRef<TextInput>(null)
   const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
+  const [selectedKitchen, setSelectedKitchen] = useState<KitchenWithActiveFoods | null>(null)
+  const [showKitchenModal, setShowKitchenModal] = useState(false)
 
   useEffect(() => {
     fetchKitchens()
@@ -221,24 +225,57 @@ export default function MealPlanPage() {
     })
   }
 
+  const toggleKitchenSelection = (kitchenId: string) => {
+    setSelectedKitchens(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(kitchenId)) {
+        newSet.delete(kitchenId)
+      } else {
+        newSet.add(kitchenId)
+      }
+      return newSet
+    })
+  }
+
+  const handleKitchenPress = (kitchen: KitchenWithActiveFoods) => {
+    setSelectedKitchen(kitchen)
+    setShowKitchenModal(true)
+  }
+
+  const handleCloseKitchenModal = () => {
+    setShowKitchenModal(false)
+    setSelectedKitchen(null)
+  }
+
   const renderKitchenTab = () => (
     <View style={styles.tabContent}>
-      {kitchens.map(kitchen => (
-        <View key={kitchen.id} style={styles.kitchenSection}>
-          <Text style={styles.kitchenName}>{kitchen.name}</Text>
-          <View style={styles.foodList}>
-            {kitchen.foods.map(food => (
-              <Pressable
-                key={food.id}
-                style={[styles.foodItem, food.active && styles.foodItemActive]}
-                onPress={() => toggleFoodSelection(kitchen.id, food.id, food.active)}
-              >
-                <Text style={styles.foodName}>{food.name}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      ))}
+      <View style={styles.kitchenList}>
+        {kitchens.map(kitchen => (
+          <Pressable
+            key={kitchen.id}
+            style={styles.kitchenItem}
+            onPress={() => handleKitchenPress(kitchen)}
+          >
+            <Text style={styles.kitchenName}>{kitchen.name}</Text>
+            <MaterialIcons 
+              name="chevron-right" 
+              size={24} 
+              color={Colors.gray} 
+            />
+          </Pressable>
+        ))}
+      </View>
+
+      {selectedKitchen && (
+        <KitchenActivationModal
+          isVisible={showKitchenModal}
+          onClose={handleCloseKitchenModal}
+          kitchen={selectedKitchen}
+          onToggleFood={(foodId, currentActive) => 
+            toggleFoodSelection(selectedKitchen.id, foodId, currentActive)
+          }
+        />
+      )}
     </View>
   )
 
@@ -485,13 +522,41 @@ const styles = StyleSheet.create({
   tabContent: {
     gap: 16,
   },
-  kitchenSection: {
+  kitchenList: {
     gap: 8,
+  },
+  kitchenItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
   },
   kitchenName: {
     fontSize: 16,
+    color: Colors.black,
+  },
+  selectedKitchensSection: {
+    gap: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: '600',
     color: Colors.black,
+    marginBottom: 8,
+  },
+  kitchenSection: {
+    gap: 8,
+  },
+  kitchenHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  removeButton: {
+    padding: 4,
   },
   foodList: {
     gap: 8,

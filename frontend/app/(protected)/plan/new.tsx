@@ -113,7 +113,7 @@ export default function NewMealPlanPage() {
               </View>
 
               <View style={styles.distributionContainer}>
-                <Text style={styles.label}>Distribution</Text>
+                <Text style={styles.label}>% Daily Macros</Text>
                 <View style={styles.distributionInput}>
                   <TextInput
                     style={styles.percentageInput}
