@@ -9,7 +9,7 @@ interface KitchenWithActiveFoods {
   name: string
   description?: string
   foods: (Food & { 
-    active: boolean
+    active: boolean  // database active state
     quantity: number
     minQuantity: number
     maxQuantity: number
@@ -22,25 +22,41 @@ interface Props {
   onClose: () => void
   kitchen: KitchenWithActiveFoods
   onToggleFood: (foodId: string, currentActive: boolean) => void
+  onSelectedFoodsChange: (selectedFoodIds: string[]) => void
 }
 
-export default function KitchenActivationModal({ isVisible, onClose, kitchen, onToggleFood }: Props) {
-  const [localFoods, setLocalFoods] = useState(kitchen.foods)
+export default function KitchenActivationModal({ 
+  isVisible, 
+  onClose, 
+  kitchen, 
+  onToggleFood,
+  onSelectedFoodsChange 
+}: Props) {
+  // Track selected foods separately from active state
+  const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    setLocalFoods(kitchen.foods)
+    // Initialize selected foods from kitchen's active foods
+    const initialSelected = new Set(
+      kitchen.foods.filter(food => food.active).map(food => food.id)
+    )
+    setSelectedFoods(initialSelected)
+    // Notify parent of initial selection
+    onSelectedFoodsChange(Array.from(initialSelected))
   }, [kitchen])
 
-  const handleToggleFood = (foodId: string, currentActive: boolean) => {
-    // Optimistically update local state
-    setLocalFoods(prevFoods => 
-      prevFoods.map(food => 
-        food.id === foodId ? { ...food, active: !currentActive } : food
-      )
-    )
-    
-    // Call the parent's toggle function
-    onToggleFood(foodId, currentActive)
+  const handleToggleFood = (foodId: string) => {
+    setSelectedFoods(prev => {
+      const newSelected = new Set(prev)
+      if (newSelected.has(foodId)) {
+        newSelected.delete(foodId)
+      } else {
+        newSelected.add(foodId)
+      }
+      // Notify parent of selection change
+      onSelectedFoodsChange(Array.from(newSelected))
+      return newSelected
+    })
   }
 
   return (
@@ -59,21 +75,27 @@ export default function KitchenActivationModal({ isVisible, onClose, kitchen, on
             </Pressable>
           </View>
 
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.description}>
+              Select foods to include in this kitchen
+            </Text>
+          </View>
+
           <ScrollView style={styles.scrollView}>
             <View style={styles.foodList}>
-              {localFoods.map(food => (
+              {kitchen.foods.map(food => (
                 <Pressable
                   key={food.id}
-                  style={[styles.foodItem, food.active && styles.foodItemActive]}
-                  onPress={() => handleToggleFood(food.id, food.active)}
+                  style={[styles.foodItem, selectedFoods.has(food.id) && styles.foodItemActive]}
+                  onPress={() => handleToggleFood(food.id)}
                 >
-                  <Text style={[styles.foodName, food.active && styles.foodNameActive]}>
+                  <Text style={[styles.foodName, selectedFoods.has(food.id) && styles.foodNameActive]}>
                     {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
                   </Text>
                   <MaterialIcons 
-                    name={food.active ? "check-circle" : "add-circle-outline"} 
+                    name={selectedFoods.has(food.id) ? "check-circle" : "add-circle-outline"} 
                     size={20} 
-                    color={food.active ? Colors.white : Colors.gray} 
+                    color={selectedFoods.has(food.id) ? Colors.white : Colors.gray} 
                   />
                 </Pressable>
               ))}
@@ -102,7 +124,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 20,
@@ -111,6 +133,14 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+  },
+  descriptionContainer: {
+    marginBottom: 16,
+  },
+  description: {
+    fontSize: 14,
+    color: Colors.gray,
+    lineHeight: 20,
   },
   scrollView: {
     flex: 1,
