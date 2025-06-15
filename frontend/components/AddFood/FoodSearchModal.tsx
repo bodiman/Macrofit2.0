@@ -24,7 +24,7 @@ type Props = PropsWithChildren<{
 
 export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
-    const totalMacrosInCart = useMacros(shoppingCart);
+    const totalMacrosInCart = useMacros([...shoppingCart, ...(activeMeal?.servings || [])]);
 
     const adjustedPreferences = useMemo(() => {
         const distributionPercentage = activeMealPreference?.distribution_percentage;
