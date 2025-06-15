@@ -74,6 +74,17 @@ export default function MealPlanPage() {
         })
       )
       setKitchens(kitchensWithActiveFoods)
+      
+      // Initialize selected foods based on active state when page loads
+      const initialSelectedFoods = new Set<string>()
+      kitchensWithActiveFoods.forEach(kitchen => {
+        kitchen.foods.forEach(food => {
+          if (food.active) {
+            initialSelectedFoods.add(food.id)
+          }
+        })
+      })
+      setSelectedFoods(initialSelectedFoods)
     } catch (error) {
       console.error('Error fetching kitchens:', error)
     } finally {
