@@ -81,7 +81,12 @@ export default function KitchenActivationModal({
             </Text>
           </View>
 
-          <ScrollView style={styles.scrollView}>
+          <ScrollView 
+            style={styles.scrollView}
+            scrollEnabled={isVisible}
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.foodList}>
               {kitchen.foods.map(food => (
                 <Pressable

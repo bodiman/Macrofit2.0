@@ -88,17 +88,15 @@ export default function AppHeader() {
 
     return (
         <View style={styles.header}>
-            {/* <View style={styles.toggleContainer}> */}
-                <TouchableOpacity 
-                    style={styles.toggleContainer}
-                    onPress={() => setShowMacros(!showMacros)}
-                >   
-                    <Logo size1={25} size2={25} theme={"dark"} />
-                    <View style={[{transform: showMacros ? [{ translateY: 9 }] : [{ translateY: -5 }]}]}>
-                        {!showMacros ? <WideUpArrow /> : <WideDownArrow />}
-                    </View>
-                </TouchableOpacity>
-            {/* </View> */}
+            <TouchableOpacity 
+                style={styles.toggleContainer}
+                onPress={() => setShowMacros(!showMacros)}
+            >   
+                <Logo size1={25} size2={25} theme={"dark"} />
+                <View style={[{transform: showMacros ? [{ translateY: 9 }] : [{ translateY: -5 }]}]}>
+                    {!showMacros ? <WideUpArrow /> : <WideDownArrow />}
+                </View>
+            </TouchableOpacity>
 
             <View style={styles.globalMacroContainer}>
                 {showMacros && (
