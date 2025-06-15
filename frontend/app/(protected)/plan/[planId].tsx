@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, InteractionManager } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useUser } from '@/app/hooks/useUser'
@@ -43,6 +43,7 @@ export default function MealPlanPage() {
   const menuApi = useMenuApi()
   const minInputRef = useRef<TextInput>(null)
   const maxInputRef = useRef<TextInput>(null)
+  const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
 
   useEffect(() => {
     fetchKitchens()
@@ -182,44 +183,39 @@ export default function MealPlanPage() {
     }))
   }
 
-  const handleMinClick = (foodId: string) => {
+  const handleInputFocus = (foodId: string, type: 'min' | 'max') => {
+    nextFocusedInputRef.current = { foodId, type }
+    setFocusedInput({ foodId, type })
+    setFocusedContainer(foodId)
     setEditingMin(foodId)
     setEditingMax(foodId)
-    setFocusedContainer(foodId)
-    setTimeout(() => {
-      minInputRef.current?.focus()
-    }, 50)
-  }
-
-  const handleMaxClick = (foodId: string) => {
-    setEditingMin(foodId)
-    setEditingMax(foodId)
-    setFocusedContainer(foodId)
-    setTimeout(() => {
-      maxInputRef.current?.focus()
-    }, 50)
   }
 
   const handleInputBlur = (foodId: string, type: 'min' | 'max') => {
-    const otherType = type === 'min' ? 'max' : 'min'
-    const isSwitchingToOtherInput = focusedInput?.foodId === foodId && focusedInput?.type === otherType
-    
-    if (!isSwitchingToOtherInput) {
-      setFocusedInput(null)
-      setFocusedContainer(null)
-    }
+    InteractionManager.runAfterInteractions(() => {
+      const nextInput = nextFocusedInputRef.current
+      const isSwitchingToOtherInput = nextInput?.foodId === foodId && nextInput?.type !== type
+      
+      if (!isSwitchingToOtherInput) {
+        setFocusedInput(null)
+        setFocusedContainer(null)
+        setEditingMin(null)
+        setEditingMax(null)
+      }
+      
+      nextFocusedInputRef.current = null
+    })
   }
 
-  const handleInputFocus = (foodId: string, type: 'min' | 'max') => {
-    setFocusedInput({ foodId, type })
+  const handleMinClick = (foodId: string) => {
+    handleInputFocus(foodId, 'min')
+    minInputRef.current?.focus()
   }
 
-  useEffect(() => {
-    if (!focusedInput) {
-      setEditingMin(null)
-      setEditingMax(null)
-    }
-  }, [focusedInput])
+  const handleMaxClick = (foodId: string) => {
+    handleInputFocus(foodId, 'max')
+    maxInputRef.current?.focus()
+  }
 
   const renderKitchenTab = () => (
     <View style={styles.tabContent}>
@@ -283,10 +279,7 @@ export default function MealPlanPage() {
                         keyboardType="numeric"
                         selectionColor={Colors.blue}
                         underlineColorAndroid="transparent"
-                        onFocus={() => {
-                          setFocusedContainer(food.id)
-                          handleInputFocus(food.id, 'min')
-                        }}
+                        onFocus={() => handleInputFocus(food.id, 'min')}
                         onBlur={() => handleInputBlur(food.id, 'min')}
                       />
                       <Text style={styles.rangeSeparator}>to</Text>
@@ -298,10 +291,7 @@ export default function MealPlanPage() {
                         keyboardType="numeric"
                         selectionColor={Colors.blue}
                         underlineColorAndroid="transparent"
-                        onFocus={() => {
-                          setFocusedContainer(food.id)
-                          handleInputFocus(food.id, 'max')
-                        }}
+                        onFocus={() => handleInputFocus(food.id, 'max')}
                         onBlur={() => handleInputBlur(food.id, 'max')}
                       />
                     </View>
