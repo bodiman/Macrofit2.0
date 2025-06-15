@@ -209,12 +209,16 @@ export default function MealPlanPage() {
 
   const handleMinClick = (foodId: string) => {
     handleInputFocus(foodId, 'min')
-    minInputRef.current?.focus()
+    requestAnimationFrame(() => {
+      minInputRef.current?.focus()
+    })
   }
 
   const handleMaxClick = (foodId: string) => {
     handleInputFocus(foodId, 'max')
-    maxInputRef.current?.focus()
+    requestAnimationFrame(() => {
+      maxInputRef.current?.focus()
+    })
   }
 
   const renderKitchenTab = () => (
@@ -273,7 +277,11 @@ export default function MealPlanPage() {
                     <View style={styles.rangeInputContainer}>
                       <TextInput
                         ref={minInputRef}
-                        style={styles.rangeInput}
+                        style={[
+                          styles.rangeInput,
+                          focusedInput?.foodId === food.id && focusedInput?.type === 'min' && styles.rangeInputFocused,
+                          { outlineWidth: 0 } as any
+                        ]}
                         value={food.minQuantity.toString()}
                         onChangeText={(text) => handleMinQuantityChange(kitchen.id, food.id, text)}
                         keyboardType="numeric"
@@ -281,11 +289,17 @@ export default function MealPlanPage() {
                         underlineColorAndroid="transparent"
                         onFocus={() => handleInputFocus(food.id, 'min')}
                         onBlur={() => handleInputBlur(food.id, 'min')}
+                        autoCorrect={false}
+                        spellCheck={false}
                       />
                       <Text style={styles.rangeSeparator}>to</Text>
                       <TextInput
                         ref={maxInputRef}
-                        style={styles.rangeInput}
+                        style={[
+                          styles.rangeInput,
+                          focusedInput?.foodId === food.id && focusedInput?.type === 'max' && styles.rangeInputFocused,
+                          { outlineWidth: 0 } as any
+                        ]}
                         value={food.maxQuantity.toString()}
                         onChangeText={(text) => handleMaxQuantityChange(kitchen.id, food.id, text)}
                         keyboardType="numeric"
@@ -293,12 +307,17 @@ export default function MealPlanPage() {
                         underlineColorAndroid="transparent"
                         onFocus={() => handleInputFocus(food.id, 'max')}
                         onBlur={() => handleInputBlur(food.id, 'max')}
+                        autoCorrect={false}
+                        spellCheck={false}
                       />
                     </View>
                   ) : (
                     <React.Fragment>
                       <View style={styles.sliderRow}>
-                        <Pressable onPress={() => handleMinClick(food.id)}>
+                        <Pressable 
+                          onPress={() => handleMinClick(food.id)}
+                          style={styles.minMaxLabelContainer}
+                        >
                           <Text style={styles.minMaxLabel}>{food.minQuantity.toFixed(1)}</Text>
                         </Pressable>
                         <Slider
@@ -310,7 +329,10 @@ export default function MealPlanPage() {
                           minimumTrackTintColor={Colors.green}
                           maximumTrackTintColor={Colors.lightgray}
                         />
-                        <Pressable onPress={() => handleMaxClick(food.id)}>
+                        <Pressable 
+                          onPress={() => handleMaxClick(food.id)}
+                          style={styles.minMaxLabelContainer}
+                        >
                           <Text style={styles.minMaxLabel}>{food.maxQuantity.toFixed(1)}</Text>
                         </Pressable>
                       </View>
@@ -545,11 +567,12 @@ const styles = StyleSheet.create({
     gap: 8,
     marginVertical: 8,
     alignSelf: 'flex-start',
+    borderWidth: 0,
   },
   rangeInput: {
     fontSize: 14,
     color: Colors.black,
-    borderBottomWidth: 2,
+    borderBottomWidth: 3,
     borderBottomColor: Colors.black,
     padding: 4,
     width: 60,
@@ -562,5 +585,10 @@ const styles = StyleSheet.create({
   rangeSeparator: {
     fontSize: 14,
     color: Colors.gray,
+  },
+  minMaxLabelContainer: {
+    minWidth: 40,
+    alignItems: 'center',
+    padding: 4,
   },
 }) 
