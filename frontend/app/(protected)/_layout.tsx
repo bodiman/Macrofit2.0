@@ -42,6 +42,7 @@ export default function Layout() {
     <SignedIn>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="plan" options={{ headerShown: false }} />
           <Stack.Screen 
             name="create-kitchen" 
             options={{ 

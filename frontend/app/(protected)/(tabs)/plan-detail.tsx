@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, InteractionMa
 import { useLocalSearchParams, router } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useUser } from '@/app/hooks/useUser'
-import MaterialIcons from '@expo/vector-icons/MaterialIcons'
+import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { useState, useEffect, useRef } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { Food } from '@shared/types/foodTypes'
@@ -32,7 +32,7 @@ interface KitchenWithActiveFoods extends Kitchen {
 
 type Tab = 'kitchen' | 'quantity'
 
-export default function MealPlanPage() {
+export default function PlanDetailPage() {
   const { planId } = useLocalSearchParams()
   const { userMealPreferences, preferences } = useUser()
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
@@ -93,7 +93,6 @@ export default function MealPlanPage() {
   }
 
   const toggleMealExpansion = (mealId: string) => {
-    // console.log(expandedMeals)
     setExpandedMeals(prev => {
       const newSet = new Set<string>()
       if (!prev.has(mealId)) {
@@ -354,7 +353,6 @@ export default function MealPlanPage() {
       <View style={styles.kitchenList}>
         {kitchens.map(kitchen => (
           <View key={kitchen.id} style={styles.kitchenSection}>
-            <Text>{JSON.stringify(getSelectedFoodsForMeal(activeMealId || ''))}</Text>
             <Text style={styles.kitchenName}>{kitchen.name}</Text>
             <View style={styles.foodList}>
               {kitchen.foods
@@ -488,7 +486,7 @@ export default function MealPlanPage() {
                   <Text style={styles.mealTime}>{meal.default_time}</Text>
                 </View>
                 <MaterialIcons 
-                  name={expandedMeals.has(meal.id) ? "expand-less" : "expand-more"} 
+                  name={expandedMeals.has(meal.id) ? "chevron-up" : "chevron-down"} 
                   size={24} 
                   color={Colors.black} 
                 />

@@ -9,12 +9,12 @@ export default function MealPlanPage() {
 
   const handleCreateNewPlan = () => {
     // TODO: Create a new meal plan and navigate to it
-    router.push('/plan/new')
+    router.push('./plan-new')
   }
 
   const handleLoadPlan = () => {
     // TODO: Show list of existing meal plans
-    router.push('/plan/list')
+    router.push('./plan-list')
   }
 
   return (

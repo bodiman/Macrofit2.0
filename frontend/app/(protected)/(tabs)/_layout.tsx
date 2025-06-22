@@ -37,6 +37,24 @@ export default function TabsLayout() {
             tabBarIcon: ({ color }) => <FontAwesome size={28} name="gear" color={color} />,
           }} 
         />
+        <Tabs.Screen 
+          name='plan-list' 
+          options={{
+            href: null, // Hide from tab bar
+          }} 
+        />
+        <Tabs.Screen 
+          name='plan-new' 
+          options={{
+            href: null, // Hide from tab bar
+          }} 
+        />
+        <Tabs.Screen 
+          name='plan-detail' 
+          options={{
+            href: null, // Hide from tab bar
+          }} 
+        />
       </Tabs>
     </View>
   )
