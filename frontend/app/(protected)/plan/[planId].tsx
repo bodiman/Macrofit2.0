@@ -44,7 +44,8 @@ export default function MealPlanPage() {
   const [focusedInput, setFocusedInput] = useState<{ foodId: string, type: 'min' | 'max' } | null>(null)
   const [selectedKitchen, setSelectedKitchen] = useState<KitchenWithActiveFoods | null>(null)
   const [showKitchenModal, setShowKitchenModal] = useState(false)
-  const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set())
+  const [selectedFoods, setSelectedFoods] = useState<Map<string, Set<string>>>(new Map())
+  const [activeMealId, setActiveMealId] = useState<string | null>(null)
   const menuApi = useMenuApi()
   const minInputRef = useRef<TextInput>(null)
   const maxInputRef = useRef<TextInput>(null)
@@ -76,13 +77,10 @@ export default function MealPlanPage() {
       setKitchens(kitchensWithActiveFoods)
       
       // Initialize selected foods based on active state when page loads
-      const initialSelectedFoods = new Set<string>()
-      kitchensWithActiveFoods.forEach(kitchen => {
-        kitchen.foods.forEach(food => {
-          if (food.active) {
-            initialSelectedFoods.add(food.id)
-          }
-        })
+      const initialSelectedFoods = new Map<string, Set<string>>()
+      // Initialize each meal with an empty set of selected foods
+      userMealPreferences.forEach(meal => {
+        initialSelectedFoods.set(meal.id, new Set<string>())
       })
       setSelectedFoods(initialSelectedFoods)
     } catch (error) {
@@ -93,6 +91,7 @@ export default function MealPlanPage() {
   }
 
   const toggleMealExpansion = (mealId: string) => {
+    // console.log(expandedMeals)
     setExpandedMeals(prev => {
       const newSet = new Set<string>()
       if (!prev.has(mealId)) {
@@ -260,7 +259,18 @@ export default function MealPlanPage() {
   }
 
   const handleSelectedFoodsChange = (foodIds: string[]) => {
-    setSelectedFoods(new Set(foodIds))
+    if (!activeMealId) return
+    
+    const newSelectedFoods = new Set<string>(foodIds)
+    setSelectedFoods(prev => {
+      const newMap = new Map<string, Set<string>>(prev)
+      newMap.set(activeMealId, newSelectedFoods)
+      return newMap
+    })
+  }
+
+  const getSelectedFoodsForMeal = (mealId: string) => {
+    return selectedFoods.get(mealId) || new Set<string>()
   }
 
   const renderKitchenTab = () => (
@@ -291,6 +301,7 @@ export default function MealPlanPage() {
             toggleFoodSelection(selectedKitchen.id, foodId, currentActive)
           }
           onSelectedFoodsChange={handleSelectedFoodsChange}
+          selectedFoodIds={Array.from(getSelectedFoodsForMeal(activeMealId || ''))}
         />
       )}
     </View>
@@ -301,10 +312,11 @@ export default function MealPlanPage() {
       <View style={styles.kitchenList}>
         {kitchens.map(kitchen => (
           <View key={kitchen.id} style={styles.kitchenSection}>
+            <Text>{JSON.stringify(getSelectedFoodsForMeal(activeMealId || ''))}</Text>
             <Text style={styles.kitchenName}>{kitchen.name}</Text>
             <View style={styles.foodList}>
               {kitchen.foods
-                .filter(food => selectedFoods.has(food.id))
+                .filter(food => getSelectedFoodsForMeal(activeMealId || '').has(food.id))
                 .map(food => (
                   <View key={food.id} style={styles.quantityItem}>
                     <View style={styles.foodHeader}>
@@ -423,7 +435,10 @@ export default function MealPlanPage() {
           <View key={meal.id} style={styles.mealSection}>
             <Pressable 
               style={styles.mealHeader}
-              onPress={() => toggleMealExpansion(meal.id)}
+              onPress={() => {
+                toggleMealExpansion(meal.id)
+                setActiveMealId(meal.id)
+              }}
             >
               <View style={styles.mealHeaderContent}>
                 <View>

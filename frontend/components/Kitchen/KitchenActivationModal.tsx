@@ -23,6 +23,7 @@ interface Props {
   kitchen: KitchenWithActiveFoods
   onToggleFood: (foodId: string, currentActive: boolean) => void
   onSelectedFoodsChange: (selectedFoodIds: string[]) => void
+  selectedFoodIds: string[]
 }
 
 export default function KitchenActivationModal({ 
@@ -30,20 +31,17 @@ export default function KitchenActivationModal({
   onClose, 
   kitchen, 
   onToggleFood,
-  onSelectedFoodsChange 
+  onSelectedFoodsChange,
+  selectedFoodIds
 }: Props) {
   // Track selected foods separately from active state
   const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    // Initialize selected foods from kitchen's active foods
-    const initialSelected = new Set(
-      kitchen.foods.filter(food => food.active).map(food => food.id)
-    )
+    // Initialize selected foods from the passed selectedFoodIds
+    const initialSelected = new Set(selectedFoodIds)
     setSelectedFoods(initialSelected)
-    // Notify parent of initial selection
-    onSelectedFoodsChange(Array.from(initialSelected))
-  }, [kitchen])
+  }, [selectedFoodIds])
 
   const handleToggleFood = (foodId: string) => {
     setSelectedFoods(prev => {
