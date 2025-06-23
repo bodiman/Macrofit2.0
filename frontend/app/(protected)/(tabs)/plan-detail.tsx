@@ -13,6 +13,7 @@ import React from 'react'
 import KitchenActivationModal from '@/components/Kitchen/KitchenActivationModal'
 import eventBus from '@/app/storage/eventEmitter'
 import useMacros from '@/app/hooks/useMacros'
+import { Swipeable } from 'react-native-gesture-handler'
 
 interface Kitchen {
   id: string
@@ -447,6 +448,17 @@ export default function PlanDetailPage() {
     })
   }
 
+  const handleDeleteFood = (mealId: string, foodId: string) => {
+    setSelectedFoods(prev => {
+      const newMap = new Map<string, Set<string>>(prev)
+      const mealSelectedFoods = newMap.get(mealId) || new Set<string>()
+      const newSelectedFoods = new Set<string>(mealSelectedFoods)
+      newSelectedFoods.delete(foodId)
+      newMap.set(mealId, newSelectedFoods)
+      return newMap
+    })
+  }
+
   const renderKitchenTab = (mealId: string) => (
     <View style={styles.tabContent}>
       <View style={styles.kitchenList}>
@@ -497,119 +509,133 @@ export default function PlanDetailPage() {
               ) : (
                 <View style={styles.foodList}>
                   {selectedFoodsForKitchen.map(food => (
-                    <View key={food.id} style={styles.quantityItem}>
-                      <Pressable 
-                        style={styles.foodHeader}
-                        onPress={() => toggleFoodExpansion(food.id)}
-                      >
-                        <View style={styles.foodHeaderContent}>
-                          <Text style={styles.foodName} numberOfLines={1} ellipsizeMode="tail">
-                            {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
-                          </Text>
-                          {!expandedFoods.has(food.id) && (
-                            <Text style={styles.summaryText} numberOfLines={1} ellipsizeMode="tail">
-                              {food.quantity.toFixed(1)} {food.selectedUnit}
-                            </Text>
-                          )}
-                          <MaterialIcons 
-                            name={expandedFoods.has(food.id) ? "chevron-up" : "chevron-down"} 
-                            size={20} 
-                            color={Colors.gray} 
-                          />
-                        </View>
-                      </Pressable>
-
-                      {expandedFoods.has(food.id) && (
-                        <View style={styles.expandedContent}>
-                          <View style={styles.quantityUnitRow}>
-                            <Text style={styles.quantityText}>{food.quantity.toFixed(1)}</Text>
-                            <View style={styles.unitPicker}>
-                              <Picker
-                                selectedValue={food.selectedUnit}
-                                onValueChange={(value: string) => handleUnitChange(kitchen.id, food.id, value)}
-                                style={styles.picker}
-                              >
-                                {food.servingUnits.map(unit => (
-                                  <Picker.Item 
-                                    key={unit.id} 
-                                    label={unit.name} 
-                                    value={unit.name} 
-                                  />
-                                ))}
-                              </Picker>
-                            </View>
-                          </View>
-
-                          <View style={styles.sliderContainer}>
-                            {focusedContainer === food.id ? (
-                              <View style={styles.rangeInputContainer}>
-                                <TextInput
-                                  ref={minInputRef}
-                                  style={[
-                                    styles.rangeInput,
-                                    focusedInput?.foodId === food.id && focusedInput?.type === 'min' && styles.rangeInputFocused,
-                                    { outlineWidth: 0 } as any
-                                  ]}
-                                  value={food.minQuantity.toString()}
-                                  onChangeText={(text) => handleMinQuantityChange(kitchen.id, food.id, text)}
-                                  keyboardType="numeric"
-                                  selectionColor={Colors.blue}
-                                  underlineColorAndroid="transparent"
-                                  onFocus={() => handleInputFocus(food.id, 'min')}
-                                  onBlur={() => handleInputBlur(food.id, 'min')}
-                                  autoCorrect={false}
-                                  spellCheck={false}
-                                />
-                                <Text style={styles.rangeSeparator}>to</Text>
-                                <TextInput
-                                  ref={maxInputRef}
-                                  style={[
-                                    styles.rangeInput,
-                                    focusedInput?.foodId === food.id && focusedInput?.type === 'max' && styles.rangeInputFocused,
-                                    { outlineWidth: 0 } as any
-                                  ]}
-                                  value={food.maxQuantity.toString()}
-                                  onChangeText={(text) => handleMaxQuantityChange(kitchen.id, food.id, text)}
-                                  keyboardType="numeric"
-                                  selectionColor={Colors.blue}
-                                  underlineColorAndroid="transparent"
-                                  onFocus={() => handleInputFocus(food.id, 'max')}
-                                  onBlur={() => handleInputBlur(food.id, 'max')}
-                                  autoCorrect={false}
-                                  spellCheck={false}
-                                />
-                              </View>
-                            ) : (
-                              <React.Fragment>
-                                <View style={styles.sliderRow}>
-                                  <Pressable 
-                                    onPress={() => handleMinClick(food.id)}
-                                    style={styles.minMaxLabelContainer}
-                                  >
-                                    <Text style={styles.minMaxLabel}>{food.minQuantity.toFixed(1)}</Text>
-                                  </Pressable>
-                                  <Slider
-                                    style={styles.slider}
-                                    minimumValue={food.minQuantity}
-                                    maximumValue={food.maxQuantity}
-                                    value={food.quantity}
-                                    onValueChange={(value) => handleQuantityChange(kitchen.id, food.id, value)}
-                                    minimumTrackTintColor={Colors.green}
-                                    maximumTrackTintColor={Colors.lightgray}
-                                  />
-                                  <Pressable 
-                                    onPress={() => handleMaxClick(food.id)}
-                                    style={styles.minMaxLabelContainer}
-                                  >
-                                    <Text style={styles.minMaxLabel}>{food.maxQuantity.toFixed(1)}</Text>
-                                  </Pressable>
-                                </View>
-                              </React.Fragment>
-                            )}
-                          </View>
+                    <Swipeable
+                      key={food.id}
+                      renderLeftActions={() => (
+                        <View style={styles.deleteAction}>
+                          <Pressable
+                            style={styles.deleteButton}
+                            onPress={() => handleDeleteFood(mealId, food.id)}
+                          >
+                            <MaterialIcons name="delete" size={24} color={Colors.white} />
+                          </Pressable>
                         </View>
                       )}
-                    </View>
+                    >
+                      <View style={styles.quantityItem}>
+                        <Pressable 
+                          style={styles.foodHeader}
+                          onPress={() => toggleFoodExpansion(food.id)}
+                        >
+                          <View style={styles.foodHeaderContent}>
+                            <Text style={styles.foodName} numberOfLines={1} ellipsizeMode="tail">
+                              {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
+                            </Text>
+                            {!expandedFoods.has(food.id) && (
+                              <Text style={styles.summaryText} numberOfLines={1} ellipsizeMode="tail">
+                                {food.quantity.toFixed(1)} {food.selectedUnit}
+                              </Text>
+                            )}
+                            <MaterialIcons 
+                              name={expandedFoods.has(food.id) ? "chevron-up" : "chevron-down"} 
+                              size={20} 
+                              color={Colors.gray} 
+                            />
+                          </View>
+                        </Pressable>
+
+                        {expandedFoods.has(food.id) && (
+                          <View style={styles.expandedContent}>
+                            <View style={styles.quantityUnitRow}>
+                              <Text style={styles.quantityText}>{food.quantity.toFixed(1)}</Text>
+                              <View style={styles.unitPicker}>
+                                <Picker
+                                  selectedValue={food.selectedUnit}
+                                  onValueChange={(value: string) => handleUnitChange(kitchen.id, food.id, value)}
+                                  style={styles.picker}
+                                >
+                                  {food.servingUnits.map(unit => (
+                                    <Picker.Item 
+                                      key={unit.id} 
+                                      label={unit.name} 
+                                      value={unit.name} 
+                                    />
+                                  ))}
+                                </Picker>
+                              </View>
+                            </View>
+
+                            <View style={styles.sliderContainer}>
+                              {focusedContainer === food.id ? (
+                                <View style={styles.rangeInputContainer}>
+                                  <TextInput
+                                    ref={minInputRef}
+                                    style={[
+                                      styles.rangeInput,
+                                      focusedInput?.foodId === food.id && focusedInput?.type === 'min' && styles.rangeInputFocused,
+                                      { outlineWidth: 0 } as any
+                                    ]}
+                                    value={food.minQuantity.toString()}
+                                    onChangeText={(text) => handleMinQuantityChange(kitchen.id, food.id, text)}
+                                    keyboardType="numeric"
+                                    selectionColor={Colors.blue}
+                                    underlineColorAndroid="transparent"
+                                    onFocus={() => handleInputFocus(food.id, 'min')}
+                                    onBlur={() => handleInputBlur(food.id, 'min')}
+                                    autoCorrect={false}
+                                    spellCheck={false}
+                                  />
+                                  <Text style={styles.rangeSeparator}>to</Text>
+                                  <TextInput
+                                    ref={maxInputRef}
+                                    style={[
+                                      styles.rangeInput,
+                                      focusedInput?.foodId === food.id && focusedInput?.type === 'max' && styles.rangeInputFocused,
+                                      { outlineWidth: 0 } as any
+                                    ]}
+                                    value={food.maxQuantity.toString()}
+                                    onChangeText={(text) => handleMaxQuantityChange(kitchen.id, food.id, text)}
+                                    keyboardType="numeric"
+                                    selectionColor={Colors.blue}
+                                    underlineColorAndroid="transparent"
+                                    onFocus={() => handleInputFocus(food.id, 'max')}
+                                    onBlur={() => handleInputBlur(food.id, 'max')}
+                                    autoCorrect={false}
+                                    spellCheck={false}
+                                  />
+                                </View>
+                              ) : (
+                                <React.Fragment>
+                                  <View style={styles.sliderRow}>
+                                    <Pressable 
+                                      onPress={() => handleMinClick(food.id)}
+                                      style={styles.minMaxLabelContainer}
+                                    >
+                                      <Text style={styles.minMaxLabel}>{food.minQuantity.toFixed(1)}</Text>
+                                    </Pressable>
+                                    <Slider
+                                      style={styles.slider}
+                                      minimumValue={food.minQuantity}
+                                      maximumValue={food.maxQuantity}
+                                      value={food.quantity}
+                                      onValueChange={(value) => handleQuantityChange(kitchen.id, food.id, value)}
+                                      minimumTrackTintColor={Colors.green}
+                                      maximumTrackTintColor={Colors.lightgray}
+                                    />
+                                    <Pressable 
+                                      onPress={() => handleMaxClick(food.id)}
+                                      style={styles.minMaxLabelContainer}
+                                    >
+                                      <Text style={styles.minMaxLabel}>{food.maxQuantity.toFixed(1)}</Text>
+                                    </Pressable>
+                                  </View>
+                                </React.Fragment>
+                              )}
+                            </View>
+                          </View>
+                        )}
+                      </View>
+                    </Swipeable>
                   ))}
                 </View>
               )}
@@ -968,5 +994,17 @@ const styles = StyleSheet.create({
   },
   optimizeButtonTextDisabled: {
     color: Colors.gray,
+  },
+  deleteAction: {
+    backgroundColor: Colors.orange,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+  },
+  deleteButton: {
+    padding: 8,
+    backgroundColor: Colors.orange,
+    borderRadius: 8,
   },
 }) 
