@@ -24,6 +24,8 @@ export interface FoodServing {
     grams: number;
   };
   quantity: number;
+  minQuantity: number;
+  maxQuantity: number;
 }
 
 export interface UserPreference {

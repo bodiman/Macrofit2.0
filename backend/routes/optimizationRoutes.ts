@@ -28,6 +28,8 @@ interface FoodServing {
     grams: number;
   };
   quantity: number;
+  minQuantity: number;
+  maxQuantity: number;
 }
 
 interface UserPreference {
@@ -117,11 +119,12 @@ const optimizeQuantities = (
       qPlus[i] += h;
       qMinus[i] -= h;
       
-      const macros = calculateTotalMacros(foodServings, qMinus)
-    //   for (let preference of preferences) {
-    //     console.log(preference)
-    //     console.log(macros[preference.metric_id])
-    //   }
+      // Ensure finite difference calculations respect bounds
+      const minQuantity = foodServings[i].minQuantity;
+      const maxQuantity = foodServings[i].maxQuantity;
+      qPlus[i] = Math.max(minQuantity, Math.min(maxQuantity, qPlus[i]));
+      qMinus[i] = Math.max(minQuantity, Math.min(maxQuantity, qMinus[i]));
+      
       const errorPlus = calculateSquaredError(calculateTotalMacros(foodServings, qPlus), preferences);
       const errorMinus = calculateSquaredError(calculateTotalMacros(foodServings, qMinus), preferences);
       
@@ -131,8 +134,10 @@ const optimizeQuantities = (
     // Update quantities using gradient descent
     for (let i = 0; i < quantities.length; i++) {
       quantities[i] -= learningRate * gradients[i];
-      // Ensure non-negative quantities
-      quantities[i] = Math.max(0, quantities[i]);
+      // Ensure quantities respect min/max bounds
+      const minQuantity = foodServings[i].minQuantity;
+      const maxQuantity = foodServings[i].maxQuantity;
+      quantities[i] = Math.max(minQuantity, Math.min(maxQuantity, quantities[i]));
     }
     
     // Calculate new error

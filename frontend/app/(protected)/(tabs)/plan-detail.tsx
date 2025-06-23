@@ -361,23 +361,40 @@ export default function PlanDetailPage() {
       }
       
       // Convert selected foods to FoodServing format
-      const foodServings = selectedFoods.map(food => ({
-        id: food.id,
-        food: {
-          id: food.food.id,
-          name: food.food.name,
-          macros: Object.entries(food.food.macros || {}).map(([metricName, value]) => ({
-            metric: {
-              id: metricName,
-              name: metricName
-            },
-            value: value as number
-          })),
-          servingUnits: food.food.servingUnits || []
-        },
-        unit: food.unit,
-        quantity: food.quantity
-      }))
+      const foodServings = selectedFoods.map(food => {
+        // Find the food in kitchens to get min/max constraints
+        let minQuantity = 0;
+        let maxQuantity = 10;
+        
+        for (const kitchen of kitchens) {
+          const kitchenFood = kitchen.foods.find(f => f.id === food.id);
+          if (kitchenFood) {
+            minQuantity = kitchenFood.minQuantity;
+            maxQuantity = kitchenFood.maxQuantity;
+            break;
+          }
+        }
+        
+        return {
+          id: food.id,
+          food: {
+            id: food.food.id,
+            name: food.food.name,
+            macros: Object.entries(food.food.macros || {}).map(([metricName, value]) => ({
+              metric: {
+                id: metricName,
+                name: metricName
+              },
+              value: value as number
+            })),
+            servingUnits: food.food.servingUnits || []
+          },
+          unit: food.unit,
+          quantity: food.quantity,
+          minQuantity: minQuantity,
+          maxQuantity: maxQuantity
+        }
+      })
       
       // Convert preferences to the format expected by the backend
       const optimizationPreferences = userPrefs.map(pref => ({
