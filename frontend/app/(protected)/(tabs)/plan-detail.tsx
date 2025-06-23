@@ -616,7 +616,7 @@ export default function PlanDetailPage() {
       {/* <Text style={styles.title}>Meal Plan</Text>
       <Text style={styles.subtitle}>Plan your meals for the day</Text> */}
 
-      <ScrollView style={styles.mealList}>
+      <ScrollView style={styles.mealList} contentContainerStyle={styles.mealListContent}>
         {userMealPreferences.map(meal => (
           <View key={meal.id} style={styles.mealSection}>
             <Pressable 
@@ -664,19 +664,20 @@ export default function PlanDetailPage() {
             )}
           </View>
         ))}
+        
+        {/* Optimize button at the bottom of the scrollable content */}
+        <View style={styles.optimizeContainer}>
+          <Pressable 
+            style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
+            onPress={optimizeQuantities}
+            disabled={isOptimizing}
+          >
+            <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
+              {isOptimizing ? 'Optimizing...' : 'Optimize Quantities'}
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
-      
-      <View style={styles.optimizeContainer}>
-        <Pressable 
-          style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
-          onPress={optimizeQuantities}
-          disabled={isOptimizing}
-        >
-          <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
-            {isOptimizing ? 'Optimizing...' : 'Optimize Quantities'}
-          </Text>
-        </Pressable>
-      </View>
     </View>
   )
 }
@@ -700,6 +701,9 @@ const styles = StyleSheet.create({
   },
   mealList: {
     flex: 1,
+  },
+  mealListContent: {
+    gap: 16,
   },
   mealSection: {
     borderBottomWidth: 1,
@@ -928,8 +932,8 @@ const styles = StyleSheet.create({
   optimizeContainer: {
     padding: 16,
     backgroundColor: Colors.white,
-    borderTopWidth: 1,
-    borderTopColor: Colors.coolgray,
+    marginTop: 16,
+    marginBottom: 20,
   },
   optimizeButton: {
     padding: 12,
