@@ -5,6 +5,7 @@ import { useUser } from '@/app/hooks/useUser'
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { useState, useEffect, useRef } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
+import { useOptimizationApi } from '@/lib/api/optimization'
 import { Food } from '@shared/types/foodTypes'
 import Slider from '@react-native-community/slider'
 import { Picker } from '@react-native-picker/picker'
@@ -51,7 +52,9 @@ export default function PlanDetailPage() {
   const [activeMealId, setActiveMealId] = useState<string | null>(null)
   const [activeMeals, setActiveMeals] = useState<Set<string>>(new Set())
   const [currentModalMealId, setCurrentModalMealId] = useState<string | null>(null)
+  const [isOptimizing, setIsOptimizing] = useState(false)
   const menuApi = useMenuApi()
+  const optimizationApi = useOptimizationApi()
   const minInputRef = useRef<TextInput>(null)
   const maxInputRef = useRef<TextInput>(null)
   const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
@@ -339,6 +342,84 @@ export default function PlanDetailPage() {
     eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros)
   }, [mealPlanMacros])
 
+  const optimizeQuantities = async () => {
+    const selectedFoods = getAllSelectedFoodServings()
+    if (selectedFoods.length === 0) {
+      alert('No foods selected for optimization')
+      return
+    }
+
+    setIsOptimizing(true)
+    
+    try {
+      // Get user preferences
+      const userPrefs = preferences || []
+      
+      if (userPrefs.length === 0) {
+        alert('No nutritional preferences set. Please set your preferences first.')
+        return
+      }
+      
+      // Convert selected foods to FoodServing format
+      const foodServings = selectedFoods.map(food => ({
+        id: food.id,
+        food: {
+          id: food.food.id,
+          name: food.food.name,
+          macros: Object.entries(food.food.macros || {}).map(([metricName, value]) => ({
+            metric: {
+              id: metricName,
+              name: metricName
+            },
+            value: value as number
+          })),
+          servingUnits: food.food.servingUnits || []
+        },
+        unit: food.unit,
+        quantity: food.quantity
+      }))
+      
+      // Convert preferences to the format expected by the backend
+      const optimizationPreferences = userPrefs.map(pref => ({
+        metric_id: pref.id,
+        min_value: pref.min || 0,
+        max_value: pref.max || Infinity
+      }))
+      
+      console.log('Sending optimization request:', {
+        foodServings,
+        preferences: optimizationPreferences
+      })
+      
+      // Call backend optimization
+      const result = await optimizationApi.optimizeQuantities({
+        foodServings,
+        preferences: optimizationPreferences
+      })
+      
+      console.log('Optimization result:', result)
+      
+      // Apply optimized quantities
+      setKitchens(prev => prev.map(kitchen => ({
+        ...kitchen,
+        foods: kitchen.foods.map(food => {
+          const foodIndex = selectedFoods.findIndex(f => f.id === food.id)
+          if (foodIndex !== -1) {
+            return { ...food, quantity: result.optimizedQuantities[foodIndex] }
+          }
+          return food
+        })
+      })))
+      
+      alert(`Quantities optimized successfully! Final error: ${result.error.toFixed(4)}`)
+    } catch (error) {
+      console.error('Optimization error:', error)
+      alert('Failed to optimize quantities. Please try again.')
+    } finally {
+      setIsOptimizing(false)
+    }
+  }
+
   const toggleFoodExpansion = (foodId: string) => {
     setExpandedFoods(prev => {
       const newSet = new Set<string>()
@@ -584,6 +665,18 @@ export default function PlanDetailPage() {
           </View>
         ))}
       </ScrollView>
+      
+      <View style={styles.optimizeContainer}>
+        <Pressable 
+          style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
+          onPress={optimizeQuantities}
+          disabled={isOptimizing}
+        >
+          <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
+            {isOptimizing ? 'Optimizing...' : 'Optimize Quantities'}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   )
 }
@@ -831,5 +924,28 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     textAlign: 'center',
     marginBottom: 8,
+  },
+  optimizeContainer: {
+    padding: 16,
+    backgroundColor: Colors.white,
+    borderTopWidth: 1,
+    borderTopColor: Colors.coolgray,
+  },
+  optimizeButton: {
+    padding: 12,
+    backgroundColor: Colors.blue,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  optimizeButtonDisabled: {
+    backgroundColor: Colors.lightgray,
+  },
+  optimizeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  optimizeButtonTextDisabled: {
+    color: Colors.gray,
   },
 }) 
