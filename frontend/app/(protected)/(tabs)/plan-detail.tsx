@@ -5,6 +5,7 @@ import { useUser } from '@/app/hooks/useUser'
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { useState, useEffect, useRef } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
+import { useOptimizationApi } from '@/lib/api/optimization'
 import { Food } from '@shared/types/foodTypes'
 import Slider from '@react-native-community/slider'
 import { Picker } from '@react-native-picker/picker'
@@ -12,6 +13,7 @@ import React from 'react'
 import KitchenActivationModal from '@/components/Kitchen/KitchenActivationModal'
 import eventBus from '@/app/storage/eventEmitter'
 import useMacros from '@/app/hooks/useMacros'
+import { Swipeable } from 'react-native-gesture-handler'
 
 interface Kitchen {
   id: string
@@ -36,6 +38,7 @@ export default function PlanDetailPage() {
   const { planId } = useLocalSearchParams()
   const { userMealPreferences, preferences } = useUser()
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
+  const [expandedFoods, setExpandedFoods] = useState<Set<string>>(new Set())
   const [kitchens, setKitchens] = useState<KitchenWithActiveFoods[]>([])
   const [selectedKitchens, setSelectedKitchens] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -48,7 +51,11 @@ export default function PlanDetailPage() {
   const [showKitchenModal, setShowKitchenModal] = useState(false)
   const [selectedFoods, setSelectedFoods] = useState<Map<string, Set<string>>>(new Map())
   const [activeMealId, setActiveMealId] = useState<string | null>(null)
+  const [activeMeals, setActiveMeals] = useState<Set<string>>(new Set())
+  const [currentModalMealId, setCurrentModalMealId] = useState<string | null>(null)
+  const [isOptimizing, setIsOptimizing] = useState(false)
   const menuApi = useMenuApi()
+  const optimizationApi = useOptimizationApi()
   const minInputRef = useRef<TextInput>(null)
   const maxInputRef = useRef<TextInput>(null)
   const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
@@ -85,6 +92,11 @@ export default function PlanDetailPage() {
         initialSelectedFoods.set(meal.id, new Set<string>())
       })
       setSelectedFoods(initialSelectedFoods)
+      
+      // Expand all meals by default
+      const allMealIds = new Set(userMealPreferences.map(meal => meal.id))
+      setExpandedMeals(allMealIds)
+      setActiveMeals(allMealIds)
     } catch (error) {
       console.error('Error fetching kitchens:', error)
     } finally {
@@ -94,9 +106,23 @@ export default function PlanDetailPage() {
 
   const toggleMealExpansion = (mealId: string) => {
     setExpandedMeals(prev => {
-      const newSet = new Set<string>()
-      if (!prev.has(mealId)) {
+      const newSet = new Set(prev)
+      if (newSet.has(mealId)) {
+        newSet.delete(mealId)
+        // Remove from active meals when collapsed
+        setActiveMeals(prevActive => {
+          const newActive = new Set(prevActive)
+          newActive.delete(mealId)
+          return newActive
+        })
+      } else {
         newSet.add(mealId)
+        // Add to active meals when expanded
+        setActiveMeals(prevActive => {
+          const newActive = new Set(prevActive)
+          newActive.add(mealId)
+          return newActive
+        })
       }
       return newSet
     })
@@ -249,23 +275,25 @@ export default function PlanDetailPage() {
     })
   }
 
-  const handleKitchenPress = (kitchen: KitchenWithActiveFoods) => {
+  const handleKitchenPress = (kitchen: KitchenWithActiveFoods, mealId: string) => {
     setSelectedKitchen(kitchen)
+    setCurrentModalMealId(mealId)
     setShowKitchenModal(true)
   }
 
   const handleCloseKitchenModal = () => {
     setShowKitchenModal(false)
     setSelectedKitchen(null)
+    setCurrentModalMealId(null)
   }
 
   const handleSelectedFoodsChange = (foodIds: string[]) => {
-    if (!activeMealId) return
+    if (!currentModalMealId) return
     
     const newSelectedFoods = new Set<string>(foodIds)
     setSelectedFoods(prev => {
       const newMap = new Map<string, Set<string>>(prev)
-      newMap.set(activeMealId, newSelectedFoods)
+      newMap.set(currentModalMealId, newSelectedFoods)
       return newMap
     })
   }
@@ -277,8 +305,9 @@ export default function PlanDetailPage() {
   const getAllSelectedFoodServings = () => {
     const allServings: any[] = []
     
-    // Get all selected foods from all meals
-    selectedFoods.forEach((selectedFoodIds, mealId) => {
+    // Get all selected foods from all meals (not just active ones)
+    userMealPreferences.forEach(meal => {
+      const selectedFoodIds = selectedFoods.get(meal.id) || new Set<string>()
       selectedFoodIds.forEach(foodId => {
         // Find the food in kitchens
         for (const kitchen of kitchens) {
@@ -314,14 +343,130 @@ export default function PlanDetailPage() {
     eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros)
   }, [mealPlanMacros])
 
-  const renderKitchenTab = () => (
+  const optimizeQuantities = async () => {
+    const selectedFoods = getAllSelectedFoodServings()
+    if (selectedFoods.length === 0) {
+      alert('No foods selected for optimization')
+      return
+    }
+
+    setIsOptimizing(true)
+    
+    try {
+      // Get user preferences
+      const userPrefs = preferences || []
+      
+      if (userPrefs.length === 0) {
+        alert('No nutritional preferences set. Please set your preferences first.')
+        return
+      }
+      
+      // Convert selected foods to FoodServing format
+      const foodServings = selectedFoods.map(food => {
+        // Find the food in kitchens to get min/max constraints
+        let minQuantity = 0;
+        let maxQuantity = 10;
+        
+        for (const kitchen of kitchens) {
+          const kitchenFood = kitchen.foods.find(f => f.id === food.id);
+          if (kitchenFood) {
+            minQuantity = kitchenFood.minQuantity;
+            maxQuantity = kitchenFood.maxQuantity;
+            break;
+          }
+        }
+        
+        return {
+          id: food.id,
+          food: {
+            id: food.food.id,
+            name: food.food.name,
+            macros: Object.entries(food.food.macros || {}).map(([metricName, value]) => ({
+              metric: {
+                id: metricName,
+                name: metricName
+              },
+              value: value as number
+            })),
+            servingUnits: food.food.servingUnits || []
+          },
+          unit: food.unit,
+          quantity: food.quantity,
+          minQuantity: minQuantity,
+          maxQuantity: maxQuantity
+        }
+      })
+      
+      // Convert preferences to the format expected by the backend
+      const optimizationPreferences = userPrefs.map(pref => ({
+        metric_id: pref.id,
+        min_value: pref.min || 0,
+        max_value: pref.max || Infinity
+      }))
+      
+      console.log('Sending optimization request:', {
+        foodServings,
+        preferences: optimizationPreferences
+      })
+      
+      // Call backend optimization
+      const result = await optimizationApi.optimizeQuantities({
+        foodServings,
+        preferences: optimizationPreferences
+      })
+      
+      console.log('Optimization result:', result)
+      
+      // Apply optimized quantities
+      setKitchens(prev => prev.map(kitchen => ({
+        ...kitchen,
+        foods: kitchen.foods.map(food => {
+          const foodIndex = selectedFoods.findIndex(f => f.id === food.id)
+          if (foodIndex !== -1) {
+            return { ...food, quantity: result.optimizedQuantities[foodIndex] }
+          }
+          return food
+        })
+      })))
+      
+      alert(`Quantities optimized successfully! Final error: ${result.error.toFixed(4)}`)
+    } catch (error) {
+      console.error('Optimization error:', error)
+      alert('Failed to optimize quantities. Please try again.')
+    } finally {
+      setIsOptimizing(false)
+    }
+  }
+
+  const toggleFoodExpansion = (foodId: string) => {
+    setExpandedFoods(prev => {
+      const newSet = new Set<string>()
+      if (!prev.has(foodId)) {
+        newSet.add(foodId)
+      }
+      return newSet
+    })
+  }
+
+  const handleDeleteFood = (mealId: string, foodId: string) => {
+    setSelectedFoods(prev => {
+      const newMap = new Map<string, Set<string>>(prev)
+      const mealSelectedFoods = newMap.get(mealId) || new Set<string>()
+      const newSelectedFoods = new Set<string>(mealSelectedFoods)
+      newSelectedFoods.delete(foodId)
+      newMap.set(mealId, newSelectedFoods)
+      return newMap
+    })
+  }
+
+  const renderKitchenTab = (mealId: string) => (
     <View style={styles.tabContent}>
       <View style={styles.kitchenList}>
         {kitchens.map(kitchen => (
           <Pressable
             key={kitchen.id}
             style={styles.kitchenItem}
-            onPress={() => handleKitchenPress(kitchen)}
+            onPress={() => handleKitchenPress(kitchen, mealId)}
           >
             <Text style={styles.kitchenName}>{kitchen.name}</Text>
             <MaterialIcons 
@@ -342,117 +487,161 @@ export default function PlanDetailPage() {
             toggleFoodSelection(selectedKitchen.id, foodId, currentActive)
           }
           onSelectedFoodsChange={handleSelectedFoodsChange}
-          selectedFoodIds={Array.from(getSelectedFoodsForMeal(activeMealId || ''))}
+          selectedFoodIds={currentModalMealId ? Array.from(getSelectedFoodsForMeal(currentModalMealId)) : []}
         />
       )}
     </View>
   )
 
-  const renderQuantityTab = () => (
+  const renderQuantityTab = (mealId: string) => (
     <View style={styles.tabContent}>
       <View style={styles.kitchenList}>
-        {kitchens.map(kitchen => (
-          <View key={kitchen.id} style={styles.kitchenSection}>
-            <Text style={styles.kitchenName}>{kitchen.name}</Text>
-            <View style={styles.foodList}>
-              {kitchen.foods
-                .filter(food => getSelectedFoodsForMeal(activeMealId || '').has(food.id))
-                .map(food => (
-                  <View key={food.id} style={styles.quantityItem}>
-                    <View style={styles.foodHeader}>
-                      <Text style={styles.foodName}>{food.name.charAt(0).toUpperCase() + food.name.slice(1)}</Text>
-                    </View>
-                    <View style={styles.quantityUnitRow}>
-                      <Text style={styles.quantityText}>{food.quantity.toFixed(1)}</Text>
-                      <View style={styles.unitPicker}>
-                        <Picker
-                          selectedValue={food.selectedUnit}
-                          onValueChange={(value: string) => handleUnitChange(kitchen.id, food.id, value)}
-                          style={styles.picker}
-                        >
-                          {food.servingUnits.map(unit => (
-                            <Picker.Item 
-                              key={unit.id} 
-                              label={unit.name} 
-                              value={unit.name} 
-                            />
-                          ))}
-                        </Picker>
-                      </View>
-                    </View>
-
-                    <View style={styles.sliderContainer}>
-                      {focusedContainer === food.id ? (
-                        <View style={styles.rangeInputContainer}>
-                          <TextInput
-                            ref={minInputRef}
-                            style={[
-                              styles.rangeInput,
-                              focusedInput?.foodId === food.id && focusedInput?.type === 'min' && styles.rangeInputFocused,
-                              { outlineWidth: 0 } as any
-                            ]}
-                            value={food.minQuantity.toString()}
-                            onChangeText={(text) => handleMinQuantityChange(kitchen.id, food.id, text)}
-                            keyboardType="numeric"
-                            selectionColor={Colors.blue}
-                            underlineColorAndroid="transparent"
-                            onFocus={() => handleInputFocus(food.id, 'min')}
-                            onBlur={() => handleInputBlur(food.id, 'min')}
-                            autoCorrect={false}
-                            spellCheck={false}
-                          />
-                          <Text style={styles.rangeSeparator}>to</Text>
-                          <TextInput
-                            ref={maxInputRef}
-                            style={[
-                              styles.rangeInput,
-                              focusedInput?.foodId === food.id && focusedInput?.type === 'max' && styles.rangeInputFocused,
-                              { outlineWidth: 0 } as any
-                            ]}
-                            value={food.maxQuantity.toString()}
-                            onChangeText={(text) => handleMaxQuantityChange(kitchen.id, food.id, text)}
-                            keyboardType="numeric"
-                            selectionColor={Colors.blue}
-                            underlineColorAndroid="transparent"
-                            onFocus={() => handleInputFocus(food.id, 'max')}
-                            onBlur={() => handleInputBlur(food.id, 'max')}
-                            autoCorrect={false}
-                            spellCheck={false}
-                          />
+        {kitchens.map(kitchen => {
+          const selectedFoodsForKitchen = kitchen.foods.filter(food => 
+            getSelectedFoodsForMeal(mealId).has(food.id)
+          )
+          
+          return (
+            <View key={kitchen.id} style={styles.kitchenSection}>
+              <Text style={styles.kitchenName}>{kitchen.name}</Text>
+              {selectedFoodsForKitchen.length === 0 ? (
+                <Text style={styles.noFoodsMessage}>No foods selected for this kitchen</Text>
+              ) : (
+                <View style={styles.foodList}>
+                  {selectedFoodsForKitchen.map(food => (
+                    <Swipeable
+                      key={food.id}
+                      renderLeftActions={() => (
+                        <View style={styles.deleteAction}>
+                          <Pressable
+                            style={styles.deleteButton}
+                            onPress={() => handleDeleteFood(mealId, food.id)}
+                          >
+                            <MaterialIcons name="delete" size={24} color={Colors.white} />
+                          </Pressable>
                         </View>
-                      ) : (
-                        <React.Fragment>
-                          <View style={styles.sliderRow}>
-                            <Pressable 
-                              onPress={() => handleMinClick(food.id)}
-                              style={styles.minMaxLabelContainer}
-                            >
-                              <Text style={styles.minMaxLabel}>{food.minQuantity.toFixed(1)}</Text>
-                            </Pressable>
-                            <Slider
-                              style={styles.slider}
-                              minimumValue={food.minQuantity}
-                              maximumValue={food.maxQuantity}
-                              value={food.quantity}
-                              onValueChange={(value) => handleQuantityChange(kitchen.id, food.id, value)}
-                              minimumTrackTintColor={Colors.green}
-                              maximumTrackTintColor={Colors.lightgray}
-                            />
-                            <Pressable 
-                              onPress={() => handleMaxClick(food.id)}
-                              style={styles.minMaxLabelContainer}
-                            >
-                              <Text style={styles.minMaxLabel}>{food.maxQuantity.toFixed(1)}</Text>
-                            </Pressable>
-                          </View>
-                        </React.Fragment>
                       )}
-                    </View>
-                  </View>
-                ))}
+                    >
+                      <View style={styles.quantityItem}>
+                        <Pressable 
+                          style={styles.foodHeader}
+                          onPress={() => toggleFoodExpansion(food.id)}
+                        >
+                          <View style={styles.foodHeaderContent}>
+                            <Text style={styles.foodName} numberOfLines={1} ellipsizeMode="tail">
+                              {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
+                            </Text>
+                            {!expandedFoods.has(food.id) && (
+                              <Text style={styles.summaryText} numberOfLines={1} ellipsizeMode="tail">
+                                {food.quantity.toFixed(1)} {food.selectedUnit}
+                              </Text>
+                            )}
+                            <MaterialIcons 
+                              name={expandedFoods.has(food.id) ? "chevron-up" : "chevron-down"} 
+                              size={20} 
+                              color={Colors.gray} 
+                            />
+                          </View>
+                        </Pressable>
+
+                        {expandedFoods.has(food.id) && (
+                          <View style={styles.expandedContent}>
+                            <View style={styles.quantityUnitRow}>
+                              <Text style={styles.quantityText}>{food.quantity.toFixed(1)}</Text>
+                              <View style={styles.unitPicker}>
+                                <Picker
+                                  selectedValue={food.selectedUnit}
+                                  onValueChange={(value: string) => handleUnitChange(kitchen.id, food.id, value)}
+                                  style={styles.picker}
+                                >
+                                  {food.servingUnits.map(unit => (
+                                    <Picker.Item 
+                                      key={unit.id} 
+                                      label={unit.name} 
+                                      value={unit.name} 
+                                    />
+                                  ))}
+                                </Picker>
+                              </View>
+                            </View>
+
+                            <View style={styles.sliderContainer}>
+                              {focusedContainer === food.id ? (
+                                <View style={styles.rangeInputContainer}>
+                                  <TextInput
+                                    ref={minInputRef}
+                                    style={[
+                                      styles.rangeInput,
+                                      focusedInput?.foodId === food.id && focusedInput?.type === 'min' && styles.rangeInputFocused,
+                                      { outlineWidth: 0 } as any
+                                    ]}
+                                    value={food.minQuantity.toString()}
+                                    onChangeText={(text) => handleMinQuantityChange(kitchen.id, food.id, text)}
+                                    keyboardType="numeric"
+                                    selectionColor={Colors.blue}
+                                    underlineColorAndroid="transparent"
+                                    onFocus={() => handleInputFocus(food.id, 'min')}
+                                    onBlur={() => handleInputBlur(food.id, 'min')}
+                                    autoCorrect={false}
+                                    spellCheck={false}
+                                  />
+                                  <Text style={styles.rangeSeparator}>to</Text>
+                                  <TextInput
+                                    ref={maxInputRef}
+                                    style={[
+                                      styles.rangeInput,
+                                      focusedInput?.foodId === food.id && focusedInput?.type === 'max' && styles.rangeInputFocused,
+                                      { outlineWidth: 0 } as any
+                                    ]}
+                                    value={food.maxQuantity.toString()}
+                                    onChangeText={(text) => handleMaxQuantityChange(kitchen.id, food.id, text)}
+                                    keyboardType="numeric"
+                                    selectionColor={Colors.blue}
+                                    underlineColorAndroid="transparent"
+                                    onFocus={() => handleInputFocus(food.id, 'max')}
+                                    onBlur={() => handleInputBlur(food.id, 'max')}
+                                    autoCorrect={false}
+                                    spellCheck={false}
+                                  />
+                                </View>
+                              ) : (
+                                <React.Fragment>
+                                  <View style={styles.sliderRow}>
+                                    <Pressable 
+                                      onPress={() => handleMinClick(food.id)}
+                                      style={styles.minMaxLabelContainer}
+                                    >
+                                      <Text style={styles.minMaxLabel}>{food.minQuantity.toFixed(1)}</Text>
+                                    </Pressable>
+                                    <Slider
+                                      style={styles.slider}
+                                      minimumValue={food.minQuantity}
+                                      maximumValue={food.maxQuantity}
+                                      value={food.quantity}
+                                      onValueChange={(value) => handleQuantityChange(kitchen.id, food.id, value)}
+                                      minimumTrackTintColor={Colors.green}
+                                      maximumTrackTintColor={Colors.lightgray}
+                                    />
+                                    <Pressable 
+                                      onPress={() => handleMaxClick(food.id)}
+                                      style={styles.minMaxLabelContainer}
+                                    >
+                                      <Text style={styles.minMaxLabel}>{food.maxQuantity.toFixed(1)}</Text>
+                                    </Pressable>
+                                  </View>
+                                </React.Fragment>
+                              )}
+                            </View>
+                          </View>
+                        )}
+                      </View>
+                    </Swipeable>
+                  ))}
+                </View>
+              )}
             </View>
-          </View>
-        ))}
+          )
+        })}
       </View>
     </View>
   )
@@ -470,7 +659,7 @@ export default function PlanDetailPage() {
       {/* <Text style={styles.title}>Meal Plan</Text>
       <Text style={styles.subtitle}>Plan your meals for the day</Text> */}
 
-      <ScrollView style={styles.mealList}>
+      <ScrollView style={styles.mealList} contentContainerStyle={styles.mealListContent}>
         {userMealPreferences.map(meal => (
           <View key={meal.id} style={styles.mealSection}>
             <Pressable 
@@ -513,11 +702,24 @@ export default function PlanDetailPage() {
                   </Pressable>
                 </View>
 
-                {activeTab === 'kitchen' ? renderKitchenTab() : renderQuantityTab()}
+                {activeTab === 'kitchen' ? renderKitchenTab(meal.id) : renderQuantityTab(meal.id)}
               </View>
             )}
           </View>
         ))}
+        
+        {/* Optimize button at the bottom of the scrollable content */}
+        <View style={styles.optimizeContainer}>
+          <Pressable 
+            style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
+            onPress={optimizeQuantities}
+            disabled={isOptimizing}
+          >
+            <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
+              {isOptimizing ? 'Optimizing...' : 'Optimize Quantities'}
+            </Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   )
@@ -543,6 +745,9 @@ const styles = StyleSheet.create({
   mealList: {
     flex: 1,
   },
+  mealListContent: {
+    gap: 16,
+  },
   mealSection: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.coolgray,
@@ -560,22 +765,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: Colors.black,
-    marginBottom: 4,
+    marginBottom: 0,
   },
   mealTime: {
     fontSize: 14,
     color: Colors.gray,
   },
   mealContent: {
-    padding: 16,
-    gap: 16,
+    paddingHorizontal: 16,
+    gap: 8,
     backgroundColor: Colors.white,
   },
   tabs: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: Colors.coolgray,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   tab: {
     flex: 1,
@@ -611,6 +816,8 @@ const styles = StyleSheet.create({
   kitchenName: {
     fontSize: 16,
     color: Colors.black,
+    // textDecorationLine: 'underline',
+    fontWeight: '600',
   },
   selectedKitchensSection: {
     gap: 16,
@@ -623,6 +830,7 @@ const styles = StyleSheet.create({
   },
   kitchenSection: {
     gap: 8,
+    marginBottom: 16,
   },
   kitchenHeader: {
     flexDirection: 'row',
@@ -646,28 +854,26 @@ const styles = StyleSheet.create({
   foodItemActive: {
     backgroundColor: Colors.green,
   },
+  foodHeader: {
+    width: '100%',
+  },
+  foodHeaderContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   foodName: {
+    fontWeight: '600',
     fontSize: 16,
     color: Colors.black,
     flex: 1,
+    marginRight: 8,
   },
   quantityItem: {
     padding: 12,
     backgroundColor: Colors.coolgray,
     borderRadius: 8,
     gap: 8,
-  },
-  foodHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  quantityUnitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
   },
   quantityText: {
     fontSize: 16,
@@ -735,5 +941,70 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  expandedContent: {
+    padding: 12,
+    gap: 8,
+  },
+  quantityUnitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 16,
+  },
+  summaryInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 4,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: Colors.gray,
+    flex: 1,
+    textAlign: 'right',
+    marginRight: 8,
+  },
+  noFoodsMessage: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  optimizeContainer: {
+    padding: 16,
+    backgroundColor: Colors.white,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  optimizeButton: {
+    padding: 12,
+    backgroundColor: Colors.blue,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  optimizeButtonDisabled: {
+    backgroundColor: Colors.lightgray,
+  },
+  optimizeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  optimizeButtonTextDisabled: {
+    color: Colors.gray,
+  },
+  deleteAction: {
+    backgroundColor: Colors.orange,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    height: '100%',
+  },
+  deleteButton: {
+    padding: 8,
+    backgroundColor: Colors.orange,
+    borderRadius: 8,
   },
 }) 
