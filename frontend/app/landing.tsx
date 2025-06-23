@@ -9,7 +9,7 @@ import { useUser } from "@clerk/clerk-expo";
 export default function Landing() {
     const { user } = useUser()
 
-    if (user) return <Redirect href="/(protected)/home" />
+    if (user) return <Redirect href="./(protected)/home" />
 
     return (
         <LinearGradient 

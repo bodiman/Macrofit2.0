@@ -467,8 +467,8 @@ export default function PlanDetailPage() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Meal Plan</Text>
-      <Text style={styles.subtitle}>Plan your meals for the day</Text>
+      {/* <Text style={styles.title}>Meal Plan</Text>
+      <Text style={styles.subtitle}>Plan your meals for the day</Text> */}
 
       <ScrollView style={styles.mealList}>
         {userMealPreferences.map(meal => (
@@ -483,7 +483,6 @@ export default function PlanDetailPage() {
               <View style={styles.mealHeaderContent}>
                 <View>
                   <Text style={styles.mealName}>{meal.name}</Text>
-                  <Text style={styles.mealTime}>{meal.default_time}</Text>
                 </View>
                 <MaterialIcons 
                   name={expandedMeals.has(meal.id) ? "chevron-up" : "chevron-down"} 

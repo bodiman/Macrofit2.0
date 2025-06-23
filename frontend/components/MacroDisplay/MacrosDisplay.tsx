@@ -67,7 +67,6 @@ export default function MacrosDisplay({ macroPreferences, macroValues, radius, i
                 // pagingEnabled
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={[styles.flatListContainer, { gap: gap }]}
-                nestedScrollEnabled={true}
                 snapToInterval={containerWidth + gap}
                 decelerationRate={0.9}
                 // ItemSeparatorComponent={() => <View style={{ width: gap }} />}
