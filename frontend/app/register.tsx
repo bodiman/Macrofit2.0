@@ -12,7 +12,7 @@ export default function Register() {
         if (!clerkUser || error ) {
             router.replace('/landing');
         } else if (appUser) {
-            router.replace('/(protected)/home');
+            router.replace('./(protected)/home');
         } else if (!creatingUser) {
             setCreatingUser(true);
             createUser({

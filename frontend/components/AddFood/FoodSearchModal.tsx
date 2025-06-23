@@ -24,16 +24,17 @@ type Props = PropsWithChildren<{
 
 export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
-    const totalMacrosInCart = useMacros(shoppingCart);
+    const totalMacrosInCart = useMacros([...shoppingCart, ...(activeMeal?.servings || [])]);
 
     const adjustedPreferences = useMemo(() => {
         const distributionPercentage = activeMealPreference?.distribution_percentage;
+        // console.log("distributionPercentage", distributionPercentage);
         if (!distributionPercentage) return dailyMacroPreferences;
         
         return dailyMacroPreferences.map(pref => ({
             ...pref,
-            min: pref.min ? (pref.min * distributionPercentage) / 100 : undefined,
-            max: pref.max ? (pref.max * distributionPercentage) / 100 : undefined
+            min: pref.min ? (pref.min * distributionPercentage) : undefined,
+            max: pref.max ? (pref.max * distributionPercentage): undefined
         }));
     }, [dailyMacroPreferences, activeMealPreference]);
 

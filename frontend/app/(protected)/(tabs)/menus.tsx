@@ -20,7 +20,6 @@ export default function Page() {
     // setLoading(false);
     try {
       const data = await menuApi.getMenus()
-      console.log("data", data);
       setKitchens(data)
     } catch (error) {
       console.error('Error loading kitchens:', error)

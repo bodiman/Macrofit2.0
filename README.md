@@ -1,3 +1,21 @@
+May 31
+------
+
+Let's start on the meal planning page. For now, we'll implement only the frontend, and not bother with any backend implementations, aside from using existing routes available through the api. I would like a page where users are able to
+
+1. Add kitchens to their meal plans. Users will be able to scroll through their kitchens and select or unselect the kitchens they want to plan from. They will also have the opportunity to select or unselect foods from each kitchen to move onto the next phase of meal planning.
+
+2. In the next phase of meal planning, the possible foods are known, and the quantities are what should be determined the users can adjust food units through a spinner, and quantities through a slider/textbox. They can also adjust the minimum and maximum values of the sliders, in a desmos-like format.
+
+3. Users should be able to click "Save Meal Plan" or something like that.
+
+
+May 29
+------
+
+I am going to make a modal that operates very similarly to the FoodSearch modal. But, instead of adding foodServings to a list, it will just add foods to the list. I will likely need to do something similar in the meal plan page as well, so it makes sense to rework the FoodSearchModal to be more recyclable. Right now, the FoodSearchModal pretty much just displays the meal name. The AddFood component takes care of displaying all of the foods in the shopping cart, and logging, as well as searching for new foods. I think that instead, the AddFood component should only be responsible for adding new foods. The logic for managing the shopping cart and logging foods should be moved into the FoodSearchModal. This way, I can reuse the AddFood component in a separate modal for adding foods to a kitchen.
+
+
 May 27
 ------
 

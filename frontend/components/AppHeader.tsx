@@ -40,6 +40,7 @@ export default function AppHeader() {
     const { shoppingCart, setShoppingCart } = useShoppingCart();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showMacros, setShowMacros] = useState(true);
+    const [mealPlanMacros, setMealPlanMacros] = useState({});
 
     useEffect(() => {
         const handleCartUpdate = () => {
@@ -49,15 +50,20 @@ export default function AppHeader() {
 
         const handleModalOpen = () => setIsModalOpen(true);
         const handleModalClose = () => setIsModalOpen(false);
+        const handleMealPlanMacrosUpdate = (macros: any) => {
+            setMealPlanMacros(macros);
+        };
 
         eventBus.on('shoppingCartUpdated', handleCartUpdate);
         eventBus.on('foodSearchModalOpen', handleModalOpen);
         eventBus.on('foodSearchModalClose', handleModalClose);
+        eventBus.on('mealPlanMacrosUpdated', handleMealPlanMacrosUpdate);
 
         return () => {
             eventBus.off('shoppingCartUpdated', handleCartUpdate);
             eventBus.off('foodSearchModalOpen', handleModalOpen);
             eventBus.off('foodSearchModalClose', handleModalClose);
+            eventBus.off('mealPlanMacrosUpdated', handleMealPlanMacrosUpdate);
         };
     }, []);
 
@@ -76,6 +82,11 @@ export default function AppHeader() {
             combined[key] = (combined[key] || 0) + value;
         }
     
+        // Include meal plan macros
+        for (const [key, value] of Object.entries(mealPlanMacros)) {
+            combined[key] = (combined[key] || 0) + (value as number);
+        }
+    
         // Only include cart macros when modal is open
         if (isModalOpen) {
             for (const [key, value] of Object.entries(cartMacros)) {
@@ -84,21 +95,19 @@ export default function AppHeader() {
         }
         
         return combined;
-    }, [mealMacros, cartMacros, isModalOpen]);
+    }, [mealMacros, cartMacros, mealPlanMacros, isModalOpen]);
 
     return (
         <View style={styles.header}>
-            {/* <View style={styles.toggleContainer}> */}
-                <TouchableOpacity 
-                    style={styles.toggleContainer}
-                    onPress={() => setShowMacros(!showMacros)}
-                >   
-                    <Logo size1={25} size2={25} theme={"dark"} />
-                    <View style={[{transform: showMacros ? [{ translateY: 9 }] : [{ translateY: -5 }]}]}>
-                        {!showMacros ? <WideUpArrow /> : <WideDownArrow />}
-                    </View>
-                </TouchableOpacity>
-            {/* </View> */}
+            <TouchableOpacity 
+                style={styles.toggleContainer}
+                onPress={() => setShowMacros(!showMacros)}
+            >   
+                <Logo size1={25} size2={25} theme={"dark"} />
+                <View style={[{transform: showMacros ? [{ translateY: 9 }] : [{ translateY: -5 }]}]}>
+                    {!showMacros ? <WideUpArrow /> : <WideDownArrow />}
+                </View>
+            </TouchableOpacity>
 
             <View style={styles.globalMacroContainer}>
                 {showMacros && (
