@@ -508,20 +508,9 @@ export default function PlanDetailPage() {
                 <Text style={styles.noFoodsMessage}>No foods selected for this kitchen</Text>
               ) : (
                 <View style={styles.foodList}>
-                  {selectedFoodsForKitchen.map(food => (
-                    <Swipeable
-                      key={food.id}
-                      renderLeftActions={() => (
-                        <View style={styles.deleteAction}>
-                          <Pressable
-                            style={styles.deleteButton}
-                            onPress={() => handleDeleteFood(mealId, food.id)}
-                          >
-                            <MaterialIcons name="delete" size={24} color={Colors.white} />
-                          </Pressable>
-                        </View>
-                      )}
-                    >
+                  {selectedFoodsForKitchen.map(food => {
+                    const isExpanded = expandedFoods.has(food.id);
+                    const foodCard = (
                       <View style={styles.quantityItem}>
                         <Pressable 
                           style={styles.foodHeader}
@@ -531,20 +520,20 @@ export default function PlanDetailPage() {
                             <Text style={styles.foodName} numberOfLines={1} ellipsizeMode="tail">
                               {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
                             </Text>
-                            {!expandedFoods.has(food.id) && (
+                            {!isExpanded && (
                               <Text style={styles.summaryText} numberOfLines={1} ellipsizeMode="tail">
                                 {food.quantity.toFixed(1)} {food.selectedUnit}
                               </Text>
                             )}
                             <MaterialIcons 
-                              name={expandedFoods.has(food.id) ? "chevron-up" : "chevron-down"} 
+                              name={isExpanded ? "chevron-up" : "chevron-down"} 
                               size={20} 
                               color={Colors.gray} 
                             />
                           </View>
                         </Pressable>
 
-                        {expandedFoods.has(food.id) && (
+                        {isExpanded && (
                           <View style={styles.expandedContent}>
                             <View style={styles.quantityUnitRow}>
                               <Text style={styles.quantityText}>{food.quantity.toFixed(1)}</Text>
@@ -635,8 +624,30 @@ export default function PlanDetailPage() {
                           </View>
                         )}
                       </View>
-                    </Swipeable>
-                  ))}
+                    );
+
+                    return isExpanded ? (
+                      <View key={food.id}>
+                        {foodCard}
+                      </View>
+                    ) : (
+                      <Swipeable
+                        key={food.id}
+                        renderLeftActions={() => (
+                          <View style={styles.deleteAction}>
+                            <Pressable
+                              style={styles.deleteButton}
+                              onPress={() => handleDeleteFood(mealId, food.id)}
+                            >
+                              <MaterialIcons name="delete" size={24} color={Colors.white} />
+                            </Pressable>
+                          </View>
+                        )}
+                      >
+                        {foodCard}
+                      </Swipeable>
+                    );
+                  })}
                 </View>
               )}
             </View>
