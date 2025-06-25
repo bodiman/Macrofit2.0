@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
         flex: 1,
         width: "100%",
         backgroundColor: Colors.white,
-        paddingBottom: 40,
+        paddingBottom: 60,
     },
     cartList: {
         flex: 1,
@@ -194,7 +194,8 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1,
-        padding: 20,
+        padding: 10,
+        paddingHorizontal: 20,
     },
     button: {
         backgroundColor: Colors.blue,

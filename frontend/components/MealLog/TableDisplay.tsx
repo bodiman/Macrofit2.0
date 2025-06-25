@@ -44,14 +44,15 @@ export default function TableRow({ foodServing, handleDeleteFood, onPress }: Pro
         <Pressable onPress={onPress}>
             <View style={styles.container}>
                 <Text style={styles.tableName}>
-                    { foodServing.food.name } 
+                    <Text style={styles.tableName}>{ foodServing.food.name }</Text>
+                    <View><Text style={styles.portion}>{ foodServing.food.brand.replace("-", " ") }</Text></View>
                     <View><Text style={styles.portion}>{ foodServing.quantity } { foodServing.unit.name }</Text></View>
                 </Text>
                 <Text style={styles.tableDatum}>
                     { adjustedCalories }
                 </Text>
                 <Pressable style={styles.deleteIcon} onPress={handleDeleteFood}>
-                    <MyIcon></MyIcon>
+                    <MyIcon />
                 </Pressable>
             </View>
         </Pressable>
@@ -60,7 +61,7 @@ export default function TableRow({ foodServing, handleDeleteFood, onPress }: Pro
 
 const styles = StyleSheet.create({
     container: {
-        padding: 15,
+        padding: 8,
         paddingHorizontal: 20,
         height: "auto",
         alignItems: "center",
@@ -75,7 +76,8 @@ const styles = StyleSheet.create({
         fontSize: 18,
         display: "flex",
         flexDirection: "column",
-        textTransform: "capitalize"
+        textTransform: "capitalize",
+        marginBottom: 2,
     },
     tableDatum: {
         fontSize: 18,

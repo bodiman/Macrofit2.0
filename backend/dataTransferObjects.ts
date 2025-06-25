@@ -15,6 +15,7 @@ export function toFoods(dbFoods: DbFood[]): Food[] {
     return dbFoods.map((dbFood) => ({
         id: dbFood.id,
         name: dbFood.name,
+        brand: dbFood.brand,
         macros: toMacros(dbFood.macros),
         servingUnits: dbFood.servingUnits
     }));

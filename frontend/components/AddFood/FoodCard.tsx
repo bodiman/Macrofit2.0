@@ -1,5 +1,5 @@
 import Colors from '@/styles/colors'
-import { FoodServing } from '@/tempdata'
+import { FoodServing } from '@shared/types/foodTypes';
 import { Text, View, StyleSheet, Pressable } from 'react-native'
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { TextInput } from 'react-native-gesture-handler';
@@ -47,9 +47,11 @@ export default function FoodCard({ food, onUpdatePortion, onRemove }: Props) {
                 <Pressable onPress={onRemove}>
                     <Ionicons name="close" size={24} color="black" />
                 </Pressable>
-                <Text style={styles.foodTitle}>
-                    {food.food.name}
-                </Text>
+                <View>
+                    <Text style={styles.foodTitle}>
+                        {food.food.name}
+                    </Text>
+                </View>
             </View>
             <View style={styles.foodStatsContainer}>
                 <TextInput 
@@ -64,6 +66,12 @@ export default function FoodCard({ food, onUpdatePortion, onRemove }: Props) {
                     setUnit={handleUnitChange} 
                 />
             </View>
+
+            <View style={styles.brandContainer}>
+                <Text style={styles.foodBrand}>
+                    {food.food.brand.replace("-", " ")}
+                </Text>
+            </View>
         </View>
     )
 }
@@ -74,9 +82,8 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 10,
         display: "flex",
-        flexDirection: "row",
-        flexWrap: "wrap",
-        alignItems: "center",
+        flexDirection: "column",
+        alignItems: "flex-start",
         justifyContent: "space-between",
         shadowColor: Colors.black,
         shadowOpacity: 0.5,
@@ -110,7 +117,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         // backgroundColor: "red",
-        marginLeft: 25,
+        // marginLeft: 25,
         // marginRight: 20,
         // width: "100%",
     },
@@ -124,5 +131,16 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginHorizontal: 10,
         textAlign: "center"
+    },
+    foodBrand: {
+        fontSize: 12,
+        color: Colors.black,
+        textTransform: "capitalize",
+        fontWeight: 400,
+    },
+    brandContainer: {
+        width: "100%",
+        alignItems: "flex-start",
+        paddingLeft: 10,
     }
 });

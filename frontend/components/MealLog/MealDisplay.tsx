@@ -16,20 +16,6 @@ type Props = {
 }
 
 export default function MealDisplay({ meal, modalLauncher, onFoodPress, handleDeleteFood }: Props) {
-    // const handleDeleteFood = (food: FoodServing) => {
-    //     const mealLog = storage.getString('meals')
-    //     if (mealLog != null) {
-    //         const allMeals = JSON.parse(mealLog) as Meal[];
-    //         const selectedMeal = allMeals.find(item => item.id == meal.id)
-
-    //         if (selectedMeal) {
-    //             selectedMeal.servings = selectedMeal.servings.filter((item)=> (item.id != food.id));
-    //             storage.set('meals', JSON.stringify(allMeals));
-    //             eventBus.emit('mealsUpdated')
-    //         }
-    //     }
-    // }
-
     return (
         <View style={styles.mealContainer}>
             <View style={styles.mealHeader}>
