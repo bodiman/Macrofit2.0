@@ -28,7 +28,6 @@ model Food {
   id           String        @id
   name         String
   description  String?
-  active       Boolean
   updated      DateTime      @default(now()) @updatedAt
   brand        String
   macros       FoodMacro[]
