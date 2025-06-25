@@ -120,7 +120,7 @@ export function useUser() {
 
   const createUser = async (userData: { email: string; name: string }) => {
     try {
-      setLoading(true);
+        setLoading(true);
       const res = await api.post('/api/register', userData);
       console.log("res", res);
       const data = await res.json();
@@ -133,14 +133,14 @@ export function useUser() {
       }
       // If registration provides default meal preferences, handle them here
       // For now, we expect fetchUserMealPreferences to be called after user is set
-    } catch (err) {
-      console.error('Failed to register app user:', err);
-      setError('Failed to register user');
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
+        } catch (err) {
+            console.error('Failed to register app user:', err);
+            setError('Failed to register user');
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
 
   const updatePreference = async (preference: {
     metric_id: string;
@@ -261,7 +261,7 @@ export function useUser() {
       try {
         setLoading(true);
         const params = new URLSearchParams({
-          email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
+            email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
         });
         const res = await api.get(`/api/user?${params.toString()}`);
         const user = await res.json();
@@ -285,7 +285,7 @@ export function useUser() {
         setLoading(false);
       }
     };
-    
+
     fetchAppUserAndData();
   }, [isLoaded, clerkUser]); // api should be stable, fetchX functions depend on appUser or passed params
 

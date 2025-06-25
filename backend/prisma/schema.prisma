@@ -30,10 +30,11 @@ model Food {
   description  String?
   active       Boolean
   updated      DateTime      @default(now()) @updatedAt
+  brand        String
   macros       FoodMacro[]
   foodServings FoodServing[]
-  servingUnits ServingUnit[]
   kitchens     KitchenFood[]
+  servingUnits ServingUnit[]
 }
 
 model FoodMacro {
@@ -126,12 +127,12 @@ model MealMacroGoal {
 }
 
 model KitchenFood {
-  id         String   @id
+  id         String  @id
   kitchen_id String
   food_id    String
-  active     Boolean  @default(false)
-  kitchen    Kitchen  @relation(fields: [kitchen_id], references: [id], onDelete: Cascade)
-  food       Food     @relation(fields: [food_id], references: [id], onDelete: Cascade)
+  active     Boolean @default(false)
+  food       Food    @relation(fields: [food_id], references: [id], onDelete: Cascade)
+  kitchen    Kitchen @relation(fields: [kitchen_id], references: [id], onDelete: Cascade)
 
   @@unique([kitchen_id, food_id])
 }
