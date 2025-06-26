@@ -72,11 +72,34 @@ export async function getNutritionixBrandedData(brandedFoods: BrandedFood[]) {
             });
 
             const result = await response.json()
-            return result
+            const foodData = result['foods'][0];
+
+            console.log("foodData", foodData["servingUnit"], foodData);
+            return {
+                name: foodData['food_name'],
+                brand: food.brand,
+                serving_size: foodData['serving_weight_grams'] !== null ? foodData['serving_weight_grams'] : 1,
+                serving_unit: foodData['serving_unit'],
+                macros: foodData['full_nutrients']
+            }
         })
     )
 
-    return data;
+    return data.map((food: any) => {
+        if (!food) {
+            return null;
+        }
+        
+        return {
+            ...food,
+            macros: food.macros.map((macro: any) => {
+                return {
+                    metric_id: nutrient_map[macro.attr_id],
+                    value: macro.value / food.serving_size,
+                }
+            })
+        }
+    });
 }
 
 export async function getNutritionixData(commonFoods: string[]) {
@@ -96,13 +119,7 @@ export async function getNutritionixData(commonFoods: string[]) {
 
             if (result.message == "We couldn't match any of your foods") {
                 return null;
-            } else {
-                // console.log("result", result['foods']);
-                // result['foods'].forEach((food: any) => {
-                //     console.log("food", food.alt_measures);
-                // });
             }
-
 
             const foodData = result['foods'][0];
 

@@ -168,18 +168,57 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 const nutritionixCommonData = await getNutritionixData(filteredCommonNames);
                 const nutritionixBrandedData = await getNutritionixBrandedData(filteredBrandedItems);
 
+                // console.log("nutritionixCommonData", nutritionixCommonData);
+                // console.log("nutritionixBrandedData", nutritionixBrandedData);
+
                 if (nutritionixBrandedData.length > 0) {
-                    const foodContainer = nutritionixBrandedData[0];
-                    if (foodContainer) {
-                        const food = foodContainer.foods[0];
-                        if (food) {
-                            console.log("food", food);
+                    const food = nutritionixBrandedData[0];
+                    if (food) {
+                        let servingUnits = [{
+                            id: uuidv4(),
+                            name: food.serving_unit,
+                            grams: food.serving_size
+                        }];
+
+                        if (food.serving_weight_grams) {
+                            servingUnits.push({
+                                id: uuidv4(),
+                                name: 'grams',
+                                grams: food.serving_weight_grams
+                            });
                         }
+
+                        console.log("Writing Food", food.name, "to database");
+                        
+                        await prisma.food.create({
+                            data: {
+                                id: uuidv4(),
+                                name: food.name,
+                                description: `${food.name} from ${food.brand}`,
+                                brand: food.brand,
+                                kitchens: {
+
+                                },
+                                macros: {
+                                    create: food.macros.map((macro: any) => ({
+                                        value: macro.value,
+                                        metric: {
+                                            connect: { id: macro.metric_id }
+                                        }
+                                    }))
+                                },
+                                servingUnits: {
+                                    create: servingUnits
+                                }
+                            }
+                        });
+                        
                     }
                 }
 
                 if (nutritionixCommonData.length > 0) {
                     const food = nutritionixCommonData[0];
+                    // console.log("commonfood", food);
                     if (food) {
                         try {
                             // write data to database  
