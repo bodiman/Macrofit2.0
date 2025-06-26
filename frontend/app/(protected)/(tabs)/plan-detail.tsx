@@ -361,8 +361,11 @@ export default function PlanDetailPage() {
         return
       }
       
-      // Convert selected foods to FoodServing format
-      const foodServings = selectedFoods.map(food => {
+      // Get all unique macro names from user preferences
+      const macroNames = userPrefs.map(pref => pref.id)
+      
+      // Convert selected foods to simplified numerical format
+      const foods = selectedFoods.map(food => {
         // Find the food in kitchens to get min/max constraints
         let minQuantity = 0;
         let maxQuantity = 10;
@@ -376,43 +379,37 @@ export default function PlanDetailPage() {
           }
         }
         
+        // Extract macro values in the same order as macroNames
+        const macroValues = macroNames.map(macroName => {
+          return (food.food.macros as any)?.[macroName] || 0;
+        });
+        
         return {
-          id: food.id,
-          food: {
-            id: food.food.id,
-            name: food.food.name,
-            macros: Object.entries(food.food.macros || {}).map(([metricName, value]) => ({
-              metric: {
-                id: metricName,
-                name: metricName
-              },
-              value: value as number
-            })),
-            servingUnits: food.food.servingUnits || []
-          },
-          unit: food.unit,
+          macroValues,
+          unitGrams: food.unit.grams,
           quantity: food.quantity,
-          minQuantity: minQuantity,
-          maxQuantity: maxQuantity
+          minQuantity,
+          maxQuantity
         }
       })
       
-      // Convert preferences to the format expected by the backend
+      // Convert preferences to the simplified format
       const optimizationPreferences = userPrefs.map(pref => ({
-        metric_id: pref.id,
         min_value: pref.min || 0,
         max_value: pref.max || Infinity
       }))
       
       console.log('Sending optimization request:', {
-        foodServings,
-        preferences: optimizationPreferences
+        foods,
+        preferences: optimizationPreferences,
+        macroNames
       })
       
-      // Call backend optimization
+      // Call backend optimization with simplified data
       const result = await optimizationApi.optimizeQuantities({
-        foodServings,
-        preferences: optimizationPreferences
+        foods,
+        preferences: optimizationPreferences,
+        macroNames
       })
       
       console.log('Optimization result:', result)
