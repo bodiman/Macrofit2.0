@@ -36,17 +36,70 @@ function getUniqueFoods(commonFoods: CommonFood[]) {
     return uniqueFoods;
 }
 
-export async function getNutritionixCommonNames(query: string) {    
+export async function getNutritionixNames(query: string) {    
     const response = await fetch(`https://trackapi.nutritionix.com/v2/search/instant/?query=${query}`, {
         headers: headers,
     });
     const data = await response.json();
     const commonFoods = data['common'];
+    const brandedFoods = data['branded'];
     const uniqueFoods = getUniqueFoods(commonFoods);
 
+    return {
+        commonNames: uniqueFoods.map((food: any) => food.food_name),
+        brandedItems: brandedFoods.map((food: any) => {
+            return {
+                nix_item_id: food.nix_item_id,
+                brand: food.brand_name,
+                food_name: food.food_name,
+            }   
+        })
+    }
+}
 
+type BrandedFood = {
+    nix_item_id: string;
+    brand: string;
+    food_name: string;
+}
 
-    return uniqueFoods.map((food: any) => food.food_name);
+export async function getNutritionixBrandedData(brandedFoods: BrandedFood[]) {
+    const data = await Promise.all(
+        brandedFoods.map(async (food: BrandedFood) => {
+            const response = await fetch(`https://trackapi.nutritionix.com/v2/search/item/?nix_item_id=${food.nix_item_id}`, {
+                method: "GET",
+                headers,
+            });
+
+            const result = await response.json()
+            const foodData = result['foods'][0];
+
+            console.log("foodData", foodData["servingUnit"], foodData);
+            return {
+                name: foodData['food_name'],
+                brand: food.brand,
+                serving_size: foodData['serving_weight_grams'] !== null ? foodData['serving_weight_grams'] : 1,
+                serving_unit: foodData['serving_unit'],
+                macros: foodData['full_nutrients']
+            }
+        })
+    )
+
+    return data.map((food: any) => {
+        if (!food) {
+            return null;
+        }
+        
+        return {
+            ...food,
+            macros: food.macros.map((macro: any) => {
+                return {
+                    metric_id: nutrient_map[macro.attr_id],
+                    value: macro.value / food.serving_size,
+                }
+            })
+        }
+    });
 }
 
 export async function getNutritionixData(commonFoods: string[]) {
@@ -66,17 +119,9 @@ export async function getNutritionixData(commonFoods: string[]) {
 
             if (result.message == "We couldn't match any of your foods") {
                 return null;
-            } else {
-                // console.log("result", result['foods']);
-                // result['foods'].forEach((food: any) => {
-                //     console.log("food", food.alt_measures);
-                // });
             }
 
-
             const foodData = result['foods'][0];
-
-            console.log("foodData", foodData);
 
             const serving_units = foodData['alt_measures'].map((unit: any) => {
                 return {

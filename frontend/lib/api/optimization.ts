@@ -1,42 +1,22 @@
 import { useApi } from './client';
 
-export interface FoodServing {
-  id: string;
-  food: {
-    id: string;
-    name: string;
-    macros: Array<{
-      metric: {
-        id: string;
-        name: string;
-      };
-      value: number;
-    }>;
-    servingUnits: Array<{
-      id: string;
-      name: string;
-      grams: number;
-    }>;
-  };
-  unit: {
-    id: string;
-    name: string;
-    grams: number;
-  };
-  quantity: number;
-  minQuantity: number;
-  maxQuantity: number;
+export interface FoodMacroData {
+  macroValues: number[]; // Values per gram for each macro
+  unitGrams: number;     // Grams per unit
+  quantity: number;      // Current quantity
+  minQuantity: number;   // Minimum allowed quantity
+  maxQuantity: number;   // Maximum allowed quantity
 }
 
-export interface UserPreference {
-  metric_id: string;
+export interface UserPreferenceData {
   min_value: number | null;
   max_value: number | null;
 }
 
 export interface OptimizationRequest {
-  foodServings: FoodServing[];
-  preferences: UserPreference[];
+  foods: FoodMacroData[];
+  preferences: UserPreferenceData[];
+  macroNames: string[]; // Array of macro names in the same order as macroValues
 }
 
 export interface OptimizationResponse {
