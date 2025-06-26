@@ -4,6 +4,7 @@ import { Macros } from './macroTypes';
 export type Food = {
     id: string;
     name: string;
+    brand: string;
     macros: Macros;
     servingUnits: ServingUnit[]
 };

@@ -44,6 +44,11 @@ export default function SearchFoodCard({ food, preferences, onAdd }: Props) {
                     {food.name}
                 </Text>
             </View>
+            <View style={styles.brandContainer}>
+                <Text style={styles.foodBrand}>
+                    {food.brand.replace("-", " ")}
+                </Text>
+            </View>
             <View style={styles.macrosContainer}>
                 {
                     preferences.map((preference) => {
@@ -86,6 +91,18 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: "600",
         color: Colors.black,
+    },
+    brandContainer: {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        marginTop: -12,
+    },
+    foodBrand: {
+        fontSize: 14,
+        color: Colors.gray,
+        textTransform: "capitalize",
     },
     macrosContainer: {
         display: "flex",

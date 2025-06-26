@@ -188,7 +188,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                     id: uuidv4(),
                                     name: food.name,
                                     description: `${food.name} from Common Foods`,
-                                    active: false,
+                                    brand: "common-foods",
                                     kitchens: {
                                         create: {
                                             id: uuidv4(),
