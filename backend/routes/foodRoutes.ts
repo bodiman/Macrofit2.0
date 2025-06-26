@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../prisma_client';
-import { getNutritionixData, getNutritionixCommonNames } from '../utils/Nutritionix/nutritionix';
+import { getNutritionixBrandedData, getNutritionixData, getNutritionixNames } from '../utils/Nutritionix/nutritionix';
 import { v4 as uuidv4 } from 'uuid';
 import { Prisma } from '@prisma/client';
 import { toFoods } from '../dataTransferObjects';
@@ -111,8 +111,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
             timeout = setTimeout(async () => {
                 writing = true;
 
-                const names = await getNutritionixCommonNames(query);
-                console.log("names", names);
+                const {commonNames, brandedItems} = await getNutritionixNames(query);
 
                 // get common foods kitchen id, create if it doesn't exist
                 let commonFoodsKitchen = await prisma.kitchen.findFirst({
@@ -153,17 +152,34 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 });
                 
                 // filter out names that are already in the database under the common_foods kitchen
-                const newNames = names.filter((name: string) => !foods.some((food) => (
+                const filteredCommonNames = commonNames.filter((name: string) => !foods.some((food) => (
                     food.name === name && 
                     food.kitchens.some(kf => kf.kitchen.id === commonFoodsKitchen.id)
                 )))
-                    .slice(0, 1);
+                .slice(0, 1);
 
-                console.log("Foods to Add:", newNames);
-                const nutritionixData = await getNutritionixData(newNames);
+                const filteredBrandedItems = brandedItems.filter((item: any) => !foods.some((food) => (
+                    food.name === item.food_name && 
+                    food.brand === item.brand
+                )))
+                .slice(0, 1);
 
-                if (nutritionixData.length > 0) {
-                    const food = nutritionixData[0];
+                console.log("Foods to Add:", filteredCommonNames, filteredBrandedItems);
+                const nutritionixCommonData = await getNutritionixData(filteredCommonNames);
+                const nutritionixBrandedData = await getNutritionixBrandedData(filteredBrandedItems);
+
+                if (nutritionixBrandedData.length > 0) {
+                    const foodContainer = nutritionixBrandedData[0];
+                    if (foodContainer) {
+                        const food = foodContainer.foods[0];
+                        if (food) {
+                            console.log("food", food);
+                        }
+                    }
+                }
+
+                if (nutritionixCommonData.length > 0) {
+                    const food = nutritionixCommonData[0];
                     if (food) {
                         try {
                             // write data to database  
@@ -181,7 +197,6 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                 return acc;
                             }, []);
                             
-                            console.log("servingUnits", servingUnits);
                             console.log(`Writing Food ${food.name} to database`);            
                             await prisma.food.create({
                                 data: {
