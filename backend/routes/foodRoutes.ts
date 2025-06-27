@@ -112,6 +112,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
                 writing = true;
 
                 const {commonNames, brandedItems} = await getNutritionixNames(query);
+                const brandedNames: string[] = brandedItems.map((item: any) => item.food_name);
 
                 // get common foods kitchen id, create if it doesn't exist
                 let commonFoodsKitchen = await prisma.kitchen.findFirst({
@@ -128,13 +129,15 @@ router.get('/search-all', async (req: Request, res: Response) => {
                     });
                 }
 
-                // retrieve all foods from database
+                // retrieve all foods from database that match any of the common names or branded items
                 let foods = await prisma.food.findMany({
                     where: {
-                        name: {
-                            contains: query,
-                            mode: 'insensitive'
-                        },
+                        OR: [...brandedNames, ...commonNames].map((name: string) => ({
+                            name: {
+                                contains: name,
+                                mode: 'insensitive'
+                            }
+                        }))
                     },
                     include: {
                         kitchens: {
@@ -201,7 +204,7 @@ router.get('/search-all', async (req: Request, res: Response) => {
                                 },
                                 macros: {
                                     create: food.macros.map((macro: any) => ({
-                                        value: macro.value,
+                                        value: macro.value / food.serving_qty,
                                         metric: {
                                             connect: { id: macro.metric_id }
                                         }

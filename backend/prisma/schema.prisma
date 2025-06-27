@@ -34,6 +34,8 @@ model Food {
   foodServings FoodServing[]
   kitchens     KitchenFood[]
   servingUnits ServingUnit[]
+
+  @@unique([name, brand])
 }
 
 model FoodMacro {
