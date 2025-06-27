@@ -74,10 +74,11 @@ export async function getNutritionixBrandedData(brandedFoods: BrandedFood[]) {
             const result = await response.json()
             const foodData = result['foods'][0];
 
-            console.log("foodData", foodData["servingUnit"], foodData);
+
             return {
                 name: foodData['food_name'],
                 brand: food.brand,
+                serving_qty: foodData['serving_qty'] !== null ? foodData['serving_qty'] : 1,
                 serving_size: foodData['serving_weight_grams'] !== null ? foodData['serving_weight_grams'] : 1,
                 serving_unit: foodData['serving_unit'],
                 macros: foodData['full_nutrients']
