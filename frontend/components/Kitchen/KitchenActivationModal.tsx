@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, Pressable, Modal, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native'
 import Colors from '@/styles/colors'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { Food } from '@shared/types/foodTypes'
 import { useState, useEffect } from 'react'
+import AnimatedModal from '../AnimatedModal'
 
 interface KitchenWithActiveFoods {
   id: string
@@ -43,7 +44,20 @@ export default function KitchenActivationModal({
     setSelectedFoods(initialSelected)
   }, [selectedFoodIds])
 
+  // Debug logging
+  useEffect(() => {
+    console.log('KitchenActivationModal Debug:', {
+      isVisible,
+      kitchenId: kitchen?.id,
+      kitchenName: kitchen?.name,
+      foodsCount: kitchen?.foods?.length || 0,
+      selectedFoodIds,
+      selectedFoodsSize: selectedFoods.size
+    })
+  }, [isVisible, kitchen, selectedFoodIds, selectedFoods])
+
   const handleToggleFood = (foodId: string) => {
+    console.log('Toggling food:', foodId)
     setSelectedFoods(prev => {
       const newSelected = new Set(prev)
       if (newSelected.has(foodId)) {
@@ -57,36 +71,41 @@ export default function KitchenActivationModal({
     })
   }
 
+  // Early return if kitchen is not available
+  if (!kitchen) {
+    console.log('KitchenActivationModal: No kitchen data available')
+    return null
+  }
+
   return (
-    <Modal
-      visible={isVisible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{kitchen.name}</Text>
-            <Pressable onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color={Colors.gray} />
-            </Pressable>
-          </View>
+    <AnimatedModal isVisible={isVisible} onClose={onClose} zIndex={100}>
+      <View style={styles.modalContent}>
+        {/* Drag handle */}
+        <View style={styles.dragHandle} />
+        
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>{kitchen.name}</Text>
+          <Pressable onPress={onClose} style={styles.closeButton}>
+            <MaterialIcons name="close" size={24} color={Colors.gray} />
+          </Pressable>
+        </View>
 
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.description}>
-              Select foods to include in this kitchen
-            </Text>
-          </View>
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.description}>
+            Select foods to include in this kitchen
+          </Text>
+        </View>
 
-          <ScrollView 
-            style={styles.scrollView}
-            scrollEnabled={isVisible}
-            bounces={false}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.foodList}>
-              {kitchen.foods.map(food => (
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          scrollEnabled={true}
+          bounces={false}
+          showsVerticalScrollIndicator={true}
+        >
+          <View style={styles.foodList}>
+            {kitchen.foods && kitchen.foods.length > 0 ? (
+              kitchen.foods.map(food => (
                 <Pressable
                   key={food.id}
                   style={[styles.foodItem, selectedFoods.has(food.id) && styles.foodItemActive]}
@@ -101,41 +120,56 @@ export default function KitchenActivationModal({
                     color={selectedFoods.has(food.id) ? Colors.white : Colors.gray} 
                   />
                 </Pressable>
-              ))}
-            </View>
-          </ScrollView>
-        </View>
+              ))
+            ) : (
+              <Text style={styles.noFoodsText}>No foods available in this kitchen</Text>
+            )}
+          </View>
+        </ScrollView>
       </View>
-    </Modal>
+    </AnimatedModal>
   )
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
   modalContent: {
+    height: '100%',
+    width: '100%',
+    borderTopRightRadius: 18,
+    borderTopLeftRadius: 18,
+    position: 'absolute',
+    bottom: 0,
     backgroundColor: Colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 0,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.coolgray,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: Colors.black,
+    flex: 1,
   },
   closeButton: {
     padding: 4,
+    marginLeft: 8,
   },
   descriptionContainer: {
     marginBottom: 16,
@@ -147,6 +181,11 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    minHeight: 200,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: 40,
   },
   foodList: {
     flexDirection: 'row',
@@ -161,6 +200,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.coolgray,
     borderRadius: 20,
     gap: 4,
+    minHeight: 40,
   },
   foodItemActive: {
     backgroundColor: Colors.blue,
@@ -171,5 +211,11 @@ const styles = StyleSheet.create({
   },
   foodNameActive: {
     color: Colors.white,
+  },
+  noFoodsText: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    padding: 20,
   },
 }) 
