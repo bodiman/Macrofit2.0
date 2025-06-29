@@ -276,18 +276,26 @@ export default function PlanDetailPage() {
   }
 
   const handleKitchenPress = (kitchen: KitchenWithActiveFoods, mealId: string) => {
+    console.log('handleKitchenPress called:', {
+      kitchenId: kitchen.id,
+      kitchenName: kitchen.name,
+      foodsCount: kitchen.foods.length,
+      mealId
+    })
     setSelectedKitchen(kitchen)
     setCurrentModalMealId(mealId)
     setShowKitchenModal(true)
   }
 
   const handleCloseKitchenModal = () => {
+    console.log('handleCloseKitchenModal called')
     setShowKitchenModal(false)
     setSelectedKitchen(null)
     setCurrentModalMealId(null)
   }
 
   const handleSelectedFoodsChange = (foodIds: string[]) => {
+    console.log('handleSelectedFoodsChange called:', foodIds)
     if (!currentModalMealId) return
     
     const newSelectedFoods = new Set<string>(foodIds)
@@ -456,39 +464,40 @@ export default function PlanDetailPage() {
     })
   }
 
-  const renderKitchenTab = (mealId: string) => (
-    <View style={styles.tabContent}>
-      <View style={styles.kitchenList}>
-        {kitchens.map(kitchen => (
-          <Pressable
-            key={kitchen.id}
-            style={styles.kitchenItem}
-            onPress={() => handleKitchenPress(kitchen, mealId)}
-          >
-            <Text style={styles.kitchenName}>{kitchen.name}</Text>
-            <MaterialIcons 
-              name="chevron-right" 
-              size={24} 
-              color={Colors.gray} 
-            />
-          </Pressable>
-        ))}
-      </View>
+  const renderKitchenTab = (mealId: string) => {
+    // Debug logging for modal rendering
+    if (selectedKitchen && showKitchenModal) {
+      console.log('Rendering KitchenActivationModal with props:', {
+        isVisible: showKitchenModal,
+        kitchenId: selectedKitchen.id,
+        kitchenName: selectedKitchen.name,
+        foodsCount: selectedKitchen.foods.length,
+        currentModalMealId,
+        selectedFoodIds: currentModalMealId ? Array.from(getSelectedFoodsForMeal(currentModalMealId)) : []
+      })
+    }
 
-      {selectedKitchen && (
-        <KitchenActivationModal
-          isVisible={showKitchenModal}
-          onClose={handleCloseKitchenModal}
-          kitchen={selectedKitchen}
-          onToggleFood={(foodId, currentActive) => 
-            toggleFoodSelection(selectedKitchen.id, foodId, currentActive)
-          }
-          onSelectedFoodsChange={handleSelectedFoodsChange}
-          selectedFoodIds={currentModalMealId ? Array.from(getSelectedFoodsForMeal(currentModalMealId)) : []}
-        />
-      )}
-    </View>
-  )
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.kitchenList}>
+          {kitchens.map(kitchen => (
+            <Pressable
+              key={kitchen.id}
+              style={styles.kitchenItem}
+              onPress={() => handleKitchenPress(kitchen, mealId)}
+            >
+              <Text style={styles.kitchenName}>{kitchen.name}</Text>
+              <MaterialIcons 
+                name="chevron-right" 
+                size={24} 
+                color={Colors.gray} 
+              />
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    )
+  }
 
   const renderQuantityTab = (mealId: string) => (
     <View style={styles.tabContent}>
@@ -729,6 +738,20 @@ export default function PlanDetailPage() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* Kitchen Activation Modal - moved to root level for full screen display */}
+      {selectedKitchen && (
+        <KitchenActivationModal
+          isVisible={showKitchenModal}
+          onClose={handleCloseKitchenModal}
+          kitchen={selectedKitchen}
+          onToggleFood={(foodId, currentActive) => 
+            toggleFoodSelection(selectedKitchen.id, foodId, currentActive)
+          }
+          onSelectedFoodsChange={handleSelectedFoodsChange}
+          selectedFoodIds={currentModalMealId ? Array.from(getSelectedFoodsForMeal(currentModalMealId)) : []}
+        />
+      )}
     </View>
   )
 }
