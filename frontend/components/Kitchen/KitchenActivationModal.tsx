@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, Pressable, ScrollView, TextInput } from 'react-native'
 import Colors from '@/styles/colors'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { Food } from '@shared/types/foodTypes'
@@ -37,6 +37,7 @@ export default function KitchenActivationModal({
 }: Props) {
   // Track selected foods separately from active state
   const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     // Initialize selected foods from the passed selectedFoodIds
@@ -90,9 +91,22 @@ export default function KitchenActivationModal({
           </Pressable>
         </View>
 
+        {/* Search bar */}
+        <View style={styles.searchBarContainer}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search foods..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
+          />
+        </View>
+
         <View style={styles.descriptionContainer}>
           <Text style={styles.description}>
-            Select foods to include in this kitchen
+            {selectedFoods.size} foods selected
           </Text>
         </View>
 
@@ -105,22 +119,47 @@ export default function KitchenActivationModal({
         >
           <View style={styles.foodList}>
             {kitchen.foods && kitchen.foods.length > 0 ? (
-              kitchen.foods.map(food => (
-                <Pressable
-                  key={food.id}
-                  style={[styles.foodItem, selectedFoods.has(food.id) && styles.foodItemActive]}
-                  onPress={() => handleToggleFood(food.id)}
-                >
-                  <Text style={[styles.foodName, selectedFoods.has(food.id) && styles.foodNameActive]}>
-                    {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
-                  </Text>
-                  <MaterialIcons 
-                    name={selectedFoods.has(food.id) ? "check-circle" : "add-circle-outline"} 
-                    size={20} 
-                    color={selectedFoods.has(food.id) ? Colors.white : Colors.gray} 
-                  />
-                </Pressable>
-              ))
+              (() => {
+                // Filter foods by search query
+                const filteredFoods = searchQuery.trim().length === 0
+                  ? kitchen.foods
+                  : kitchen.foods.filter(food =>
+                      food.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+                    )
+                // Group foods by brand
+                const foodsByBrand = filteredFoods.reduce((acc, food) => {
+                  const brand = food.brand || 'Other';
+                  if (!acc[brand]) {
+                    acc[brand] = [];
+                  }
+                  acc[brand].push(food);
+                  return acc;
+                }, {} as Record<string, typeof kitchen.foods>);
+
+                return Object.entries(foodsByBrand).map(([brand, foods]) => (
+                  <View key={brand} style={styles.brandSection}>
+                    <Text style={styles.brandTitle}>{brand}</Text>
+                    <View style={styles.brandFoods}>
+                      {foods.map(food => (
+                        <Pressable
+                          key={food.id}
+                          style={[styles.foodItem, selectedFoods.has(food.id) && styles.foodItemActive]}
+                          onPress={() => handleToggleFood(food.id)}
+                        >
+                          <Text style={[styles.foodName, selectedFoods.has(food.id) && styles.foodNameActive]}>
+                            {food.name.charAt(0).toUpperCase() + food.name.slice(1)}
+                          </Text>
+                          <MaterialIcons 
+                            name={selectedFoods.has(food.id) ? "check-circle" : "add-circle-outline"} 
+                            size={20} 
+                            color={selectedFoods.has(food.id) ? Colors.white : Colors.gray} 
+                          />
+                        </Pressable>
+                      ))}
+                    </View>
+                  </View>
+                ));
+              })()
             ) : (
               <Text style={styles.noFoodsText}>No foods available in this kitchen</Text>
             )}
@@ -190,7 +229,7 @@ const styles = StyleSheet.create({
   foodList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    alignItems: 'flex-start',
   },
   foodItem: {
     flexDirection: 'row',
@@ -201,6 +240,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     gap: 4,
     minHeight: 40,
+    maxWidth: "100%",
+    marginRight: 8,
+    marginBottom: 8,
   },
   foodItemActive: {
     backgroundColor: Colors.blue,
@@ -208,6 +250,8 @@ const styles = StyleSheet.create({
   foodName: {
     fontSize: 14,
     color: Colors.black,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   foodNameActive: {
     color: Colors.white,
@@ -217,5 +261,35 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     textAlign: 'center',
     padding: 20,
+  },
+  brandSection: {
+    width: '100%',
+    marginRight: 16,
+    marginBottom: 16,
+    flexGrow: 1,
+  },
+  brandTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.black,
+    marginBottom: 8,
+  },
+  brandFoods: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+  },
+  searchBarContainer: {
+    paddingHorizontal: 0,
+    paddingBottom: 8,
+  },
+  searchBar: {
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    color: Colors.black,
+    marginBottom: 0,
   },
 }) 

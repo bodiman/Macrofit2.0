@@ -26,6 +26,33 @@ interface FoodWithMacros {
 
 const router = Router();
 
+// Get all foods from database
+router.get('/all', async (req: Request, res: Response) => {
+    try {
+        const foods = await prisma.food.findMany({
+            include: {
+                kitchens: {
+                    include: {
+                        kitchen: true
+                    }
+                },
+                servingUnits: true,
+                macros: {
+                    include: {
+                        metric: true
+                    }
+                }
+            }
+        });
+
+        const transformedFoods: Food[] = toFoods(foods);
+        res.json(transformedFoods);
+    } catch (error) {
+        console.error('Error fetching all foods:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 router.get('/search', async (req: Request, res: Response) => {
     try {
         const { query } = req.query;
