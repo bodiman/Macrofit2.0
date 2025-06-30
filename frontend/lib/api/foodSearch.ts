@@ -9,7 +9,13 @@ export const useFoodSearchApi = () => {
         return res.json();
     };
 
+    const getAllFoods = async (): Promise<Food[]> => {
+        const res = await api.get('/api/food/all');
+        return res.json();
+    };
+
     return {
         searchAllFoods,
+        getAllFoods,
     };
 }; 

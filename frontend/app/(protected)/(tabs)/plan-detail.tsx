@@ -14,6 +14,7 @@ import KitchenActivationModal from '@/components/Kitchen/KitchenActivationModal'
 import eventBus from '@/app/storage/eventEmitter'
 import useMacros from '@/app/hooks/useMacros'
 import { Swipeable } from 'react-native-gesture-handler'
+import { useFoodSearchApi } from '@/lib/api/foodSearch'
 
 interface Kitchen {
   id: string
@@ -32,7 +33,16 @@ interface KitchenWithActiveFoods extends Kitchen {
   })[]
 }
 
-type Tab = 'kitchen' | 'quantity'
+// Filter types
+interface Filter {
+  id: string
+  type: 'kitchen' | 'calories' | 'protein' | 'carbs' | 'fat' | 'name' | 'macro'
+  operator: 'equals' | 'contains' | 'less_than' | 'greater_than' | 'between'
+  value: string | number | [number, number]
+  label: string
+}
+
+type FlowStep = 'filters' | 'quantities'
 
 export default function PlanDetailPage() {
   const { planId } = useLocalSearchParams()
@@ -40,57 +50,65 @@ export default function PlanDetailPage() {
   const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
   const [expandedFoods, setExpandedFoods] = useState<Set<string>>(new Set())
   const [kitchens, setKitchens] = useState<KitchenWithActiveFoods[]>([])
-  const [selectedKitchens, setSelectedKitchens] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<Tab>('kitchen')
   const [editingMin, setEditingMin] = useState<string | null>(null)
   const [editingMax, setEditingMax] = useState<string | null>(null)
   const [focusedContainer, setFocusedContainer] = useState<string | null>(null)
   const [focusedInput, setFocusedInput] = useState<{ foodId: string, type: 'min' | 'max' } | null>(null)
-  const [selectedKitchen, setSelectedKitchen] = useState<KitchenWithActiveFoods | null>(null)
-  const [showKitchenModal, setShowKitchenModal] = useState(false)
   const [selectedFoods, setSelectedFoods] = useState<Map<string, Set<string>>>(new Map())
   const [activeMealId, setActiveMealId] = useState<string | null>(null)
   const [activeMeals, setActiveMeals] = useState<Set<string>>(new Set())
-  const [currentModalMealId, setCurrentModalMealId] = useState<string | null>(null)
   const [isOptimizing, setIsOptimizing] = useState(false)
+  
+  // Flow state
+  const [currentStep, setCurrentStep] = useState<FlowStep>('filters')
+  const [showSelectionModal, setShowSelectionModal] = useState(false)
+  const [currentModalMealId, setCurrentModalMealId] = useState<string | null>(null)
+  
   const menuApi = useMenuApi()
   const optimizationApi = useOptimizationApi()
   const minInputRef = useRef<TextInput>(null)
   const maxInputRef = useRef<TextInput>(null)
   const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
+  const foodSearchApi = useFoodSearchApi()
 
   useEffect(() => {
     fetchKitchens()
   }, [])
 
+  // Apply filters whenever filters change
+  useEffect(() => {
+    // No longer needed since we're showing all foods
+  }, [kitchens])
+
   const fetchKitchens = async () => {
     try {
-      const data = await menuApi.getMenus()
-      const kitchensWithActiveFoods = await Promise.all(
-        data.map(async (kitchen) => {
-          const foods = await menuApi.getMenuFoods(kitchen.id)
-          return {
-            ...kitchen,
-            foods: foods.map(food => ({
-              ...food.food,
-              active: food.active,
-              quantity: 1,
-              minQuantity: 0,
-              maxQuantity: 10,
-              selectedUnit: food.food.servingUnits[0]?.name || 'g'
-            }))
-          }
-        })
-      )
-      setKitchens(kitchensWithActiveFoods)
+      const allFoods = await foodSearchApi.getAllFoods()
       
-      // Initialize selected foods based on active state when page loads
+      // Create a single "All Foods" kitchen with all foods
+      const allFoodsKitchen = {
+        id: 'all-foods',
+        name: 'All Foods',
+        description: 'All available foods',
+        foods: allFoods.map(food => ({
+          ...food,
+          active: true,
+          quantity: 1,
+          minQuantity: 0,
+          maxQuantity: 10,
+          selectedUnit: food.servingUnits[0]?.name || 'g'
+        }))
+      }
+      
+      setKitchens([allFoodsKitchen])
+      
+      // Initialize selected foods for each meal
       const initialSelectedFoods = new Map<string, Set<string>>()
-      // Initialize each meal with an empty set of selected foods
+      
       userMealPreferences.forEach(meal => {
         initialSelectedFoods.set(meal.id, new Set<string>())
       })
+      
       setSelectedFoods(initialSelectedFoods)
       
       // Expand all meals by default
@@ -98,10 +116,24 @@ export default function PlanDetailPage() {
       setExpandedMeals(allMealIds)
       setActiveMeals(allMealIds)
     } catch (error) {
-      console.error('Error fetching kitchens:', error)
+      console.error('Error fetching foods:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const applyAllFilters = () => {
+    // No longer needed since we're showing all foods
+  }
+
+  const applyFiltersForMeal = (meal: any): Food[] => {
+    // No longer needed since we're showing all foods
+    return []
+  }
+
+  const getFilteredFoodsForMeal = (mealId: string): Food[] => {
+    // No longer needed since we're showing all foods
+    return []
   }
 
   const toggleMealExpansion = (mealId: string) => {
@@ -126,25 +158,6 @@ export default function PlanDetailPage() {
       }
       return newSet
     })
-  }
-
-  const toggleFoodSelection = async (kitchenId: string, foodId: string, currentActive: boolean) => {
-    try {
-      const updatedFood = await menuApi.toggleFoodActive(kitchenId, foodId, !currentActive)
-      setKitchens(prev => prev.map(kitchen => {
-        if (kitchen.id === kitchenId) {
-          return {
-            ...kitchen,
-            foods: kitchen.foods.map(food => 
-              food.id === foodId ? { ...food, active: !currentActive } : food
-            )
-          }
-        }
-        return kitchen
-      }))
-    } catch (error) {
-      console.error('Error toggling food active state:', error)
-    }
   }
 
   const handleQuantityChange = (kitchenId: string, foodId: string, value: number) => {
@@ -263,39 +276,7 @@ export default function PlanDetailPage() {
     })
   }
 
-  const toggleKitchenSelection = (kitchenId: string) => {
-    setSelectedKitchens(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(kitchenId)) {
-        newSet.delete(kitchenId)
-      } else {
-        newSet.add(kitchenId)
-      }
-      return newSet
-    })
-  }
-
-  const handleKitchenPress = (kitchen: KitchenWithActiveFoods, mealId: string) => {
-    console.log('handleKitchenPress called:', {
-      kitchenId: kitchen.id,
-      kitchenName: kitchen.name,
-      foodsCount: kitchen.foods.length,
-      mealId
-    })
-    setSelectedKitchen(kitchen)
-    setCurrentModalMealId(mealId)
-    setShowKitchenModal(true)
-  }
-
-  const handleCloseKitchenModal = () => {
-    console.log('handleCloseKitchenModal called')
-    setShowKitchenModal(false)
-    setSelectedKitchen(null)
-    setCurrentModalMealId(null)
-  }
-
   const handleSelectedFoodsChange = (foodIds: string[]) => {
-    console.log('handleSelectedFoodsChange called:', foodIds)
     if (!currentModalMealId) return
     
     const newSelectedFoods = new Set<string>(foodIds)
@@ -464,57 +445,99 @@ export default function PlanDetailPage() {
     })
   }
 
-  const renderKitchenTab = (mealId: string) => {
-    // Debug logging for modal rendering
-    if (selectedKitchen && showKitchenModal) {
-      console.log('Rendering KitchenActivationModal with props:', {
-        isVisible: showKitchenModal,
-        kitchenId: selectedKitchen.id,
-        kitchenName: selectedKitchen.name,
-        foodsCount: selectedKitchen.foods.length,
-        currentModalMealId,
-        selectedFoodIds: currentModalMealId ? Array.from(getSelectedFoodsForMeal(currentModalMealId)) : []
-      })
-    }
-
-    return (
-      <View style={styles.tabContent}>
-        <View style={styles.kitchenList}>
-          {kitchens.map(kitchen => (
-            <Pressable
-              key={kitchen.id}
-              style={styles.kitchenItem}
-              onPress={() => handleKitchenPress(kitchen, mealId)}
-            >
-              <Text style={styles.kitchenName}>{kitchen.name}</Text>
-              <MaterialIcons 
-                name="chevron-right" 
-                size={24} 
-                color={Colors.gray} 
-              />
-            </Pressable>
-          ))}
-        </View>
-      </View>
-    )
+  const handleOpenSelectionModal = (mealId: string) => {
+    setCurrentModalMealId(mealId)
+    setShowSelectionModal(true)
   }
 
-  const renderQuantityTab = (mealId: string) => (
-    <View style={styles.tabContent}>
-      <View style={styles.kitchenList}>
-        {kitchens.map(kitchen => {
-          const selectedFoodsForKitchen = kitchen.foods.filter(food => 
-            getSelectedFoodsForMeal(mealId).has(food.id)
-          )
+  const handleCloseSelectionModal = () => {
+    setShowSelectionModal(false)
+    setCurrentModalMealId(null)
+  }
+
+  const canProceedToQuantities = () => {
+    // Check if any meal has at least one food selected
+    return userMealPreferences.some(meal => {
+      const selectedFoodsForMeal = getSelectedFoodsForMeal(meal.id)
+      return selectedFoodsForMeal.size > 0
+    })
+  }
+
+  const renderFiltersStep = () => (
+    <View style={styles.stepContainer}>
+      <ScrollView style={styles.mealList} contentContainerStyle={styles.mealListContent}>
+        {userMealPreferences.map(meal => {
+          const selectedFoodsForMeal = getSelectedFoodsForMeal(meal.id)
           
           return (
-            <View key={kitchen.id} style={styles.kitchenSection}>
-              <Text style={styles.kitchenName}>{kitchen.name}</Text>
-              {selectedFoodsForKitchen.length === 0 ? (
-                <Text style={styles.noFoodsMessage}>No foods selected for this kitchen</Text>
-              ) : (
+            <View key={meal.id} style={styles.mealSection}>
+              <Pressable 
+                style={styles.mealHeader}
+                onPress={() => handleOpenSelectionModal(meal.id)}
+              >
+                <View style={styles.mealHeaderContent}>
+                  <View>
+                    <Text style={styles.mealName}>{meal.name}</Text>
+                    <Text style={styles.mealStatus}>
+                      {selectedFoodsForMeal.size} foods selected
+                    </Text>
+                  </View>
+                  <MaterialIcons 
+                    name="chevron-right" 
+                    size={24} 
+                    color={Colors.gray} 
+                  />
+                </View>
+              </Pressable>
+            </View>
+          )
+        })}
+      </ScrollView>
+      
+      {/* Continue button at the bottom of the scrollable content */}
+      <View style={styles.continueContainer}>
+        <Pressable 
+          style={[styles.continueButton, !canProceedToQuantities() && styles.continueButtonDisabled]}
+          onPress={() => {
+            if (canProceedToQuantities()) {
+              setCurrentStep('quantities')
+            }
+          }}
+          disabled={!canProceedToQuantities()}
+        >
+          <Text style={[styles.continueButtonText, !canProceedToQuantities() && styles.continueButtonTextDisabled]}>
+            Continue to Quantities
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  )
+
+  const renderQuantitiesStep = () => (
+    <View style={styles.stepContainer}>
+      <ScrollView style={styles.mealList} contentContainerStyle={styles.mealListContent}>
+        {userMealPreferences.map(meal => {
+          const selectedFoodsForMeal = getSelectedFoodsForMeal(meal.id)
+          
+          return (
+            <View key={meal.id} style={styles.mealSection}>
+              <View style={styles.mealHeader}>
+                <View style={styles.mealHeaderContent}>
+                  <View>
+                    <Text style={styles.mealName}>{meal.name}</Text>
+                    <Text style={styles.mealStatus}>
+                      {selectedFoodsForMeal.size} foods selected
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.mealContent}>
                 <View style={styles.foodList}>
-                  {selectedFoodsForKitchen.map(food => {
+                  {kitchens.flatMap(kitchen => 
+                    kitchen.foods.filter(food => selectedFoodsForMeal.has(food.id))
+                      .map(food => ({ ...food, kitchenId: kitchen.id }))
+                  ).map(food => {
                     const isExpanded = expandedFoods.has(food.id);
                     const foodCard = (
                       <View style={styles.quantityItem}>
@@ -546,7 +569,7 @@ export default function PlanDetailPage() {
                               <View style={styles.unitPicker}>
                                 <Picker
                                   selectedValue={food.selectedUnit}
-                                  onValueChange={(value: string) => handleUnitChange(kitchen.id, food.id, value)}
+                                  onValueChange={(value: string) => handleUnitChange(food.kitchenId || '', food.id, value)}
                                   style={styles.picker}
                                 >
                                   {food.servingUnits.map(unit => (
@@ -571,7 +594,7 @@ export default function PlanDetailPage() {
                                       { outlineWidth: 0 } as any
                                     ]}
                                     value={food.minQuantity.toString()}
-                                    onChangeText={(text) => handleMinQuantityChange(kitchen.id, food.id, text)}
+                                    onChangeText={(text) => handleMinQuantityChange(food.kitchenId || '', food.id, text)}
                                     keyboardType="numeric"
                                     selectionColor={Colors.blue}
                                     underlineColorAndroid="transparent"
@@ -589,7 +612,7 @@ export default function PlanDetailPage() {
                                       { outlineWidth: 0 } as any
                                     ]}
                                     value={food.maxQuantity.toString()}
-                                    onChangeText={(text) => handleMaxQuantityChange(kitchen.id, food.id, text)}
+                                    onChangeText={(text) => handleMaxQuantityChange(food.kitchenId || '', food.id, text)}
                                     keyboardType="numeric"
                                     selectionColor={Colors.blue}
                                     underlineColorAndroid="transparent"
@@ -613,7 +636,7 @@ export default function PlanDetailPage() {
                                       minimumValue={food.minQuantity}
                                       maximumValue={food.maxQuantity}
                                       value={food.quantity}
-                                      onValueChange={(value) => handleQuantityChange(kitchen.id, food.id, value)}
+                                      onValueChange={(value) => handleQuantityChange(food.kitchenId || '', food.id, value)}
                                       minimumTrackTintColor={Colors.green}
                                       maximumTrackTintColor={Colors.lightgray}
                                     />
@@ -643,7 +666,7 @@ export default function PlanDetailPage() {
                           <View style={styles.deleteAction}>
                             <Pressable
                               style={styles.deleteButton}
-                              onPress={() => handleDeleteFood(mealId, food.id)}
+                              onPress={() => handleDeleteFood(meal.id, food.id)}
                             >
                               <MaterialIcons name="delete" size={24} color={Colors.white} />
                             </Pressable>
@@ -655,10 +678,23 @@ export default function PlanDetailPage() {
                     );
                   })}
                 </View>
-              )}
+              </View>
             </View>
           )
         })}
+      </ScrollView>
+      
+      {/* Optimize button at the bottom of the scrollable content */}
+      <View style={styles.optimizeContainer}>
+        <Pressable 
+          style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
+          onPress={optimizeQuantities}
+          disabled={isOptimizing}
+        >
+          <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
+            {isOptimizing ? 'Optimizing...' : 'Optimize Quantities'}
+          </Text>
+        </Pressable>
       </View>
     </View>
   )
@@ -673,83 +709,78 @@ export default function PlanDetailPage() {
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>Meal Plan</Text>
-      <Text style={styles.subtitle}>Plan your meals for the day</Text> */}
-
-      <ScrollView style={styles.mealList} contentContainerStyle={styles.mealListContent}>
-        {userMealPreferences.map(meal => (
-          <View key={meal.id} style={styles.mealSection}>
-            <Pressable 
-              style={styles.mealHeader}
-              onPress={() => {
-                toggleMealExpansion(meal.id)
-                setActiveMealId(meal.id)
-              }}
-            >
-              <View style={styles.mealHeaderContent}>
-                <View>
-                  <Text style={styles.mealName}>{meal.name}</Text>
-                </View>
-                <MaterialIcons 
-                  name={expandedMeals.has(meal.id) ? "chevron-up" : "chevron-down"} 
-                  size={24} 
-                  color={Colors.black} 
-                />
-              </View>
-            </Pressable>
-
-            {expandedMeals.has(meal.id) && (
-              <View style={styles.mealContent}>
-                <View style={styles.tabs}>
-                  <Pressable
-                    style={[styles.tab, activeTab === 'kitchen' && styles.activeTab]}
-                    onPress={() => setActiveTab('kitchen')}
-                  >
-                    <Text style={[styles.tabText, activeTab === 'kitchen' && styles.activeTabText]}>
-                      Kitchen
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[styles.tab, activeTab === 'quantity' && styles.activeTab]}
-                    onPress={() => setActiveTab('quantity')}
-                  >
-                    <Text style={[styles.tabText, activeTab === 'quantity' && styles.activeTabText]}>
-                      Quantities
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {activeTab === 'kitchen' ? renderKitchenTab(meal.id) : renderQuantityTab(meal.id)}
-              </View>
-            )}
-          </View>
-        ))}
-        
-        {/* Optimize button at the bottom of the scrollable content */}
-        <View style={styles.optimizeContainer}>
+      {/* Flow Navigation Header */}
+      <View style={styles.flowHeader}>
+        <View style={styles.flowSteps}>
           <Pressable 
-            style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
-            onPress={optimizeQuantities}
-            disabled={isOptimizing}
+            style={styles.flowStepContainer}
+            onPress={() => setCurrentStep('filters')}
           >
-            <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
-              {isOptimizing ? 'Optimizing...' : 'Optimize Quantities'}
+            <View style={[styles.flowStepDot, currentStep === 'filters' && styles.flowStepDotActive]} />
+            <Text style={[styles.flowStepLabel, currentStep === 'filters' && styles.flowStepLabelActive]}>
+              Select Foods
+            </Text>
+          </Pressable>
+          <View style={styles.flowStepLine} />
+          <Pressable 
+            style={styles.flowStepContainer}
+            onPress={() => {
+              if (canProceedToQuantities()) {
+                setCurrentStep('quantities')
+              }
+            }}
+          >
+            <View style={[styles.flowStepDot, currentStep === 'quantities' && styles.flowStepDotActive]} />
+            <Text style={[styles.flowStepLabel, currentStep === 'quantities' && styles.flowStepLabelActive]}>
+              Quantities
             </Text>
           </Pressable>
         </View>
-      </ScrollView>
+      </View>
 
-      {/* Kitchen Activation Modal - moved to root level for full screen display */}
-      {selectedKitchen && (
+      {/* Render current step */}
+      {currentStep === 'filters' ? renderFiltersStep() : renderQuantitiesStep()}
+
+      {/* Food Selection Modal */}
+      {showSelectionModal && currentModalMealId && (
         <KitchenActivationModal
-          isVisible={showKitchenModal}
-          onClose={handleCloseKitchenModal}
-          kitchen={selectedKitchen}
-          onToggleFood={(foodId, currentActive) => 
-            toggleFoodSelection(selectedKitchen.id, foodId, currentActive)
-          }
-          onSelectedFoodsChange={handleSelectedFoodsChange}
-          selectedFoodIds={currentModalMealId ? Array.from(getSelectedFoodsForMeal(currentModalMealId)) : []}
+          isVisible={showSelectionModal}
+          onClose={handleCloseSelectionModal}
+          kitchen={{
+            id: 'all-foods',
+            name: `Select Foods for ${userMealPreferences.find(meal => meal.id === currentModalMealId)?.name || 'Meal'}`,
+            foods: kitchens[0]?.foods.map(food => ({
+              ...food,
+              active: getSelectedFoodsForMeal(currentModalMealId).has(food.id),
+              quantity: 1,
+              minQuantity: 0,
+              maxQuantity: 10,
+              selectedUnit: food.servingUnits[0]?.name || 'g'
+            })) || []
+          }}
+          onToggleFood={(foodId, currentActive) => {
+            // Handle food selection
+            const newSelectedFoods = new Set(getSelectedFoodsForMeal(currentModalMealId))
+            if (currentActive) {
+              newSelectedFoods.delete(foodId)
+            } else {
+              newSelectedFoods.add(foodId)
+            }
+            setSelectedFoods(prev => {
+              const newMap = new Map(prev)
+              newMap.set(currentModalMealId, newSelectedFoods)
+              return newMap
+            })
+          }}
+          onSelectedFoodsChange={(selectedFoodIds) => {
+            const newSelectedFoods = new Set(selectedFoodIds)
+            setSelectedFoods(prev => {
+              const newMap = new Map(prev)
+              newMap.set(currentModalMealId, newSelectedFoods)
+              return newMap
+            })
+          }}
+          selectedFoodIds={Array.from(getSelectedFoodsForMeal(currentModalMealId))}
         />
       )}
     </View>
@@ -1037,5 +1068,189 @@ const styles = StyleSheet.create({
     padding: 8,
     backgroundColor: Colors.orange,
     borderRadius: 8,
+  },
+  filterSection: {
+    gap: 16,
+  },
+  filterList: {
+    gap: 8,
+  },
+  filterItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
+  },
+  filterLabel: {
+    fontSize: 16,
+    color: Colors.black,
+    fontWeight: '600',
+  },
+  removeFilterButton: {
+    padding: 4,
+  },
+  clearFiltersButton: {
+    padding: 12,
+    backgroundColor: Colors.blue,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  clearFiltersText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  filterOptions: {
+    gap: 8,
+  },
+  filterOption: {
+    padding: 12,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  filterOptionText: {
+    fontSize: 16,
+    color: Colors.black,
+    fontWeight: '600',
+  },
+  previewSection: {
+    gap: 16,
+  },
+  previewList: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  previewItem: {
+    padding: 12,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
+  },
+  previewFoodName: {
+    fontSize: 16,
+    color: Colors.black,
+    fontWeight: '600',
+  },
+  previewKitchenName: {
+    fontSize: 14,
+    color: Colors.gray,
+  },
+  previewMoreText: {
+    fontSize: 16,
+    color: Colors.gray,
+    fontWeight: '600',
+  },
+  selectButton: {
+    padding: 12,
+    backgroundColor: Colors.blue,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  selectButtonDisabled: {
+    backgroundColor: Colors.lightgray,
+  },
+  selectButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  flowHeader: {
+    padding: 16,
+    backgroundColor: Colors.white,
+    marginBottom: 20,
+  },
+  flowSteps: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  flowStepContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  flowStepDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: Colors.coolgray,
+  },
+  flowStepDotActive: {
+    backgroundColor: Colors.blue,
+  },
+  flowStepLabel: {
+    fontSize: 16,
+    color: Colors.gray,
+  },
+  flowStepLabelActive: {
+    color: Colors.blue,
+    fontWeight: '600',
+  },
+  flowStepLine: {
+    width: 40,
+    height: 2,
+    backgroundColor: Colors.coolgray,
+  },
+  flowNavigation: {
+    padding: 16,
+    backgroundColor: Colors.white,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  stepContainer: {
+    flex: 1,
+    backgroundColor: Colors.white,
+  },
+  stepHeader: {
+    padding: 16,
+    backgroundColor: Colors.white,
+    marginBottom: 20,
+  },
+  stepTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.black,
+    marginBottom: 8,
+  },
+  stepDescription: {
+    fontSize: 14,
+    color: Colors.gray,
+  },
+  mealStatus: {
+    fontSize: 12,
+    color: Colors.gray,
+    marginTop: 4,
+  },
+  noFiltersText: {
+    fontSize: 14,
+    color: Colors.gray,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  continueContainer: {
+    padding: 16,
+    backgroundColor: Colors.white,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  continueButton: {
+    padding: 12,
+    backgroundColor: Colors.blue,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  continueButtonDisabled: {
+    backgroundColor: Colors.lightgray,
+  },
+  continueButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  continueButtonTextDisabled: {
+    color: Colors.gray,
   },
 }) 
