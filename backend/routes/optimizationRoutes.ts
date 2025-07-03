@@ -22,6 +22,7 @@ interface OptimizationRequest {
   foods: FoodMacroData[];
   preferences: UserPreferenceData[];
   macroNames: string[]; // Array of macro names in the same order as macroValues
+  maxIterations?: number; // Optional parameter for number of optimization iterations
 }
 
 interface OptimizationResponse {
@@ -83,10 +84,10 @@ const optimizeQuantities = (
   foods: FoodMacroData[],
   preferences: UserPreferenceData[],
   macroNames: string[],
-  initialQuantities: number[]
+  initialQuantities: number[],
+  maxIterations: number
 ): { quantities: number[]; error: number } => {
   const learningRate = 0.1;
-  const maxIterations = 1000;
   const tolerance = 1e-6;
   
   let quantities = [...initialQuantities];
@@ -165,7 +166,8 @@ router.post('/', async (req, res) => {
       foods,
       preferences,
       macroNames,
-      initialQuantities
+      initialQuantities,
+      req.body.maxIterations || 1000
     );
     
     // Calculate final macros with optimized quantities

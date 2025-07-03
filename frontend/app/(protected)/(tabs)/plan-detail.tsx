@@ -425,6 +425,104 @@ export default function PlanDetailPage() {
     eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros)
   }, [mealPlanMacros])
 
+  // Helper function to optimize a single meal
+  const optimizeSingleMeal = async (meal: any) => {
+    const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+    if (selectedFoodIds.size === 0) {
+      alert(`No foods selected for ${meal.name}`);
+      return;
+    }
+
+    const userPrefs = preferences || [];
+    if (userPrefs.length === 0) {
+      alert('No nutritional preferences set. Please set your preferences first.');
+      return;
+    }
+
+    const macroNames = userPrefs.map(pref => pref.id);
+    
+    // Get foods for this specific meal
+    const mealFoods: any[] = [];
+    selectedFoodIds.forEach(foodId => {
+      for (const kitchen of kitchens) {
+        const food = kitchen.foods.find(f => f.id === foodId);
+        if (food) {
+          const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+          if (q) {
+            mealFoods.push({
+              mealId: meal.id,
+              foodId: food.id,
+              quantity: q.quantity,
+              minQuantity: q.minQuantity,
+              maxQuantity: q.maxQuantity,
+              selectedUnit: q.selectedUnit,
+              food: food,
+              unit: {
+                id: q.selectedUnit,
+                name: q.selectedUnit,
+                food_id: food.id,
+                grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+              }
+            });
+          }
+          break;
+        }
+      }
+    });
+
+    const mealSpecificPrefs = getMealSpecificPreferences(meal);
+    if (!mealSpecificPrefs) {
+      alert(`No preferences found for ${meal.name}`);
+      return;
+    }
+
+    const foods = mealFoods.map(food => {
+      const macroValues = macroNames.map(macroName => {
+        return (food.food.macros as any)?.[macroName] || 0;
+      });
+      return {
+        macroValues,
+        unitGrams: food.unit.grams,
+        quantity: food.quantity,
+        minQuantity: food.minQuantity,
+        maxQuantity: food.maxQuantity
+      };
+    });
+
+    const optimizationPreferences = mealSpecificPrefs.map(pref => ({
+      min_value: pref.min || 0,
+      max_value: pref.max || Infinity
+    }));
+
+    try {
+      const mealResult = await optimizationApi.optimizeQuantities({
+        foods,
+        preferences: optimizationPreferences,
+        macroNames,
+        maxIterations: 500
+      });
+
+      // Update quantities for this meal
+      setMealFoodQuantities(prev => {
+        const newMap = new Map(prev);
+        mealFoods.forEach((food, idx) => {
+          const mealMap = new Map(newMap.get(meal.id) || new Map());
+          const entry = mealMap.get(food.foodId);
+          if (entry) {
+            mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
+            newMap.set(meal.id, mealMap);
+          }
+        });
+        return newMap;
+      });
+
+      alert(`${meal.name} optimized successfully! Error: ${mealResult.error.toFixed(4)}`);
+    } catch (error) {
+      console.error(`Optimization error for ${meal.name}:`, error);
+      alert(`Failed to optimize ${meal.name}. Please try again.`);
+    }
+  };
+
   const optimizeQuantities = async () => {
     // Build selectedFoodList using per-meal, per-food quantities
     const selectedFoodList: any[] = [];
@@ -469,8 +567,61 @@ export default function PlanDetailPage() {
         return;
       }
       const macroNames = userPrefs.map(pref => pref.id);
-      const foods = selectedFoodList.map(food => {
-        // Extract macro values in the same order as macroNames
+      
+      // Phase 1: Optimize each meal individually to meal-specific preferences
+      console.log('Starting Phase 1: Individual meal optimization...');
+      for (const meal of userMealPreferences) {
+        const mealFoods = selectedFoodList.filter(food => food.mealId === meal.id);
+        if (mealFoods.length === 0) continue;
+        
+        const mealSpecificPrefs = getMealSpecificPreferences(meal);
+        if (!mealSpecificPrefs) continue;
+        
+        const foods = mealFoods.map(food => {
+          const macroValues = macroNames.map(macroName => {
+            return (food.food.macros as any)?.[macroName] || 0;
+          });
+          return {
+            macroValues,
+            unitGrams: food.unit.grams,
+            quantity: food.quantity,
+            minQuantity: food.minQuantity,
+            maxQuantity: food.maxQuantity
+          };
+        });
+        
+        const optimizationPreferences = mealSpecificPrefs.map(pref => ({
+          min_value: pref.min || 0,
+          max_value: pref.max || Infinity
+        }));
+        
+        const mealResult = await optimizationApi.optimizeQuantities({
+          foods,
+          preferences: optimizationPreferences,
+          macroNames,
+          maxIterations: 500
+        });
+        
+        // Update quantities for this meal
+        setMealFoodQuantities(prev => {
+          const newMap = new Map(prev);
+          mealFoods.forEach((food, idx) => {
+            const mealMap = new Map(newMap.get(meal.id) || new Map());
+            const entry = mealMap.get(food.foodId);
+            if (entry) {
+              mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
+              newMap.set(meal.id, mealMap);
+            }
+          });
+          return newMap;
+        });
+        
+        console.log(`Phase 1: ${meal.name} optimized with error: ${mealResult.error.toFixed(4)}`);
+      }
+      
+      // Phase 2: Optimize everything together to daily preferences
+      console.log('Starting Phase 2: Overall optimization...');
+      const allFoods = selectedFoodList.map(food => {
         const macroValues = macroNames.map(macroName => {
           return (food.food.macros as any)?.[macroName] || 0;
         });
@@ -482,26 +633,20 @@ export default function PlanDetailPage() {
           maxQuantity: food.maxQuantity
         };
       });
+      
       const optimizationPreferences = userPrefs.map(pref => ({
         min_value: pref.min || 0,
         max_value: pref.max || Infinity
       }));
+      
       const result = await optimizationApi.optimizeQuantities({
-        foods,
+        foods: allFoods,
         preferences: optimizationPreferences,
-        macroNames
+        macroNames,
+        maxIterations: 1000
       });
-      setKitchens(prev => prev.map(kitchen => ({
-        ...kitchen,
-        foods: kitchen.foods.map(food => {
-          // Find the optimized quantity for this food in any meal
-          const idx = selectedFoodList.findIndex(f => f.foodId === food.id);
-          if (idx !== -1) {
-            return { ...food, quantity: result.optimizedQuantities[idx] };
-          }
-          return food;
-        })
-      })));
+      
+      // Update all quantities with final optimized values
       setMealFoodQuantities(prev => {
         const newMap = new Map(prev);
         selectedFoodList.forEach((food, idx) => {
@@ -514,7 +659,8 @@ export default function PlanDetailPage() {
         });
         return newMap;
       });
-      alert(`Quantities optimized successfully! Final error: ${result.error.toFixed(4)}`);
+      
+      alert(`Two-phase optimization completed!\nPhase 1: Individual meals optimized\nPhase 2: Overall optimization - Final error: ${result.error.toFixed(4)}`);
     } catch (error) {
       console.error('Optimization error:', error);
       alert('Failed to optimize quantities. Please try again.');
@@ -626,12 +772,15 @@ export default function PlanDetailPage() {
             <View key={meal.id} style={styles.mealSection}>
               <View style={styles.mealHeader}>
                 <View style={styles.mealHeaderContent}>
-                  <View>
-                    <Text style={styles.mealName}>{meal.name} ({selectedFoodsForMeal.size})</Text>
-                    {/* <Text style={styles.mealStatus}>
-                       foods selected {selectedFoodsForMeal.size}
-                    </Text> */}
-                  </View>
+                  <Text style={styles.mealName}>{meal.name} ({selectedFoodsForMeal.size})</Text>
+                  {selectedFoodsForMeal.size > 0 && (
+                    <Pressable 
+                      style={styles.mealOptimizeButton}
+                      onPress={() => optimizeSingleMeal(meal)}
+                    >
+                      <Text style={styles.mealOptimizeButtonText}>Optimize</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
               {/* Small MacrosDisplay for this meal */}
@@ -1366,5 +1515,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: -8,
     marginBottom: 12,
+  },
+  mealOptimizeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: Colors.blue,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  mealOptimizeButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.white,
   },
 }) 
