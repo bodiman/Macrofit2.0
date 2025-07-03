@@ -3,7 +3,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useUser } from '@/app/hooks/useUser'
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { useOptimizationApi } from '@/lib/api/optimization'
 import { Food } from '@shared/types/foodTypes'
@@ -15,6 +15,8 @@ import eventBus from '@/app/storage/eventEmitter'
 import useMacros from '@/app/hooks/useMacros'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useFoodSearchApi } from '@/lib/api/foodSearch'
+import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay'
+import { calculateAdjustedMacros } from '@/components/MacroDisplay/calculateMacros'
 
 interface Kitchen {
   id: string
@@ -75,6 +77,73 @@ export default function PlanDetailPage() {
   const [mealFoodQuantities, setMealFoodQuantities] = useState<
     Map<string, Map<string, { quantity: number; minQuantity: number; maxQuantity: number; selectedUnit: string }>>
   >(new Map())
+
+  // Helper function to get servings for a single meal
+  const getMealSelectedFoodServings = (mealId: string) => {
+    const servings: any[] = [];
+    const selectedFoodIds = selectedFoods.get(mealId) || new Set<string>();
+    selectedFoodIds.forEach(foodId => {
+      for (const kitchen of kitchens) {
+        const food = kitchen.foods.find(f => f.id === foodId);
+        if (food) {
+          const q = mealFoodQuantities.get(mealId)?.get(foodId) || {
+            quantity: 1,
+            minQuantity: 0,
+            maxQuantity: 10,
+            selectedUnit: food.servingUnits[0]?.name || 'g',
+          };
+          servings.push({
+            id: food.id,
+            food_id: food.id,
+            quantity: q.quantity,
+            unit: {
+              id: q.selectedUnit,
+              name: q.selectedUnit,
+              food_id: food.id,
+              grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+            },
+            food: food
+          });
+          break;
+        }
+      }
+    });
+    return servings;
+  };
+
+  // Helper function to scale preferences based on meal distribution percentage
+  const getMealSpecificPreferences = (meal: any) => {
+    if (!preferences || !meal.distribution_percentage) {
+      return preferences;
+    }
+    
+    const distributionPercentage = meal.distribution_percentage;
+    return preferences.map(pref => ({
+      ...pref,
+      min: pref.min ? pref.min * distributionPercentage : undefined,
+      max: pref.max ? pref.max * distributionPercentage : undefined,
+    }));
+  };
+
+  // Calculate macros for all meals at the top level
+  const mealMacros = useMemo(() => {
+    const macros: { [mealId: string]: any } = {};
+    userMealPreferences.forEach(meal => {
+      const servings = getMealSelectedFoodServings(meal.id);
+      // Calculate macros directly instead of using useMacros hook
+      const totalMacros: any = {};
+      servings.forEach((foodServing) => {
+        const adjustedMacros = calculateAdjustedMacros(foodServing);
+        Object.entries(adjustedMacros).forEach(([key, value]) => {
+          if (value) {
+            totalMacros[key] = (totalMacros[key] || 0) + value;
+          }
+        });
+      });
+      macros[meal.id] = totalMacros;
+    });
+    return macros;
+  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens]);
 
   useEffect(() => {
     fetchKitchens()
@@ -558,14 +627,17 @@ export default function PlanDetailPage() {
               <View style={styles.mealHeader}>
                 <View style={styles.mealHeaderContent}>
                   <View>
-                    <Text style={styles.mealName}>{meal.name}</Text>
-                    <Text style={styles.mealStatus}>
-                      {selectedFoodsForMeal.size} foods selected
-                    </Text>
+                    <Text style={styles.mealName}>{meal.name} ({selectedFoodsForMeal.size})</Text>
+                    {/* <Text style={styles.mealStatus}>
+                       foods selected {selectedFoodsForMeal.size}
+                    </Text> */}
                   </View>
                 </View>
               </View>
-
+              {/* Small MacrosDisplay for this meal */}
+              <View style={styles.macrosDisplayContainer}>
+                <MacrosDisplay radius={20} indicators={4} macroPreferences={getMealSpecificPreferences(meal)} macroValues={mealMacros[meal.id] || {}} />
+              </View>
               <View style={styles.mealContent}>
                 <View style={styles.foodList}>
                   {kitchens.flatMap(kitchen => 
@@ -999,11 +1071,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
   },
-  minMaxLabel: {
-    fontSize: 14,
-    color: Colors.gray,
+  minMaxLabelContainer: {
     minWidth: 40,
-    textAlign: 'center',
+    alignItems: 'center',
+    padding: 4,
   },
   rangeInputContainer: {
     flexDirection: 'row',
@@ -1030,10 +1101,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.gray,
   },
-  minMaxLabelContainer: {
+  minMaxLabel: {
+    fontSize: 14,
+    color: Colors.gray,
     minWidth: 40,
-    alignItems: 'center',
-    padding: 4,
+    textAlign: 'center',
   },
   quantityControls: {
     flexDirection: 'row',
@@ -1288,5 +1360,11 @@ const styles = StyleSheet.create({
   },
   continueButtonTextDisabled: {
     color: Colors.gray,
+  },
+  macrosDisplayContainer: {
+    paddingHorizontal: 4,
+    marginHorizontal: 16,
+    marginTop: -8,
+    marginBottom: 12,
   },
 }) 
