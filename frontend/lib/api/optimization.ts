@@ -17,6 +17,7 @@ export interface OptimizationRequest {
   foods: FoodMacroData[];
   preferences: UserPreferenceData[];
   macroNames: string[]; // Array of macro names in the same order as macroValues
+  maxIterations?: number; // Optional parameter for number of optimization iterations
 }
 
 export interface OptimizationResponse {

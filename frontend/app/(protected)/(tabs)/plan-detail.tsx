@@ -3,7 +3,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useUser } from '@/app/hooks/useUser'
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { useOptimizationApi } from '@/lib/api/optimization'
 import { Food } from '@shared/types/foodTypes'
@@ -15,6 +15,8 @@ import eventBus from '@/app/storage/eventEmitter'
 import useMacros from '@/app/hooks/useMacros'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useFoodSearchApi } from '@/lib/api/foodSearch'
+import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay'
+import { calculateAdjustedMacros } from '@/components/MacroDisplay/calculateMacros'
 
 interface Kitchen {
   id: string
@@ -71,6 +73,77 @@ export default function PlanDetailPage() {
   const maxInputRef = useRef<TextInput>(null)
   const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
   const foodSearchApi = useFoodSearchApi()
+
+  const [mealFoodQuantities, setMealFoodQuantities] = useState<
+    Map<string, Map<string, { quantity: number; minQuantity: number; maxQuantity: number; selectedUnit: string }>>
+  >(new Map())
+
+  // Helper function to get servings for a single meal
+  const getMealSelectedFoodServings = (mealId: string) => {
+    const servings: any[] = [];
+    const selectedFoodIds = selectedFoods.get(mealId) || new Set<string>();
+    selectedFoodIds.forEach(foodId => {
+      for (const kitchen of kitchens) {
+        const food = kitchen.foods.find(f => f.id === foodId);
+        if (food) {
+          const q = mealFoodQuantities.get(mealId)?.get(foodId) || {
+            quantity: 1,
+            minQuantity: 0,
+            maxQuantity: 10,
+            selectedUnit: food.servingUnits[0]?.name || 'g',
+          };
+          servings.push({
+            id: food.id,
+            food_id: food.id,
+            quantity: q.quantity,
+            unit: {
+              id: q.selectedUnit,
+              name: q.selectedUnit,
+              food_id: food.id,
+              grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+            },
+            food: food
+          });
+          break;
+        }
+      }
+    });
+    return servings;
+  };
+
+  // Helper function to scale preferences based on meal distribution percentage
+  const getMealSpecificPreferences = (meal: any) => {
+    if (!preferences || !meal.distribution_percentage) {
+      return preferences;
+    }
+    
+    const distributionPercentage = meal.distribution_percentage;
+    return preferences.map(pref => ({
+      ...pref,
+      min: pref.min ? pref.min * distributionPercentage : undefined,
+      max: pref.max ? pref.max * distributionPercentage : undefined,
+    }));
+  };
+
+  // Calculate macros for all meals at the top level
+  const mealMacros = useMemo(() => {
+    const macros: { [mealId: string]: any } = {};
+    userMealPreferences.forEach(meal => {
+      const servings = getMealSelectedFoodServings(meal.id);
+      // Calculate macros directly instead of using useMacros hook
+      const totalMacros: any = {};
+      servings.forEach((foodServing) => {
+        const adjustedMacros = calculateAdjustedMacros(foodServing);
+        Object.entries(adjustedMacros).forEach(([key, value]) => {
+          if (value) {
+            totalMacros[key] = (totalMacros[key] || 0) + value;
+          }
+        });
+      });
+      macros[meal.id] = totalMacros;
+    });
+    return macros;
+  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens]);
 
   useEffect(() => {
     fetchKitchens()
@@ -160,82 +233,72 @@ export default function PlanDetailPage() {
     })
   }
 
-  const handleQuantityChange = (kitchenId: string, foodId: string, value: number) => {
-    setKitchens(prev => prev.map(kitchen => {
-      if (kitchen.id === kitchenId) {
-        return {
-          ...kitchen,
-          foods: kitchen.foods.map(food => 
-            food.id === foodId ? { ...food, quantity: value } : food
-          )
-        }
+  const handleQuantityChange = (mealId: string, foodId: string, value: number) => {
+    setMealFoodQuantities(prev => {
+      const newMap = new Map(prev)
+      const mealMap = new Map(newMap.get(mealId) || new Map())
+      const entry = mealMap.get(foodId)
+      if (entry) {
+        mealMap.set(foodId, { ...entry, quantity: value })
+        newMap.set(mealId, mealMap)
       }
-      return kitchen
-    }))
+      return newMap
+    })
   }
 
-  const handleMinQuantityChange = (kitchenId: string, foodId: string, value: string) => {
+  const handleMinQuantityChange = (mealId: string, foodId: string, value: string) => {
     const numValue = parseFloat(value)
     if (!isNaN(numValue)) {
-      setKitchens(prev => prev.map(kitchen => {
-        if (kitchen.id === kitchenId) {
-          return {
-            ...kitchen,
-            foods: kitchen.foods.map(food => {
-              if (food.id === foodId) {
-                const newMin = Math.max(0, Math.min(numValue, food.maxQuantity))
-                return { 
-                  ...food, 
-                  minQuantity: newMin,
-                  quantity: Math.max(newMin, food.quantity)
-                }
-              }
-              return food
-            })
-          }
+      setMealFoodQuantities(prev => {
+        const newMap = new Map(prev)
+        const mealMap = new Map(newMap.get(mealId) || new Map())
+        const entry = mealMap.get(foodId)
+        if (entry) {
+          const newMin = Math.max(0, Math.min(numValue, entry.maxQuantity))
+          mealMap.set(foodId, {
+            ...entry,
+            minQuantity: newMin,
+            quantity: Math.max(newMin, entry.quantity),
+          })
+          newMap.set(mealId, mealMap)
         }
-        return kitchen
-      }))
+        return newMap
+      })
     }
   }
 
-  const handleMaxQuantityChange = (kitchenId: string, foodId: string, value: string) => {
+  const handleMaxQuantityChange = (mealId: string, foodId: string, value: string) => {
     const numValue = parseFloat(value)
     if (!isNaN(numValue)) {
-      setKitchens(prev => prev.map(kitchen => {
-        if (kitchen.id === kitchenId) {
-          return {
-            ...kitchen,
-            foods: kitchen.foods.map(food => {
-              if (food.id === foodId) {
-                const newMax = Math.max(numValue, food.minQuantity)
-                return { 
-                  ...food, 
-                  maxQuantity: newMax,
-                  quantity: Math.min(newMax, food.quantity)
-                }
-              }
-              return food
-            })
-          }
+      setMealFoodQuantities(prev => {
+        const newMap = new Map(prev)
+        const mealMap = new Map(newMap.get(mealId) || new Map())
+        const entry = mealMap.get(foodId)
+        if (entry) {
+          const newMax = Math.max(numValue, entry.minQuantity)
+          mealMap.set(foodId, {
+            ...entry,
+            maxQuantity: newMax,
+            quantity: Math.min(newMax, entry.quantity),
+          })
+          newMap.set(mealId, mealMap)
         }
-        return kitchen
-      }))
+        return newMap
+      })
     }
   }
 
-  const handleUnitChange = (kitchenId: string, foodId: string, unit: string) => {
-    setKitchens(prev => prev.map(kitchen => {
-      if (kitchen.id === kitchenId) {
-        return {
-          ...kitchen,
-          foods: kitchen.foods.map(food => 
-            food.id === foodId ? { ...food, selectedUnit: unit } : food
-          )
-        }
+  const handleUnitChange = (mealId: string, foodId: string, unit: string) => {
+    setMealFoodQuantities(prev => {
+      const newMap = new Map(prev)
+      const mealMap = new Map(newMap.get(mealId) || new Map())
+      const entry = mealMap.get(foodId)
+      if (entry) {
+        mealMap.set(foodId, { ...entry, selectedUnit: unit })
+        newMap.set(mealId, mealMap)
       }
-      return kitchen
-    }))
+      return newMap
+    })
   }
 
   const handleInputFocus = (foodId: string, type: 'min' | 'max') => {
@@ -276,15 +339,44 @@ export default function PlanDetailPage() {
     })
   }
 
-  const handleSelectedFoodsChange = (foodIds: string[]) => {
-    if (!currentModalMealId) return
-    
-    const newSelectedFoods = new Set<string>(foodIds)
+  type HandleSelectedFoodsChange = (mealId: string, foodIds: string[]) => void;
+  const handleSelectedFoodsChange: HandleSelectedFoodsChange = (mealId, foodIds) => {
     setSelectedFoods(prev => {
-      const newMap = new Map<string, Set<string>>(prev)
-      newMap.set(currentModalMealId, newSelectedFoods)
-      return newMap
-    })
+      const newMap = new Map(prev);
+      newMap.set(mealId, new Set(foodIds));
+      return newMap;
+    });
+    setMealFoodQuantities(prev => {
+      const newMap = new Map(prev);
+      const mealMap = new Map(newMap.get(mealId) || new Map());
+      // Add new foods
+      foodIds.forEach(foodId => {
+        if (!mealMap.has(foodId)) {
+          let food;
+          for (const kitchen of kitchens) {
+            food = kitchen.foods.find(f => f.id === foodId);
+            if (food) break;
+          }
+          if (food) {
+            mealMap.set(foodId, {
+              quantity: 1,
+              minQuantity: 0,
+              maxQuantity: 10,
+              selectedUnit: food.servingUnits[0]?.name || 'g',
+            });
+          }
+        }
+      });
+      // Remove foods that are no longer selected
+      Array.from(mealMap.keys()).forEach(fid => {
+        if (!foodIds.includes(fid)) {
+          mealMap.delete(fid);
+        }
+      });
+      newMap.set(mealId, mealMap);
+      console.log('mealFoodQuantities after update:', Array.from(newMap.entries()));
+      return newMap;
+    });
   }
 
   const getSelectedFoodsForMeal = (mealId: string) => {
@@ -293,35 +385,36 @@ export default function PlanDetailPage() {
 
   const getAllSelectedFoodServings = () => {
     const allServings: any[] = []
-    
-    // Get all selected foods from all meals (not just active ones)
     userMealPreferences.forEach(meal => {
       const selectedFoodIds = selectedFoods.get(meal.id) || new Set<string>()
       selectedFoodIds.forEach(foodId => {
-        // Find the food in kitchens
         for (const kitchen of kitchens) {
           const food = kitchen.foods.find(f => f.id === foodId)
           if (food) {
-            // Create a serving object with the selected quantity and unit
+            const q = mealFoodQuantities.get(meal.id)?.get(foodId) || {
+              quantity: 1,
+              minQuantity: 0,
+              maxQuantity: 10,
+              selectedUnit: food.servingUnits[0]?.name || 'g',
+            }
             const serving = {
               id: food.id,
               food_id: food.id,
-              quantity: food.quantity,
+              quantity: q.quantity,
               unit: {
-                id: food.selectedUnit,
-                name: food.selectedUnit,
+                id: q.selectedUnit,
+                name: q.selectedUnit,
                 food_id: food.id,
-                grams: food.servingUnits.find(u => u.name === food.selectedUnit)?.grams || 1
+                grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
               },
               food: food
             }
             allServings.push(serving)
-            break // Found the food, no need to check other kitchens
+            break
           }
         }
       })
     })
-    
     return allServings
   }
 
@@ -332,103 +425,259 @@ export default function PlanDetailPage() {
     eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros)
   }, [mealPlanMacros])
 
-  const optimizeQuantities = async () => {
-    const selectedFoods = getAllSelectedFoodServings()
-    if (selectedFoods.length === 0) {
-      alert('No foods selected for optimization')
-      return
+  // Helper function to optimize a single meal
+  const optimizeSingleMeal = async (meal: any) => {
+    const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+    if (selectedFoodIds.size === 0) {
+      alert(`No foods selected for ${meal.name}`);
+      return;
     }
 
-    setIsOptimizing(true)
+    const userPrefs = preferences || [];
+    if (userPrefs.length === 0) {
+      alert('No nutritional preferences set. Please set your preferences first.');
+      return;
+    }
+
+    const macroNames = userPrefs.map(pref => pref.id);
     
-    try {
-      // Get user preferences
-      const userPrefs = preferences || []
-      
-      if (userPrefs.length === 0) {
-        alert('No nutritional preferences set. Please set your preferences first.')
-        return
+    // Get foods for this specific meal
+    const mealFoods: any[] = [];
+    selectedFoodIds.forEach(foodId => {
+      for (const kitchen of kitchens) {
+        const food = kitchen.foods.find(f => f.id === foodId);
+        if (food) {
+          const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+          if (q) {
+            mealFoods.push({
+              mealId: meal.id,
+              foodId: food.id,
+              quantity: q.quantity,
+              minQuantity: q.minQuantity,
+              maxQuantity: q.maxQuantity,
+              selectedUnit: q.selectedUnit,
+              food: food,
+              unit: {
+                id: q.selectedUnit,
+                name: q.selectedUnit,
+                food_id: food.id,
+                grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+              }
+            });
+          }
+          break;
+        }
       }
-      
-      // Get all unique macro names from user preferences
-      const macroNames = userPrefs.map(pref => pref.id)
-      
-      // Convert selected foods to simplified numerical format
-      const foods = selectedFoods.map(food => {
-        // Find the food in kitchens to get min/max constraints
-        let minQuantity = 0;
-        let maxQuantity = 10;
-        
+    });
+
+    const mealSpecificPrefs = getMealSpecificPreferences(meal);
+    if (!mealSpecificPrefs) {
+      alert(`No preferences found for ${meal.name}`);
+      return;
+    }
+
+    const foods = mealFoods.map(food => {
+      const macroValues = macroNames.map(macroName => {
+        return (food.food.macros as any)?.[macroName] || 0;
+      });
+      return {
+        macroValues,
+        unitGrams: food.unit.grams,
+        quantity: food.quantity,
+        minQuantity: food.minQuantity,
+        maxQuantity: food.maxQuantity
+      };
+    });
+
+    const optimizationPreferences = mealSpecificPrefs.map(pref => ({
+      min_value: pref.min || 0,
+      max_value: pref.max || Infinity
+    }));
+
+    try {
+      const mealResult = await optimizationApi.optimizeQuantities({
+        foods,
+        preferences: optimizationPreferences,
+        macroNames,
+        maxIterations: 500
+      });
+
+      // Update quantities for this meal
+      setMealFoodQuantities(prev => {
+        const newMap = new Map(prev);
+        mealFoods.forEach((food, idx) => {
+          const mealMap = new Map(newMap.get(meal.id) || new Map());
+          const entry = mealMap.get(food.foodId);
+          if (entry) {
+            mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
+            newMap.set(meal.id, mealMap);
+          }
+        });
+        return newMap;
+      });
+
+      alert(`${meal.name} optimized successfully! Error: ${mealResult.error.toFixed(4)}`);
+    } catch (error) {
+      console.error(`Optimization error for ${meal.name}:`, error);
+      alert(`Failed to optimize ${meal.name}. Please try again.`);
+    }
+  };
+
+  const optimizeQuantities = async () => {
+    // Build selectedFoodList using per-meal, per-food quantities
+    const selectedFoodList: any[] = [];
+    userMealPreferences.forEach(meal => {
+      const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+      selectedFoodIds.forEach(foodId => {
         for (const kitchen of kitchens) {
-          const kitchenFood = kitchen.foods.find(f => f.id === food.id);
-          if (kitchenFood) {
-            minQuantity = kitchenFood.minQuantity;
-            maxQuantity = kitchenFood.maxQuantity;
+          const food = kitchen.foods.find(f => f.id === foodId);
+          if (food) {
+            const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+            if (q) {
+              selectedFoodList.push({
+                mealId: meal.id,
+                foodId: food.id,
+                quantity: q.quantity,
+                minQuantity: q.minQuantity,
+                maxQuantity: q.maxQuantity,
+                selectedUnit: q.selectedUnit,
+                food: food,
+                unit: {
+                  id: q.selectedUnit,
+                  name: q.selectedUnit,
+                  food_id: food.id,
+                  grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+                }
+              });
+            }
             break;
           }
         }
+      });
+    });
+    if (selectedFoodList.length === 0) {
+      alert('No foods selected for optimization');
+      return;
+    }
+    setIsOptimizing(true);
+    try {
+      const userPrefs = preferences || [];
+      if (userPrefs.length === 0) {
+        alert('No nutritional preferences set. Please set your preferences first.');
+        return;
+      }
+      const macroNames = userPrefs.map(pref => pref.id);
+      
+      // Phase 1: Optimize each meal individually to meal-specific preferences
+      console.log('Starting Phase 1: Individual meal optimization...');
+      for (const meal of userMealPreferences) {
+        const mealFoods = selectedFoodList.filter(food => food.mealId === meal.id);
+        if (mealFoods.length === 0) continue;
         
-        // Extract macro values in the same order as macroNames
+        const mealSpecificPrefs = getMealSpecificPreferences(meal);
+        if (!mealSpecificPrefs) continue;
+        
+        const foods = mealFoods.map(food => {
+          const macroValues = macroNames.map(macroName => {
+            return (food.food.macros as any)?.[macroName] || 0;
+          });
+          return {
+            macroValues,
+            unitGrams: food.unit.grams,
+            quantity: food.quantity,
+            minQuantity: food.minQuantity,
+            maxQuantity: food.maxQuantity
+          };
+        });
+        
+        const optimizationPreferences = mealSpecificPrefs.map(pref => ({
+          min_value: pref.min || 0,
+          max_value: pref.max || Infinity
+        }));
+        
+        const mealResult = await optimizationApi.optimizeQuantities({
+          foods,
+          preferences: optimizationPreferences,
+          macroNames,
+          maxIterations: 500
+        });
+        
+        // Update quantities for this meal
+        setMealFoodQuantities(prev => {
+          const newMap = new Map(prev);
+          mealFoods.forEach((food, idx) => {
+            const mealMap = new Map(newMap.get(meal.id) || new Map());
+            const entry = mealMap.get(food.foodId);
+            if (entry) {
+              mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
+              newMap.set(meal.id, mealMap);
+            }
+          });
+          return newMap;
+        });
+        
+        console.log(`Phase 1: ${meal.name} optimized with error: ${mealResult.error.toFixed(4)}`);
+      }
+      
+      // Phase 2: Optimize everything together to daily preferences
+      console.log('Starting Phase 2: Overall optimization...');
+      const allFoods = selectedFoodList.map(food => {
         const macroValues = macroNames.map(macroName => {
           return (food.food.macros as any)?.[macroName] || 0;
         });
-        
         return {
           macroValues,
           unitGrams: food.unit.grams,
           quantity: food.quantity,
-          minQuantity,
-          maxQuantity
-        }
-      })
+          minQuantity: food.minQuantity,
+          maxQuantity: food.maxQuantity
+        };
+      });
       
-      // Convert preferences to the simplified format
       const optimizationPreferences = userPrefs.map(pref => ({
         min_value: pref.min || 0,
         max_value: pref.max || Infinity
-      }))
+      }));
       
-      console.log('Sending optimization request:', {
-        foods,
-        preferences: optimizationPreferences,
-        macroNames
-      })
-      
-      // Call backend optimization with simplified data
       const result = await optimizationApi.optimizeQuantities({
-        foods,
+        foods: allFoods,
         preferences: optimizationPreferences,
-        macroNames
-      })
+        macroNames,
+        maxIterations: 1000
+      });
       
-      console.log('Optimization result:', result)
-      
-      // Apply optimized quantities
-      setKitchens(prev => prev.map(kitchen => ({
-        ...kitchen,
-        foods: kitchen.foods.map(food => {
-          const foodIndex = selectedFoods.findIndex(f => f.id === food.id)
-          if (foodIndex !== -1) {
-            return { ...food, quantity: result.optimizedQuantities[foodIndex] }
+      // Update all quantities with final optimized values
+      setMealFoodQuantities(prev => {
+        const newMap = new Map(prev);
+        selectedFoodList.forEach((food, idx) => {
+          const mealMap = new Map(newMap.get(food.mealId) || new Map());
+          const entry = mealMap.get(food.foodId);
+          if (entry) {
+            mealMap.set(food.foodId, { ...entry, quantity: result.optimizedQuantities[idx] });
+            newMap.set(food.mealId, mealMap);
           }
-          return food
-        })
-      })))
+        });
+        return newMap;
+      });
       
-      alert(`Quantities optimized successfully! Final error: ${result.error.toFixed(4)}`)
+      alert(`Two-phase optimization completed!\nPhase 1: Individual meals optimized\nPhase 2: Overall optimization - Final error: ${result.error.toFixed(4)}`);
     } catch (error) {
-      console.error('Optimization error:', error)
-      alert('Failed to optimize quantities. Please try again.')
+      console.error('Optimization error:', error);
+      alert('Failed to optimize quantities. Please try again.');
     } finally {
-      setIsOptimizing(false)
+      setIsOptimizing(false);
     }
   }
 
-  const toggleFoodExpansion = (foodId: string) => {
+  const toggleFoodExpansion = (mealId: string, foodId: string) => {
+    const key = `${mealId}:${foodId}`
     setExpandedFoods(prev => {
-      const newSet = new Set<string>()
-      if (!prev.has(foodId)) {
-        newSet.add(foodId)
+      const newSet = new Set<string>(prev)
+      if (newSet.has(key)) {
+        newSet.delete(key)
+      } else {
+        newSet.clear()
+        newSet.add(key)
       }
       return newSet
     })
@@ -523,27 +772,35 @@ export default function PlanDetailPage() {
             <View key={meal.id} style={styles.mealSection}>
               <View style={styles.mealHeader}>
                 <View style={styles.mealHeaderContent}>
-                  <View>
-                    <Text style={styles.mealName}>{meal.name}</Text>
-                    <Text style={styles.mealStatus}>
-                      {selectedFoodsForMeal.size} foods selected
-                    </Text>
-                  </View>
+                  <Text style={styles.mealName}>{meal.name} ({selectedFoodsForMeal.size})</Text>
+                  {selectedFoodsForMeal.size > 0 && (
+                    <Pressable 
+                      style={styles.mealOptimizeButton}
+                      onPress={() => optimizeSingleMeal(meal)}
+                    >
+                      <Text style={styles.mealOptimizeButtonText}>Optimize</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
-
+              {/* Small MacrosDisplay for this meal */}
+              <View style={styles.macrosDisplayContainer}>
+                <MacrosDisplay radius={20} indicators={4} macroPreferences={getMealSpecificPreferences(meal)} macroValues={mealMacros[meal.id] || {}} />
+              </View>
               <View style={styles.mealContent}>
                 <View style={styles.foodList}>
                   {kitchens.flatMap(kitchen => 
                     kitchen.foods.filter(food => selectedFoodsForMeal.has(food.id))
                       .map(food => ({ ...food, kitchenId: kitchen.id }))
                   ).map(food => {
-                    const isExpanded = expandedFoods.has(food.id);
+                    const expandedKey = `${meal.id}:${food.id}`
+                    const isExpanded = expandedFoods.has(expandedKey)
+                    const q = getMealFoodQuantity(meal.id, food.id)
                     const foodCard = (
                       <View style={styles.quantityItem}>
                         <Pressable 
                           style={styles.foodHeader}
-                          onPress={() => toggleFoodExpansion(food.id)}
+                          onPress={() => toggleFoodExpansion(meal.id, food.id)}
                         >
                           <View style={styles.foodHeaderContent}>
                             <Text style={styles.foodName} numberOfLines={1} ellipsizeMode="tail">
@@ -551,7 +808,7 @@ export default function PlanDetailPage() {
                             </Text>
                             {!isExpanded && (
                               <Text style={styles.summaryText} numberOfLines={1} ellipsizeMode="tail">
-                                {food.quantity.toFixed(1)} {food.selectedUnit}
+                                {q.quantity.toFixed(1)} {q.selectedUnit}
                               </Text>
                             )}
                             <MaterialIcons 
@@ -565,11 +822,11 @@ export default function PlanDetailPage() {
                         {isExpanded && (
                           <View style={styles.expandedContent}>
                             <View style={styles.quantityUnitRow}>
-                              <Text style={styles.quantityText}>{food.quantity.toFixed(1)}</Text>
+                              <Text style={styles.quantityText}>{q.quantity.toFixed(1)}</Text>
                               <View style={styles.unitPicker}>
                                 <Picker
-                                  selectedValue={food.selectedUnit}
-                                  onValueChange={(value: string) => handleUnitChange(food.kitchenId || '', food.id, value)}
+                                  selectedValue={q.selectedUnit}
+                                  onValueChange={(value: string) => handleUnitChange(meal.id, food.id, value)}
                                   style={styles.picker}
                                 >
                                   {food.servingUnits.map(unit => (
@@ -593,8 +850,8 @@ export default function PlanDetailPage() {
                                       focusedInput?.foodId === food.id && focusedInput?.type === 'min' && styles.rangeInputFocused,
                                       { outlineWidth: 0 } as any
                                     ]}
-                                    value={food.minQuantity.toString()}
-                                    onChangeText={(text) => handleMinQuantityChange(food.kitchenId || '', food.id, text)}
+                                    value={q.minQuantity.toString()}
+                                    onChangeText={(text) => handleMinQuantityChange(meal.id, food.id, text)}
                                     keyboardType="numeric"
                                     selectionColor={Colors.blue}
                                     underlineColorAndroid="transparent"
@@ -611,8 +868,8 @@ export default function PlanDetailPage() {
                                       focusedInput?.foodId === food.id && focusedInput?.type === 'max' && styles.rangeInputFocused,
                                       { outlineWidth: 0 } as any
                                     ]}
-                                    value={food.maxQuantity.toString()}
-                                    onChangeText={(text) => handleMaxQuantityChange(food.kitchenId || '', food.id, text)}
+                                    value={q.maxQuantity.toString()}
+                                    onChangeText={(text) => handleMaxQuantityChange(meal.id, food.id, text)}
                                     keyboardType="numeric"
                                     selectionColor={Colors.blue}
                                     underlineColorAndroid="transparent"
@@ -629,14 +886,14 @@ export default function PlanDetailPage() {
                                       onPress={() => handleMinClick(food.id)}
                                       style={styles.minMaxLabelContainer}
                                     >
-                                      <Text style={styles.minMaxLabel}>{food.minQuantity.toFixed(1)}</Text>
+                                      <Text style={styles.minMaxLabel}>{q.minQuantity.toFixed(1)}</Text>
                                     </Pressable>
                                     <Slider
                                       style={styles.slider}
-                                      minimumValue={food.minQuantity}
-                                      maximumValue={food.maxQuantity}
-                                      value={food.quantity}
-                                      onValueChange={(value) => handleQuantityChange(food.kitchenId || '', food.id, value)}
+                                      minimumValue={q.minQuantity}
+                                      maximumValue={q.maxQuantity}
+                                      value={q.quantity}
+                                      onValueChange={(value) => handleQuantityChange(meal.id, food.id, value)}
                                       minimumTrackTintColor={Colors.green}
                                       maximumTrackTintColor={Colors.lightgray}
                                     />
@@ -644,7 +901,7 @@ export default function PlanDetailPage() {
                                       onPress={() => handleMaxClick(food.id)}
                                       style={styles.minMaxLabelContainer}
                                     >
-                                      <Text style={styles.minMaxLabel}>{food.maxQuantity.toFixed(1)}</Text>
+                                      <Text style={styles.minMaxLabel}>{q.maxQuantity.toFixed(1)}</Text>
                                     </Pressable>
                                   </View>
                                 </React.Fragment>
@@ -698,6 +955,17 @@ export default function PlanDetailPage() {
       </View>
     </View>
   )
+
+  const getMealFoodQuantity = (mealId: string, foodId: string) => {
+    const value = mealFoodQuantities.get(mealId)?.get(foodId);
+    console.log('getMealFoodQuantity:', { mealId, foodId, value });
+    return value || {
+      quantity: 1,
+      minQuantity: 0,
+      maxQuantity: 10,
+      selectedUnit: 'g',
+    };
+  }
 
   if (loading) {
     return (
@@ -766,20 +1034,9 @@ export default function PlanDetailPage() {
             } else {
               newSelectedFoods.add(foodId)
             }
-            setSelectedFoods(prev => {
-              const newMap = new Map(prev)
-              newMap.set(currentModalMealId, newSelectedFoods)
-              return newMap
-            })
+            handleSelectedFoodsChange(currentModalMealId, Array.from(newSelectedFoods))
           }}
-          onSelectedFoodsChange={(selectedFoodIds) => {
-            const newSelectedFoods = new Set(selectedFoodIds)
-            setSelectedFoods(prev => {
-              const newMap = new Map(prev)
-              newMap.set(currentModalMealId, newSelectedFoods)
-              return newMap
-            })
-          }}
+          onSelectedFoodsChange={(selectedFoodIds) => handleSelectedFoodsChange(currentModalMealId, selectedFoodIds)}
           selectedFoodIds={Array.from(getSelectedFoodsForMeal(currentModalMealId))}
         />
       )}
@@ -963,11 +1220,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
   },
-  minMaxLabel: {
-    fontSize: 14,
-    color: Colors.gray,
+  minMaxLabelContainer: {
     minWidth: 40,
-    textAlign: 'center',
+    alignItems: 'center',
+    padding: 4,
   },
   rangeInputContainer: {
     flexDirection: 'row',
@@ -994,10 +1250,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.gray,
   },
-  minMaxLabelContainer: {
+  minMaxLabel: {
+    fontSize: 14,
+    color: Colors.gray,
     minWidth: 40,
-    alignItems: 'center',
-    padding: 4,
+    textAlign: 'center',
   },
   quantityControls: {
     flexDirection: 'row',
@@ -1252,5 +1509,23 @@ const styles = StyleSheet.create({
   },
   continueButtonTextDisabled: {
     color: Colors.gray,
+  },
+  macrosDisplayContainer: {
+    paddingHorizontal: 4,
+    marginHorizontal: 16,
+    marginTop: -8,
+    marginBottom: 12,
+  },
+  mealOptimizeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: Colors.blue,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  mealOptimizeButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.white,
   },
 }) 
