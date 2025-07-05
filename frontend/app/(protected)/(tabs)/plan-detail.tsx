@@ -61,6 +61,10 @@ export default function PlanDetailPage() {
   const [showSelectionModal, setShowSelectionModal] = useState(false)
   const [currentModalMealId, setCurrentModalMealId] = useState<string | null>(null)
   
+  // Quantity text input state
+  const [quantityTextInputs, setQuantityTextInputs] = useState<Map<string, string>>(new Map())
+  const [lastValidQuantities, setLastValidQuantities] = useState<Map<string, number>>(new Map())
+  
   const menuApi = useMenuApi()
   const optimizationApi = useOptimizationApi()
   const minInputRef = useRef<TextInput>(null)
@@ -69,7 +73,7 @@ export default function PlanDetailPage() {
   const foodSearchApi = useFoodSearchApi()
 
   const [mealFoodQuantities, setMealFoodQuantities] = useState<
-    Map<string, Map<string, { quantity: number; minQuantity: number; maxQuantity: number; selectedUnit: string }>>
+    Map<string, Map<string, { quantity: number; minQuantity: number; maxQuantity: number; selectedUnit: string; locked: boolean }>>
   >(new Map())
 
   // Helper function to get servings for a single meal
@@ -83,8 +87,9 @@ export default function PlanDetailPage() {
           const q = mealFoodQuantities.get(mealId)?.get(foodId) || {
             quantity: 1,
             minQuantity: 0,
-            maxQuantity: 10,
+            maxQuantity: 3,
             selectedUnit: food.servingUnits[0]?.name || 'g',
+            locked: false,
           };
           servings.push({
             id: food.id,
@@ -157,7 +162,7 @@ export default function PlanDetailPage() {
           active: true,
           quantity: 1,
           minQuantity: 0,
-          maxQuantity: 10,
+          maxQuantity: 3,
           selectedUnit: food.servingUnits[0]?.name || 'g'
         }))
       }
@@ -184,12 +189,126 @@ export default function PlanDetailPage() {
       const newMap = new Map(prev)
       const mealMap = new Map(newMap.get(mealId) || new Map())
       const entry = mealMap.get(foodId)
-      if (entry) {
+      if (entry && !entry.locked) {
         mealMap.set(foodId, { ...entry, quantity: value })
         newMap.set(mealId, mealMap)
       }
       return newMap
     })
+  }
+
+  const handleQuantityTextChange = (mealId: string, foodId: string, value: string) => {
+    const key = `${mealId}:${foodId}`
+    
+    // Allow only numbers and decimal point
+    const sanitizedValue = value.replace(/[^0-9.]/g, '')
+    
+    // Prevent multiple decimal points
+    const parts = sanitizedValue.split('.')
+    const finalValue = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitizedValue
+    
+    // Update the text input state
+    setQuantityTextInputs(prev => {
+      const newMap = new Map(prev)
+      newMap.set(key, finalValue)
+      return newMap
+    })
+    
+    // Interpret empty input as zero, otherwise update if it's a valid number
+    if (finalValue === '') {
+      // Empty input = zero
+      setLastValidQuantities(prev => {
+        const newMap = new Map(prev)
+        newMap.set(key, 0)
+        return newMap
+      })
+      
+      setMealFoodQuantities(prev => {
+        const newMap = new Map(prev)
+        const mealMap = new Map(newMap.get(mealId) || new Map())
+        const entry = mealMap.get(foodId)
+        if (entry && !entry.locked) {
+          const clampedValue = Math.max(entry.minQuantity, 0)
+          mealMap.set(foodId, { ...entry, quantity: clampedValue })
+          newMap.set(mealId, mealMap)
+        }
+        return newMap
+      })
+    } else {
+      const numValue = parseFloat(finalValue)
+      if (!isNaN(numValue) && numValue >= 0) {
+        setLastValidQuantities(prev => {
+          const newMap = new Map(prev)
+          newMap.set(key, numValue)
+          return newMap
+        })
+        
+        setMealFoodQuantities(prev => {
+          const newMap = new Map(prev)
+          const mealMap = new Map(newMap.get(mealId) || new Map())
+          const entry = mealMap.get(foodId)
+          if (entry && !entry.locked) {
+            const clampedValue = Math.max(entry.minQuantity, Math.min(numValue, entry.maxQuantity))
+            mealMap.set(foodId, { ...entry, quantity: clampedValue })
+            newMap.set(mealId, mealMap)
+          }
+          return newMap
+        })
+      }
+    }
+  }
+
+  const handleQuantityTextBlur = (mealId: string, foodId: string) => {
+    const key = `${mealId}:${foodId}`
+    const currentText = quantityTextInputs.get(key) || ''
+    
+    // If empty, keep it as empty (interpreted as zero)
+    if (currentText === '') {
+      return
+    }
+    
+    const numValue = parseFloat(currentText)
+    
+    if (isNaN(numValue) || numValue < 0) {
+      // Restore the last valid quantity
+      const lastValid = lastValidQuantities.get(key)
+      if (lastValid !== undefined) {
+        setQuantityTextInputs(prev => {
+          const newMap = new Map(prev)
+          newMap.set(key, lastValid.toFixed(1))
+          return newMap
+        })
+      } else {
+        // If no last valid, use the current quantity from state
+        const q = getMealFoodQuantity(mealId, foodId)
+        setQuantityTextInputs(prev => {
+          const newMap = new Map(prev)
+          newMap.set(key, q.quantity.toFixed(1))
+          return newMap
+        })
+      }
+    } else {
+      // Update the text to show the formatted value
+      setQuantityTextInputs(prev => {
+        const newMap = new Map(prev)
+        newMap.set(key, numValue.toFixed(1))
+        return newMap
+      })
+    }
+  }
+
+  const handleQuantityTextFocus = (mealId: string, foodId: string) => {
+    const key = `${mealId}:${foodId}`
+    const q = getMealFoodQuantity(mealId, foodId)
+    
+    // Initialize the text input with current quantity if not already set
+    if (!quantityTextInputs.has(key)) {
+      setQuantityTextInputs(prev => {
+        const newMap = new Map(prev)
+        newMap.set(key, q.quantity.toFixed(1))
+        return newMap
+      })
+    }
   }
 
   const handleMinQuantityChange = (mealId: string, foodId: string, value: string) => {
@@ -199,7 +318,7 @@ export default function PlanDetailPage() {
         const newMap = new Map(prev)
         const mealMap = new Map(newMap.get(mealId) || new Map())
         const entry = mealMap.get(foodId)
-        if (entry) {
+        if (entry && !entry.locked) {
           const newMin = Math.max(0, Math.min(numValue, entry.maxQuantity))
           mealMap.set(foodId, {
             ...entry,
@@ -220,7 +339,7 @@ export default function PlanDetailPage() {
         const newMap = new Map(prev)
         const mealMap = new Map(newMap.get(mealId) || new Map())
         const entry = mealMap.get(foodId)
-        if (entry) {
+        if (entry && !entry.locked) {
           const newMax = Math.max(numValue, entry.minQuantity)
           mealMap.set(foodId, {
             ...entry,
@@ -239,8 +358,21 @@ export default function PlanDetailPage() {
       const newMap = new Map(prev)
       const mealMap = new Map(newMap.get(mealId) || new Map())
       const entry = mealMap.get(foodId)
-      if (entry) {
+      if (entry && !entry.locked) {
         mealMap.set(foodId, { ...entry, selectedUnit: unit })
+        newMap.set(mealId, mealMap)
+      }
+      return newMap
+    })
+  }
+
+  const handleLockToggle = (mealId: string, foodId: string) => {
+    setMealFoodQuantities(prev => {
+      const newMap = new Map(prev)
+      const mealMap = new Map(newMap.get(mealId) || new Map())
+      const entry = mealMap.get(foodId)
+      if (entry) {
+        mealMap.set(foodId, { ...entry, locked: !entry.locked })
         newMap.set(mealId, mealMap)
       }
       return newMap
@@ -302,8 +434,9 @@ export default function PlanDetailPage() {
             mealMap.set(foodId, {
               quantity: 1,
               minQuantity: 0,
-              maxQuantity: 10,
+              maxQuantity: 3,
               selectedUnit: food.servingUnits[0]?.name || 'g',
+              locked: false,
             });
           }
         }
@@ -334,8 +467,9 @@ export default function PlanDetailPage() {
             const q = mealFoodQuantities.get(meal.id)?.get(foodId) || {
               quantity: 1,
               minQuantity: 0,
-              maxQuantity: 10,
+              maxQuantity: 3,
               selectedUnit: food.servingUnits[0]?.name || 'g',
+              locked: false,
             }
             const serving = {
               id: food.id,
@@ -448,7 +582,7 @@ export default function PlanDetailPage() {
         mealFoods.forEach((food, idx) => {
           const mealMap = new Map(newMap.get(meal.id) || new Map());
           const entry = mealMap.get(food.foodId);
-          if (entry) {
+          if (entry && !entry.locked) {
             mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
             newMap.set(meal.id, mealMap);
           }
@@ -548,7 +682,7 @@ export default function PlanDetailPage() {
           mealFoods.forEach((food, idx) => {
             const mealMap = new Map(newMap.get(meal.id) || new Map());
             const entry = mealMap.get(food.foodId);
-            if (entry) {
+            if (entry && !entry.locked) {
               mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
               newMap.set(meal.id, mealMap);
             }
@@ -592,7 +726,7 @@ export default function PlanDetailPage() {
         selectedFoodList.forEach((food, idx) => {
           const mealMap = new Map(newMap.get(food.mealId) || new Map());
           const entry = mealMap.get(food.foodId);
-          if (entry) {
+          if (entry && !entry.locked) {
             mealMap.set(food.foodId, { ...entry, quantity: result.optimizedQuantities[idx] });
             newMap.set(food.mealId, mealMap);
           }
@@ -649,8 +783,9 @@ export default function PlanDetailPage() {
     return value || {
       quantity: 1,
       minQuantity: 0,
-      maxQuantity: 10,
+      maxQuantity: 3,
       selectedUnit: 'g',
+      locked: false,
     };
   }
 
@@ -723,6 +858,7 @@ export default function PlanDetailPage() {
                       const expandedKey = `${meal.id}:${food.id}`
                       const isExpanded = expandedFoods.has(expandedKey)
                       const q = getMealFoodQuantity(meal.id, food.id)
+                      const quantityKey = `${meal.id}:${food.id}`
                       
                       const foodCard = (
                         <View style={styles.quantityItem}>
@@ -750,12 +886,40 @@ export default function PlanDetailPage() {
                           {isExpanded && (
                             <View style={styles.expandedContent}>
                               <View style={styles.quantityUnitRow}>
-                                <Text style={styles.quantityText}>{q.quantity.toFixed(1)}</Text>
+                                <View style={styles.quantityLockRow}>
+                                  <Pressable 
+                                    style={styles.lockButton}
+                                    onPress={() => handleLockToggle(meal.id, food.id)}
+                                  >
+                                    <MaterialIcons 
+                                      name={q.locked ? "lock" : "lock-open"} 
+                                      size={20} 
+                                      color={q.locked ? Colors.orange : Colors.gray} 
+                                    />
+                                  </Pressable>
+                                  <TextInput
+                                    style={[
+                                      styles.quantityTextInput,
+                                      q.locked && styles.quantityTextInputLocked
+                                    ]}
+                                    value={quantityTextInputs.get(quantityKey) ?? q.quantity.toFixed(1)}
+                                    onChangeText={(text) => handleQuantityTextChange(meal.id, food.id, text)}
+                                    keyboardType="numeric"
+                                    selectionColor={Colors.blue}
+                                    underlineColorAndroid="transparent"
+                                    editable={!q.locked}
+                                    autoCorrect={false}
+                                    spellCheck={false}
+                                    onBlur={() => handleQuantityTextBlur(meal.id, food.id)}
+                                    onFocus={() => handleQuantityTextFocus(meal.id, food.id)}
+                                  />
+                                </View>
                                 <View style={styles.unitPicker}>
                                   <Picker
                                     selectedValue={q.selectedUnit}
                                     onValueChange={(value: string) => handleUnitChange(meal.id, food.id, value)}
                                     style={styles.picker}
+                                    enabled={!q.locked}
                                   >
                                     {food.servingUnits.map(unit => (
                                       <Picker.Item 
@@ -776,6 +940,7 @@ export default function PlanDetailPage() {
                                       style={[
                                         styles.rangeInput,
                                         focusedInput?.foodId === food.id && focusedInput?.type === 'min' && styles.rangeInputFocused,
+                                        q.locked && styles.rangeInputLocked,
                                         { outlineWidth: 0 } as any
                                       ]}
                                       value={q.minQuantity.toString()}
@@ -787,6 +952,7 @@ export default function PlanDetailPage() {
                                       onBlur={() => handleInputBlur(food.id, 'min')}
                                       autoCorrect={false}
                                       spellCheck={false}
+                                      editable={!q.locked}
                                     />
                                     <Text style={styles.rangeSeparator}>to</Text>
                                     <TextInput
@@ -794,6 +960,7 @@ export default function PlanDetailPage() {
                                       style={[
                                         styles.rangeInput,
                                         focusedInput?.foodId === food.id && focusedInput?.type === 'max' && styles.rangeInputFocused,
+                                        q.locked && styles.rangeInputLocked,
                                         { outlineWidth: 0 } as any
                                       ]}
                                       value={q.maxQuantity.toString()}
@@ -805,30 +972,31 @@ export default function PlanDetailPage() {
                                       onBlur={() => handleInputBlur(food.id, 'max')}
                                       autoCorrect={false}
                                       spellCheck={false}
+                                      editable={!q.locked}
                                     />
                                   </View>
                                 ) : (
                                   <View style={styles.sliderRow}>
                                     <Pressable 
-                                      onPress={() => handleMinClick(food.id)}
+                                      onPress={() => !q.locked && handleMinClick(food.id)}
                                       style={styles.minMaxLabelContainer}
                                     >
-                                      <Text style={styles.minMaxLabel}>{q.minQuantity.toFixed(1)}</Text>
+                                      <Text style={q.locked ? styles.minMaxLabelLocked : styles.minMaxLabel}>{q.minQuantity.toFixed(1)}</Text>
                                     </Pressable>
                                     <Slider
                                       style={styles.slider}
                                       minimumValue={q.minQuantity}
                                       maximumValue={q.maxQuantity}
                                       value={q.quantity}
-                                      onValueChange={(value) => handleQuantityChange(meal.id, food.id, value)}
-                                      minimumTrackTintColor={Colors.green}
+                                      onValueChange={(value) => !q.locked && handleQuantityChange(meal.id, food.id, value)}
+                                      minimumTrackTintColor={q.locked ? Colors.lightgray : Colors.green}
                                       maximumTrackTintColor={Colors.lightgray}
                                     />
                                     <Pressable 
-                                      onPress={() => handleMaxClick(food.id)}
+                                      onPress={() => !q.locked && handleMaxClick(food.id)}
                                       style={styles.minMaxLabelContainer}
                                     >
-                                      <Text style={styles.minMaxLabel}>{q.maxQuantity.toFixed(1)}</Text>
+                                      <Text style={q.locked ? styles.minMaxLabelLocked : styles.minMaxLabel}>{q.maxQuantity.toFixed(1)}</Text>
                                     </Pressable>
                                   </View>
                                 )}
@@ -904,7 +1072,7 @@ export default function PlanDetailPage() {
               active: getSelectedFoodsForMeal(currentModalMealId).has(food.id),
               quantity: 1,
               minQuantity: 0,
-              maxQuantity: 10,
+              maxQuantity: 3,
               selectedUnit: food.servingUnits[0]?.name || 'g'
             })) || []
           }}
@@ -1158,5 +1326,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.white,
+  },
+  quantityLockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  quantityTextInput: {
+    fontSize: 14,
+    color: Colors.black,
+    borderBottomWidth: 3,
+    borderBottomColor: Colors.black,
+    padding: 4,
+    width: 60,
+    textAlign: 'center',
+    backgroundColor: 'transparent',
+  },
+  quantityTextInputLocked: {
+    borderBottomColor: Colors.lightgray,
+    color: Colors.gray,
+  },
+  lockButton: {
+    padding: 4,
+    backgroundColor: Colors.coolgray,
+    borderRadius: 8,
+  },
+  sliderThumbLocked: {
+    backgroundColor: Colors.lightgray,
+  },
+  rangeInputLocked: {
+    borderBottomColor: Colors.lightgray,
+  },
+  minMaxLabelLocked: {
+    color: Colors.gray,
   },
 }) 
