@@ -716,16 +716,6 @@ export default function PlanDetailPage() {
                   </View>
                 ) : (
                   <View style={styles.foodList}>
-                    {/* Optimize button for this meal */}
-                    <View style={styles.mealOptimizeContainer}>
-                      <Pressable 
-                        style={styles.mealOptimizeButton}
-                        onPress={() => optimizeSingleMeal(meal)}
-                      >
-                        <Text style={styles.mealOptimizeButtonText}>Optimize {meal.name}</Text>
-                      </Pressable>
-                    </View>
-                    
                     {kitchens.flatMap(kitchen => 
                       kitchen.foods.filter(food => selectedFoodsForMeal.has(food.id))
                         .map(food => ({ ...food, kitchenId: kitchen.id }))
@@ -870,6 +860,16 @@ export default function PlanDetailPage() {
                         </Swipeable>
                       );
                     })}
+                    
+                    {/* Optimize button for this meal - moved below food cards */}
+                    <View style={styles.mealOptimizeContainer}>
+                      <Pressable 
+                        style={styles.mealOptimizeButton}
+                        onPress={() => optimizeSingleMeal(meal)}
+                      >
+                        <Text style={styles.mealOptimizeButtonText}>Optimize {meal.name}</Text>
+                      </Pressable>
+                    </View>
                   </View>
                 )}
               </View>
