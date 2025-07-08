@@ -48,7 +48,7 @@ type FlowStep = 'filters' | 'quantities'
 
 export default function PlanDetailPage() {
   const { planId } = useLocalSearchParams()
-  const { userMealPreferences, preferences } = useUser()
+  const { userMealPreferences, preferences, meals } = useUser()
   const [expandedFoods, setExpandedFoods] = useState<Set<string>>(new Set())
   const [kitchens, setKitchens] = useState<KitchenWithActiveFoods[]>([])
   const [loading, setLoading] = useState(true)
@@ -110,18 +110,67 @@ export default function PlanDetailPage() {
     return servings;
   };
 
-  // Helper function to scale preferences based on meal distribution percentage
+  // Helper function to get meal-specific preferences for display (full goals, not adjusted)
+  const getMealDisplayPreferences = (meal: any) => {
+    if (!preferences || !meal.distribution_percentage) {
+      return preferences;
+    }
+    
+    const distributionPercentage = meal.distribution_percentage;
+    
+    return preferences.map(pref => ({
+      ...pref,
+      min: pref.min ? pref.min * distributionPercentage : undefined,
+      max: pref.max ? pref.max * distributionPercentage : undefined,
+    }));
+  };
+
+  // Helper function to scale preferences based on meal distribution percentage and account for logged foods (for optimization)
   const getMealSpecificPreferences = (meal: any) => {
     if (!preferences || !meal.distribution_percentage) {
       return preferences;
     }
     
     const distributionPercentage = meal.distribution_percentage;
-    return preferences.map(pref => ({
-      ...pref,
-      min: pref.min ? pref.min * distributionPercentage : undefined,
-      max: pref.max ? pref.max * distributionPercentage : undefined,
-    }));
+    
+    // Calculate total logged macros for this meal
+    const loggedMeal = meals.find(m => m.name === meal.name);
+    const loggedMacros: any = {};
+    if (loggedMeal) {
+      loggedMeal.servings.forEach((foodServing) => {
+        const adjustedMacros = calculateAdjustedMacros(foodServing);
+        Object.entries(adjustedMacros).forEach(([key, value]) => {
+          if (value) {
+            loggedMacros[key] = (loggedMacros[key] || 0) + value;
+          }
+        });
+      });
+    }
+    
+    console.log(`Getting preferences for ${meal.name}:`);
+    console.log('Distribution percentage:', distributionPercentage);
+    console.log('Logged macros for this meal:', loggedMacros);
+    
+    const result = preferences.map(pref => {
+      const mealTarget = {
+        min: pref.min ? pref.min * distributionPercentage : undefined,
+        max: pref.max ? pref.max * distributionPercentage : undefined,
+      };
+      
+      // Subtract logged macros from the targets
+      const loggedAmount = loggedMacros[pref.id] || 0;
+      const adjustedPref = {
+        ...pref,
+        min: mealTarget.min ? Math.max(0, mealTarget.min - loggedAmount) : undefined,
+        max: mealTarget.max ? Math.max(0, mealTarget.max - loggedAmount) : undefined,
+      };
+      
+      console.log(`${pref.id}: original min=${pref.min}, max=${pref.max}, meal target min=${mealTarget.min}, max=${mealTarget.max}, logged=${loggedAmount}, adjusted min=${adjustedPref.min}, max=${adjustedPref.max}`);
+      
+      return adjustedPref;
+    });
+    
+    return result;
   };
 
   // Calculate macros for all meals at the top level
@@ -131,6 +180,8 @@ export default function PlanDetailPage() {
       const servings = getMealSelectedFoodServings(meal.id);
       // Calculate macros directly instead of using useMacros hook
       const totalMacros: any = {};
+      
+      // Add macros from planned foods
       servings.forEach((foodServing) => {
         const adjustedMacros = calculateAdjustedMacros(foodServing);
         Object.entries(adjustedMacros).forEach(([key, value]) => {
@@ -139,10 +190,51 @@ export default function PlanDetailPage() {
           }
         });
       });
+      
+      // Add macros from logged foods for this meal
+      const loggedMeal = meals.find(m => m.name === meal.name);
+      if (loggedMeal) {
+        loggedMeal.servings.forEach((foodServing) => {
+          const adjustedMacros = calculateAdjustedMacros(foodServing);
+          Object.entries(adjustedMacros).forEach(([key, value]) => {
+            if (value) {
+              totalMacros[key] = (totalMacros[key] || 0) + value;
+            }
+          });
+        });
+      }
+      
       macros[meal.id] = totalMacros;
     });
     return macros;
-  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens]);
+  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, meals]);
+
+  // Helper function to get overall preferences accounting for all logged foods
+  const getOverallPreferencesWithLoggedFoods = () => {
+    if (!preferences) return preferences;
+    
+    // Calculate total logged macros across all meals
+    const totalLoggedMacros: any = {};
+    meals.forEach(meal => {
+      meal.servings.forEach((foodServing) => {
+        const adjustedMacros = calculateAdjustedMacros(foodServing);
+        Object.entries(adjustedMacros).forEach(([key, value]) => {
+          if (value) {
+            totalLoggedMacros[key] = (totalLoggedMacros[key] || 0) + value;
+          }
+        });
+      });
+    });
+    
+    return preferences.map(pref => {
+      const loggedAmount = totalLoggedMacros[pref.id] || 0;
+      return {
+        ...pref,
+        min: pref.min ? Math.max(0, pref.min - loggedAmount) : undefined,
+        max: pref.max ? Math.max(0, pref.max - loggedAmount) : undefined,
+      };
+    });
+  };
 
   useEffect(() => {
     fetchKitchens()
@@ -458,6 +550,8 @@ export default function PlanDetailPage() {
 
   const getAllSelectedFoodServings = () => {
     const allServings: any[] = []
+    
+    // Add planned foods only (logged foods are handled separately in app header)
     userMealPreferences.forEach(meal => {
       const selectedFoodIds = selectedFoods.get(meal.id) || new Set<string>()
       selectedFoodIds.forEach(foodId => {
@@ -489,6 +583,7 @@ export default function PlanDetailPage() {
         }
       })
     })
+    
     return allServings
   }
 
@@ -550,6 +645,11 @@ export default function PlanDetailPage() {
       return;
     }
 
+    console.log(`Optimizing ${meal.name}:`);
+    console.log('Original preferences:', preferences);
+    console.log('Meal-specific preferences (with logged foods subtracted):', mealSpecificPrefs);
+    console.log('Selected foods:', mealFoods.map(f => f.food.name));
+
     const foods = mealFoods.map(food => {
       const macroValues = macroNames.map(macroName => {
         return (food.food.macros as any)?.[macroName] || 0;
@@ -567,6 +667,8 @@ export default function PlanDetailPage() {
       min_value: pref.min || 0,
       max_value: pref.max || Infinity
     }));
+
+    console.log('Optimization preferences:', optimizationPreferences);
 
     try {
       const mealResult = await optimizationApi.optimizeQuantities({
@@ -708,7 +810,7 @@ export default function PlanDetailPage() {
         };
       });
       
-      const optimizationPreferences = userPrefs.map(pref => ({
+      const optimizationPreferences = getOverallPreferencesWithLoggedFoods().map(pref => ({
         min_value: pref.min || 0,
         max_value: pref.max || Infinity
       }));
@@ -831,7 +933,7 @@ export default function PlanDetailPage() {
                   <MacrosDisplay 
                     radius={20} 
                     indicators={4} 
-                    macroPreferences={getMealSpecificPreferences(meal)} 
+                    macroPreferences={getMealDisplayPreferences(meal)} 
                     macroValues={mealMacros[meal.id] || {}} 
                   />
                   <View style={styles.macroLine} />
