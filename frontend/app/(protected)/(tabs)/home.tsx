@@ -18,7 +18,8 @@ import { UserMealPreference } from '@shared/types/databaseTypes';
 import Colors from '@/styles/colors';
 import CalendarHeader from '@/components/CalendarHeader';
 import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay';
-import { calculateAllMacrosOptimized } from '@/utils/optimizedMacroCalculation';
+import { calculateAllMacrosOptimized, calculateAdjustedMacrosOptimized } from '@/utils/optimizedMacroCalculation';
+import { useGlobalMacrosSync } from '@/hooks/useGlobalMacrosSync';
 
 export default function Page() {
   const {
@@ -33,6 +34,7 @@ export default function Page() {
   } = useUser();
 
   const { selectedDate } = useSelectedDate();
+  const { syncLoggedMealsMacros, addToLoggedMeals, subtractFromLoggedMeals } = useGlobalMacrosSync();
   const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
   const [activeMealPreferenceDetails, setActiveMealPreferenceDetails] = useState<UserMealPreference | null>(null);
   const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
@@ -52,13 +54,16 @@ export default function Page() {
           const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
           // Update both meals and macros in single state change
           setMealsData({ meals: fetchedMeals, macros: totalMacros });
+          // Immediately sync with global macros display
+          syncLoggedMealsMacros(totalMacros);
         })
         .finally(() => setMealsLoading(false));
     } else {
       setMealsData({ meals: [], macros: {} });
+      syncLoggedMealsMacros({});
       setMealsLoading(false);
     }
-  }, [appUser, selectedDate, rawPreferences]);
+  }, [appUser, selectedDate, rawPreferences, syncLoggedMealsMacros]);
 
   // Open the food search modal for a specific meal
   const openFoodSearch = (meal: Meal) => {
@@ -82,6 +87,19 @@ export default function Page() {
 
   // Handle food deletion with optimistic update
   const handleDeleteFood = async (mealId: string, foodServingId: string) => {
+    // Find the food being deleted to calculate its macros
+    const meal = mealsData.meals.find(m => m.id === mealId);
+    const foodServing = meal?.servings.find(s => s.id === foodServingId);
+    
+    if (foodServing) {
+      // Convert preferences to Set for the optimized function
+      const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
+      // Calculate the macros being removed
+      const removedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+      // Ultra-fast update - subtract the macros immediately
+      subtractFromLoggedMeals(removedMacros);
+    }
+
     // Optimistic update - remove the food from local state immediately
     setMealsData(prevData => ({
       meals: prevData.meals.map(meal => 
@@ -100,11 +118,29 @@ export default function Page() {
       const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
       const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
       setMealsData({ meals: fetchedMeals, macros: totalMacros });
+      // Update global macros with the final result
+      syncLoggedMealsMacros(totalMacros);
     }
   };
 
   // Handle adding foods with optimistic update
   const handleAddFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
+    // Convert preferences to Set for the optimized function
+    const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
+    // Calculate the macros being added
+    const addedMacros = foodsToAdd.reduce((total, foodServing) => {
+      const foodMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+      Object.entries(foodMacros).forEach(([key, value]) => {
+        if (value) {
+          total[key] = (total[key] || 0) + value;
+        }
+      });
+      return total;
+    }, {} as any);
+    
+    // Ultra-fast update - add the macros immediately
+    addToLoggedMeals(addedMacros);
+
     // Optimistic update - add foods to local state immediately
     setMealsData(prevData => ({
       meals: prevData.meals.map(meal => 
@@ -123,11 +159,40 @@ export default function Page() {
       const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
       const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
       setMealsData({ meals: fetchedMeals, macros: totalMacros });
+      // Update global macros with the final result
+      syncLoggedMealsMacros(totalMacros);
     }
   };
 
   // Handle updating food portion with optimistic update
   const handleUpdateFoodPortion = async (servingId: string, quantity: number, unit: SharedServingUnit) => {
+    // Find the food being updated to calculate the macro difference
+    const oldServing = mealsData.meals.flatMap(m => m.servings).find(s => s.id === servingId);
+    const newServing = oldServing ? { ...oldServing, quantity, unit } : null;
+    
+    if (oldServing && newServing) {
+      // Convert preferences to Set for the optimized function
+      const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
+      const oldMacros = calculateAdjustedMacrosOptimized(oldServing, preferenceSet);
+      const newMacros = calculateAdjustedMacrosOptimized(newServing, preferenceSet);
+      
+      // Calculate the difference
+      const macroDiff = Object.keys(newMacros).reduce((diff, key) => {
+        const change = (newMacros[key] || 0) - (oldMacros[key] || 0);
+        if (change !== 0) {
+          diff[key] = change;
+        }
+        return diff;
+      }, {} as any);
+      
+      // Ultra-fast update - apply the difference immediately
+      if (Object.keys(macroDiff).length > 0) {
+        // Always add the difference - it can be positive or negative
+        // The addToLoggedMeals function will handle both cases correctly
+        addToLoggedMeals(macroDiff);
+      }
+    }
+
     // Optimistic update - update the serving in local state immediately
     setMealsData(prevData => ({
       meals: prevData.meals.map(meal => ({
@@ -149,6 +214,8 @@ export default function Page() {
       const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
       const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
       setMealsData({ meals: fetchedMeals, macros: totalMacros });
+      // Update global macros with the final result
+      syncLoggedMealsMacros(totalMacros);
     }
   };
 

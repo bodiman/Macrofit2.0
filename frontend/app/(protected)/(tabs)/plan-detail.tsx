@@ -12,12 +12,13 @@ import { Picker } from '@react-native-picker/picker'
 import React from 'react'
 import KitchenActivationModal from '@/components/Kitchen/KitchenActivationModal'
 import eventBus from '@/app/storage/eventEmitter'
-import useMacros from '@/app/hooks/useMacros'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useFoodSearchApi } from '@/lib/api/foodSearch'
 import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay'
 import { calculateAllMacrosOptimized, calculateAdjustedMacrosOptimized } from '@/utils/optimizedMacroCalculation'
 import { useSelectedDate } from './_layout'
+import { useGlobalMacros } from '@/context/GlobalMacrosContext'
+import { useGlobalMacrosSync } from '@/hooks/useGlobalMacrosSync'
 
 interface Kitchen {
   id: string
@@ -51,6 +52,7 @@ export default function PlanDetailPage() {
   const { planId } = useLocalSearchParams()
   const { userMealPreferences, preferences, rawPreferences, appUser, getMeals } = useUser()
   const { selectedDate } = useSelectedDate()
+  const { updateMealPlanMacros } = useGlobalMacros()
   const [mealsData, setMealsData] = useState<{
     meals: Meal[];
     macros: any;
@@ -122,16 +124,10 @@ export default function PlanDetailPage() {
 
   // Listen for meal updates from other pages
   useEffect(() => {
-    console.log('PlanDetailPage: Setting up mealsUpdated event listener');
-    
     const handleMealsUpdated = () => {
-      console.log('PlanDetailPage: mealsUpdated event received');
       if (appUser && selectedDate) {
         getMeals(appUser.user_id, selectedDate)
           .then((fetchedMeals) => {
-            console.log('PlanDetailPage: Meals re-fetched after update', {
-              mealsCount: fetchedMeals.length
-            });
             const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
             setMealsData({ meals: fetchedMeals, macros: totalMacros });
           });
@@ -140,7 +136,6 @@ export default function PlanDetailPage() {
 
     eventBus.on('mealsUpdated', handleMealsUpdated);
     return () => {
-      console.log('PlanDetailPage: Cleaning up mealsUpdated event listener');
       eventBus.off('mealsUpdated', handleMealsUpdated);
     };
   }, [appUser, selectedDate, rawPreferences]);
@@ -242,7 +237,8 @@ export default function PlanDetailPage() {
     return result;
   };
 
-  // Calculate macros for all meals at the top level
+  // Calculate macros for all meals at the top level - now using global macros context
+  const { totalMacros: globalTotalMacros } = useGlobalMacros();
   const mealMacros = useMemo(() => {
     const macros: { [mealId: string]: any } = {};
     userMealPreferences.forEach(meal => {
@@ -276,7 +272,7 @@ export default function PlanDetailPage() {
       macros[meal.id] = totalMacros;
     });
     return macros;
-  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, preferenceSet]);
+  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, preferenceSet, mealsData.meals]);
 
   // Helper function to get overall preferences accounting for all logged foods
   const getOverallPreferencesWithLoggedFoods = () => {
@@ -657,26 +653,190 @@ export default function PlanDetailPage() {
     return allServings
   }
 
-  const mealPlanMacros = useMacros(getAllSelectedFoodServings())
-  const prevMacrosRef = useRef<any>(null);
+  // Calculate meal plan macros using ultra-fast incremental updates
+  const { addToMealPlan, subtractFromMealPlan, clearMealPlan } = useGlobalMacrosSync();
+  const prevMealPlanRef = useRef<{
+    selectedFoods: Map<string, Set<string>>;
+    mealFoodQuantities: Map<string, Map<string, any>>;
+  }>({ selectedFoods: new Map(), mealFoodQuantities: new Map() });
 
-  // Emit meal plan macros to AppHeader whenever they change
+  // Ultra-fast meal plan macros calculation and sync
   useEffect(() => {
-    // Compare current macros with previous macros
-    const currentMacrosStr = JSON.stringify(mealPlanMacros);
-    const prevMacrosStr = JSON.stringify(prevMacrosRef.current);
-    
-    if (currentMacrosStr !== prevMacrosStr) {
-      console.log('PlanDetailPage: mealPlanMacros useEffect triggered - macros changed', {
-        mealPlanMacrosKeys: Object.keys(mealPlanMacros),
-        mealPlanMacrosValues: mealPlanMacros
-      });
-      eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros);
-      prevMacrosRef.current = mealPlanMacros;
-    } else {
-      console.log('PlanDetailPage: mealPlanMacros useEffect triggered - no change detected');
+    const currentState = {
+      selectedFoods: new Map(selectedFoods),
+      mealFoodQuantities: new Map(mealFoodQuantities)
+    };
+    const prevState = prevMealPlanRef.current;
+
+    // Calculate the difference and apply incremental updates
+    let hasChanges = false;
+
+    // Check for food selection changes
+    for (const [mealId, currentFoodIds] of selectedFoods) {
+      const prevFoodIds = prevState.selectedFoods.get(mealId) || new Set();
+      
+      // Find added foods
+      for (const foodId of currentFoodIds) {
+        if (!prevFoodIds.has(foodId)) {
+          // Food was added - add its macros
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const q = mealFoodQuantities.get(mealId)?.get(foodId) || {
+                quantity: 1,
+                minQuantity: 0,
+                maxQuantity: 3,
+                selectedUnit: food.servingUnits[0]?.name || 'g',
+                locked: false,
+              };
+              
+              // Create a proper FoodServing object for optimized calculation
+              const foodServing = {
+                id: food.id,
+                food_id: food.id,
+                quantity: q.quantity,
+                unit: {
+                  id: q.selectedUnit,
+                  name: q.selectedUnit,
+                  food_id: food.id,
+                  grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+                },
+                food: food
+              };
+              
+              // Calculate macros using the optimized function (includes weight multiplication)
+              const foodMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+              addToMealPlan(foodMacros);
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+      }
+      
+      // Find removed foods
+      for (const foodId of prevFoodIds) {
+        if (!currentFoodIds.has(foodId)) {
+          // Food was removed - subtract its macros
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const prevQ = prevState.mealFoodQuantities.get(mealId)?.get(foodId) || {
+                quantity: 1,
+                minQuantity: 0,
+                maxQuantity: 3,
+                selectedUnit: food.servingUnits[0]?.name || 'g',
+                locked: false,
+              };
+              
+              // Create a proper FoodServing object for optimized calculation
+              const foodServing = {
+                id: food.id,
+                food_id: food.id,
+                quantity: prevQ.quantity,
+                unit: {
+                  id: prevQ.selectedUnit,
+                  name: prevQ.selectedUnit,
+                  food_id: food.id,
+                  grams: food.servingUnits.find(u => u.name === prevQ.selectedUnit)?.grams || 1
+                },
+                food: food
+              };
+              
+              // Calculate macros using the optimized function (includes weight multiplication)
+              const foodMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+              subtractFromMealPlan(foodMacros);
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+      }
     }
-  }, [mealPlanMacros])
+
+    // Check for quantity changes
+    for (const [mealId, currentMealQuantities] of mealFoodQuantities) {
+      const prevMealQuantities = prevState.mealFoodQuantities.get(mealId) || new Map();
+      
+      for (const [foodId, currentQ] of currentMealQuantities) {
+        const prevQ = prevMealQuantities.get(foodId);
+        
+        if (prevQ && currentQ.quantity !== prevQ.quantity) {
+          // Quantity changed - calculate and apply the difference
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const quantityDiff = currentQ.quantity - prevQ.quantity;
+              
+              if (quantityDiff !== 0) {
+                // Create FoodServing objects for both old and new quantities
+                const oldFoodServing = {
+                  id: food.id,
+                  food_id: food.id,
+                  quantity: prevQ.quantity,
+                  unit: {
+                    id: prevQ.selectedUnit,
+                    name: prevQ.selectedUnit,
+                    food_id: food.id,
+                    grams: food.servingUnits.find(u => u.name === prevQ.selectedUnit)?.grams || 1
+                  },
+                  food: food
+                };
+                
+                const newFoodServing = {
+                  id: food.id,
+                  food_id: food.id,
+                  quantity: currentQ.quantity,
+                  unit: {
+                    id: currentQ.selectedUnit,
+                    name: currentQ.selectedUnit,
+                    food_id: food.id,
+                    grams: food.servingUnits.find(u => u.name === currentQ.selectedUnit)?.grams || 1
+                  },
+                  food: food
+                };
+                
+                // Calculate the macro difference using optimized functions
+                const oldMacros = calculateAdjustedMacrosOptimized(oldFoodServing, preferenceSet);
+                const newMacros = calculateAdjustedMacrosOptimized(newFoodServing, preferenceSet);
+                
+                // Calculate the difference
+                const macroDiff = Object.keys(newMacros).reduce((diff, key) => {
+                  const change = (newMacros[key] || 0) - (oldMacros[key] || 0);
+                  if (change !== 0) {
+                    diff[key] = change;
+                  }
+                  return diff;
+                }, {} as any);
+                
+                if (Object.keys(macroDiff).length > 0) {
+                  // Always add the difference - it can be positive or negative
+                  // The addToMealPlan function will handle both cases correctly
+                  addToMealPlan(macroDiff);
+                  hasChanges = true;
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Update the previous state reference
+    prevMealPlanRef.current = currentState;
+
+    if (hasChanges) {
+      console.log('PlanDetailPage: Meal plan macros updated incrementally');
+    }
+  }, [selectedFoods, mealFoodQuantities, kitchens, addToMealPlan, subtractFromMealPlan, preferenceSet]);
+
+  // Clear meal plan macros when leaving this page
+  useEffect(() => {
+    return () => {
+      clearMealPlan();
+    };
+  }, [clearMealPlan]);
 
   // Helper function to optimize a single meal
   const optimizeSingleMeal = async (meal: any) => {

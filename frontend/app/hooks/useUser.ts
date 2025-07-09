@@ -10,6 +10,8 @@ import eventBus from '@/app/storage/eventEmitter';
 import { useApi } from '@/lib/api';
 import { Meal as FoodTypeMeal, FoodServing, ServingUnit as SharedServingUnit } from '@shared/types/foodTypes'; // Kept for the structure from API
 import { useSelectedDate } from '../(protected)/(tabs)/_layout';
+import { useOptimisticStorage } from '@/hooks/useOptimisticStorage';
+import { calculateAllMacrosOptimized } from '@/utils/optimizedMacroCalculation';
 
 // const defaultMeals: FoodTypeMeal[] = [
 //   {
@@ -76,6 +78,24 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [error, setError] = useState<null | string>(null);
+
+  // Optimistic storage for meals
+  const {
+    state: optimisticMeals,
+    optimisticUpdate,
+    forceRollback,
+    getPendingOperations,
+    hasPendingOperations
+  } = useOptimisticStorage<{
+    meals: FoodTypeMeal[];
+    macros: any;
+  }>({
+    meals: [],
+    macros: {}
+  }, {
+    enableLogging: true,
+    maxHistorySize: 20
+  });
 
   // Remove meals state and useEffect for auto-fetching
 
@@ -381,8 +401,6 @@ export function useUser() {
       setUserMealPreferencesState(updatedPreferences);
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
-      // Optimistically update meals for today
-      // await fetchMeals(appUser.user_id, new Date()); // This line is removed
 
       return updatedPreference;
     } catch (err) {
@@ -401,17 +419,97 @@ export function useUser() {
       setUserMealPreferencesState(updatedPreferences);
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
-
-      // Optimistically update meals for today
-      if (appUser) { // Check appUser again just in case, though outer check should cover
-        console.log("Fetching meals from deleteUserMealPreference")
-        // await fetchMeals(appUser.user_id, new Date()); // This line is removed
-      }
-
     } catch (err) {
       console.error('Failed to delete user meal preference:', err);
       setError('Failed to delete user meal preference');
     }
+  };
+
+  // Optimistic meal operations
+  const deleteFoodFromMealOptimistically = async (mealId: string, foodServingId: string) => {
+    const operationId = `delete-food-${mealId}-${foodServingId}`;
+    
+    return optimisticUpdate(
+      operationId,
+      (currentState) => ({
+        meals: currentState.meals.map(meal => 
+          meal.id === mealId 
+            ? { ...meal, servings: meal.servings.filter(serving => serving.id !== foodServingId) }
+            : meal
+        ),
+        macros: currentState.macros // Keep existing macros for now
+      }),
+      api.delete(`/api/user/meals/servings/${foodServingId}`),
+      'deleteFood',
+      { mealId, foodServingId }
+    );
+  };
+
+  const addFoodsToMealOptimistically = async (mealId: string, foodsToAdd: FoodServing[]) => {
+    const operationId = `add-foods-${mealId}-${Date.now()}`;
+    
+    return optimisticUpdate(
+      operationId,
+      (currentState) => ({
+        meals: currentState.meals.map(meal => 
+          meal.id === mealId 
+            ? { ...meal, servings: [...meal.servings, ...foodsToAdd] }
+            : meal
+        ),
+        macros: currentState.macros // Keep existing macros for now
+      }),
+      api.post(`/api/user/meals/${mealId}/servings`, {
+        foodServings: foodsToAdd
+      }),
+      'addFoods',
+      { mealId, foodsCount: foodsToAdd.length }
+    );
+  };
+
+  const updateFoodPortionOptimistically = async (
+    servingId: string, 
+    quantity: number, 
+    unit: SharedServingUnit, 
+    newStatus?: 'PLANNED' | 'LOGGED'
+  ) => {
+    const operationId = `update-portion-${servingId}`;
+    
+    const payload: any = {
+      quantity: quantity,
+      unit: { id: unit.id }, 
+    };
+    if (newStatus) {
+      payload.status = newStatus;
+    }
+    
+    return optimisticUpdate(
+      operationId,
+      (currentState) => ({
+        meals: currentState.meals.map(meal => ({
+          ...meal,
+          servings: meal.servings.map(serving => 
+            serving.id === servingId 
+              ? { ...serving, quantity, unit }
+              : serving
+          )
+        })),
+        macros: currentState.macros // Keep existing macros for now
+      }),
+      api.put(`/api/user/meals/servings/${servingId}`, payload),
+      'updateFoodPortion',
+      { servingId, quantity, unit, newStatus }
+    );
+  };
+
+  // Update optimistic meals when fetched meals change
+  const updateOptimisticMeals = (fetchedMeals: FoodTypeMeal[]) => {
+    const totalMacros = calculateAllMacrosOptimized(fetchedMeals, preferences);
+    optimisticUpdate(
+      'update-meals-from-fetch',
+      () => ({ meals: fetchedMeals, macros: totalMacros }),
+      Promise.resolve(),
+      'updateMealsFromFetch'
+    );
   };
 
   return { 
@@ -439,10 +537,19 @@ export function useUser() {
     updateUserMealPreference,
     deleteUserMealPreference,
 
-    // Meals & Servings
-    // meals, // Removed from exports
-    addFoodsToMeal,
+    // Meals & Servings (Optimistic)
+    optimisticMeals,
+    deleteFoodFromMealOptimistically,
+    addFoodsToMealOptimistically,
+    updateFoodPortionOptimistically,
+    forceRollback,
+    getPendingOperations,
+    hasPendingOperations,
+    updateOptimisticMeals,
+    
+    // Legacy functions (for backward compatibility)
     deleteFoodFromMeal,
+    addFoodsToMeal,
     updateFoodPortion,
     getMeals, // Added getMeals to exports
   };

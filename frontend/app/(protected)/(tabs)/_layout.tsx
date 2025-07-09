@@ -1,15 +1,13 @@
 import { Tabs } from 'expo-router'
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { View, ActivityIndicator } from 'react-native'
+import { View } from 'react-native'
 import CalendarHeader from '@/components/CalendarHeader'
 import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay'
 import useUser from '@/app/hooks/useUser'
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react'
 import Colors from '@/styles/colors'
-import { Meal } from '@shared/types/foodTypes'
-import { calculateAllMacrosOptimized } from '@/utils/optimizedMacroCalculation'
-import eventBus from '@/app/storage/eventEmitter'
+import { useGlobalMacros } from '@/context/GlobalMacrosContext'
 
 // Context for global selected date
 const SelectedDateContext = createContext<{
@@ -27,75 +25,10 @@ export default function TabsLayout() {
     now.setHours(0,0,0,0);
     return now;
   });
-  const { preferences, rawPreferences, appUser, getMeals } = useUser();
-  const [mealsData, setMealsData] = useState<{
-    meals: Meal[];
-    macros: any;
-  }>({ meals: [], macros: {} });
-  const [mealsLoading, setMealsLoading] = useState(false);
-  const [mealPlanMacros, setMealPlanMacros] = useState({});
-
-  // Fetch meals when selectedDate or appUser changes
-  useEffect(() => {
-    if (appUser && selectedDate) {
-      setMealsLoading(true);
-      getMeals(appUser.user_id, selectedDate)
-        .then((fetchedMeals) => {
-          // Use optimized batch calculation
-          const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-          // Update both meals and macros in single state change
-          setMealsData({ meals: fetchedMeals, macros: totalMacros });
-        })
-        .finally(() => setMealsLoading(false));
-    } else {
-      setMealsData({ meals: [], macros: {} });
-      setMealsLoading(false);
-    }
-  }, [appUser, selectedDate, rawPreferences]);
-
-  // Listen for meal updates from other pages
-  useEffect(() => {
-    const handleMealsUpdated = () => {
-      if (appUser && selectedDate) {
-        setMealsLoading(true);
-        getMeals(appUser.user_id, selectedDate)
-          .then((fetchedMeals) => {
-            const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-            setMealsData({ meals: fetchedMeals, macros: totalMacros });
-          })
-          .finally(() => setMealsLoading(false));
-      }
-    };
-
-    const handleMealPlanMacrosUpdate = (macros: any) => {
-      setMealPlanMacros(macros);
-    };
-
-    eventBus.on('mealsUpdated', handleMealsUpdated);
-    eventBus.on('mealPlanMacrosUpdated', handleMealPlanMacrosUpdate);
-    
-    return () => {
-      eventBus.off('mealsUpdated', handleMealsUpdated);
-      eventBus.off('mealPlanMacrosUpdated', handleMealPlanMacrosUpdate);
-    };
-  }, [appUser, selectedDate, rawPreferences]);
-
-  // Combine actual meals macros with meal plan macros
-  const totalMacros = useMemo(() => {
-    const combined: any = {};
-
-    // Add actual meals macros
-    for (const [key, value] of Object.entries(mealsData.macros)) {
-      combined[key] = (combined[key] || 0) + value;
-    }
-
-    // Add meal plan macros
-    for (const [key, value] of Object.entries(mealPlanMacros)) {
-      combined[key] = (combined[key] || 0) + (value as number);
-    }
-
-    return combined;
-  }, [mealsData.macros, mealPlanMacros]);
+  const { preferences } = useUser();
+  
+  // Use global macros context - only for display, not management
+  const { totalMacros } = useGlobalMacros();
 
   return (
     <SelectedDateContext.Provider value={{ selectedDate, setSelectedDate }}>
@@ -109,21 +42,6 @@ export default function TabsLayout() {
               indicators={4}
               radius={35}
             />
-            {mealsLoading && (
-              <View style={{ 
-                position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                right: 0, 
-                bottom: 0, 
-                backgroundColor: 'rgba(255, 255, 255, 0.8)', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                borderRadius: 8
-              }}>
-                <ActivityIndicator size="small" color={Colors.blue} />
-              </View>
-            )}
           </View>
         </View>
         <Tabs screenOptions={{ headerShown: false }}>
