@@ -244,11 +244,6 @@ export default function PlanDetailPage() {
       }
     });
     
-    console.log(`Getting preferences for ${meal.name}:`);
-    console.log('Distribution percentage:', distributionPercentage);
-    console.log('Logged macros for this meal:', loggedMacros);
-    console.log('Locked macros for this meal:', lockedMacros);
-    
     const result = preferences.map(pref => {
       const mealTarget = {
         min: pref.min ? pref.min * distributionPercentage : undefined,
@@ -262,11 +257,9 @@ export default function PlanDetailPage() {
       
       const adjustedPref = {
         ...pref,
-        min: mealTarget.min ? Math.max(0, mealTarget.min - totalFixedAmount) : undefined,
-        max: mealTarget.max ? Math.max(0, mealTarget.max - totalFixedAmount) : undefined,
+        min: mealTarget.min ? mealTarget.min - totalFixedAmount : undefined,
+        max: mealTarget.max ? mealTarget.max - totalFixedAmount : undefined,
       };
-      
-      console.log(`${pref.id}: original min=${pref.min}, max=${pref.max}, meal target min=${mealTarget.min}, max=${mealTarget.max}, logged=${loggedAmount}, locked=${lockedAmount}, total fixed=${totalFixedAmount}, adjusted min=${adjustedPref.min}, max=${adjustedPref.max}`);
       
       return adjustedPref;
     });
@@ -363,10 +356,6 @@ export default function PlanDetailPage() {
       });
     });
     
-    console.log('Overall preferences calculation:');
-    console.log('Total logged macros:', totalLoggedMacros);
-    console.log('Total locked macros:', totalLockedMacros);
-    
     return preferences.map(pref => {
       const loggedAmount = totalLoggedMacros[pref.id] || 0;
       const lockedAmount = totalLockedMacros[pref.id] || 0;
@@ -374,11 +363,9 @@ export default function PlanDetailPage() {
       
       const adjustedPref = {
         ...pref,
-        min: pref.min ? Math.max(0, pref.min - totalFixedAmount) : undefined,
-        max: pref.max ? Math.max(0, pref.max - totalFixedAmount) : undefined,
+        min: pref.min ? pref.min - totalFixedAmount : undefined,
+        max: pref.max ? pref.max - totalFixedAmount : undefined,
       };
-      
-      console.log(`${pref.id}: original min=${pref.min}, max=${pref.max}, logged=${loggedAmount}, locked=${lockedAmount}, total fixed=${totalFixedAmount}, adjusted min=${adjustedPref.min}, max=${adjustedPref.max}`);
       
       return adjustedPref;
     });
@@ -972,6 +959,12 @@ export default function PlanDetailPage() {
       return;
     }
 
+    // Debug: Show meal-specific preferences before conversion
+    console.log(`=== ${meal.name} Meal-Specific Preferences ===`);
+    console.log('Original preferences:', preferences);
+    console.log('Meal-specific preferences (after adjustments):', mealSpecificPrefs);
+    console.log('===============================================');
+
     console.log(`Optimizing ${meal.name}:`);
     console.log('Original preferences:', preferences);
     console.log('Meal-specific preferences (with logged foods subtracted):', mealSpecificPrefs);
@@ -1005,6 +998,27 @@ export default function PlanDetailPage() {
         macroNames,
         maxIterations: 500
       });
+
+      // Debug: Show calculated macros, preferences, and error
+      console.log(`=== ${meal.name} Optimization Debug ===`);
+      console.log('Macro Names:', macroNames);
+      console.log('Optimization Preferences:', optimizationPreferences);
+      console.log('Final Macros:', mealResult.finalMacros);
+      console.log('Optimization Error:', mealResult.error);
+      
+      // Calculate what the planned foods contribute
+      // const plannedMacros: any = {};
+      // mealFoods.forEach((food, idx) => {
+      //   const quantity = mealResult.optimizedQuantities[idx];
+      //   const totalGrams = quantity * food.unit.grams;
+      //   food.macroValues.forEach((valuePerGram: number, macroIndex: number) => {
+      //     const macroName = macroNames[macroIndex];
+      //     const totalValue = totalGrams * valuePerGram;
+      //     plannedMacros[macroName] = (plannedMacros[macroName] || 0) + totalValue;
+      //   });
+      // });
+      // console.log('Planned Food Macros:', plannedMacros);
+      console.log('=====================================');
 
       // Update quantities for this meal
       setMealFoodQuantities(prev => {
@@ -1082,6 +1096,12 @@ export default function PlanDetailPage() {
         const mealSpecificPrefs = getMealSpecificPreferences(meal);
         if (!mealSpecificPrefs) continue;
         
+        // Debug: Show meal-specific preferences before conversion
+        console.log(`=== ${meal.name} Meal-Specific Preferences ===`);
+        console.log('Original preferences:', preferences);
+        console.log('Meal-specific preferences (after adjustments):', mealSpecificPrefs);
+        console.log('===============================================');
+        
         const foods = mealFoods.map(food => {
           const macroValues = macroNames.map(macroName => {
             return (food.food.macros as any)?.[macroName] || 0;
@@ -1152,6 +1172,13 @@ export default function PlanDetailPage() {
         macroNames,
         maxIterations: 1000
       });
+      
+      // Debug: Show calculated macros, preferences, and error for overall optimization
+      console.log(`=== Overall Optimization Debug ===`);
+      console.log('Macro Names:', macroNames);
+      console.log('Optimization Preferences:', optimizationPreferences);
+      console.log('Final Macros:', result.finalMacros);
+      console.log('Optimization Error:', result.error);
       
       // Update all quantities with final optimized values
       setMealFoodQuantities(prev => {
