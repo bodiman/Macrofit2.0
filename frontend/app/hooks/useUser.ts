@@ -9,6 +9,7 @@ import storage from '@/app/storage/storage';
 import eventBus from '@/app/storage/eventEmitter';
 import { useApi } from '@/lib/api';
 import { Meal as FoodTypeMeal, FoodServing, ServingUnit as SharedServingUnit } from '@shared/types/foodTypes'; // Kept for the structure from API
+import { useSelectedDate } from '../(protected)/(tabs)/_layout';
 
 // const defaultMeals: FoodTypeMeal[] = [
 //   {
@@ -76,7 +77,7 @@ export function useUser() {
   const [needsRegistration, setNeedsRegistration] = useState(false);
   const [error, setError] = useState<null | string>(null);
 
-  const [meals, setMeals] = useState<FoodTypeMeal[]>(loadMeals()); // Initialize with cached or empty
+  // Remove meals state and useEffect for auto-fetching
 
   // Sync preferences when external changes happen
   useEffect(() => {
@@ -100,7 +101,7 @@ export function useUser() {
 
     const handleMealsUpdate = () => {
       const updated = loadMeals();
-      setMeals(updated);
+      // setMeals(updated); // This line is removed
     };
 
     eventBus.on('preferencesUpdated', handleUserPrefsUpdate);
@@ -122,7 +123,7 @@ export function useUser() {
     try {
         setLoading(true);
       const res = await api.post('/api/register', userData);
-      console.log("res", res);
+      // console.log("res", res);
       const data = await res.json();
       setAppUser(data.user);
       // Assuming registration might also return initial general preferences and meal preferences
@@ -234,22 +235,27 @@ export function useUser() {
     }
   };
 
-  const fetchMeals = async (userId: number, date: Date) => {
+  // Export getMeals function
+  const getMeals = async (userId: number, date: Date) => {
     try {
-      // The backend GET /api/user/meals now handles upserting based on UserMealPreference
-      // and cleaning up old, empty, non-preferred meals.
-      const dateString = date.toISOString().split('T')[0]; // Format date as YYYY-MM-DD
+      const dateString = date.toISOString().split('T')[0];
       const res = await api.get(`/api/user/meals?user_id=${userId}&date=${dateString}`);
       const data: FoodTypeMeal[] = await res.json();
-      
-      setMeals(data); // Directly set the meals from the API response
-      storage.set(CACHED_MEALS_KEY, JSON.stringify(data));
-      eventBus.emit('mealsUpdated');
+      return data;
     } catch (err) {
-        console.error('Failed to fetch meals:', err);
-        setError('Failed to fetch meals');
+      console.error('Failed to fetch meals:', err);
+      setError('Failed to fetch meals');
+      return [];
     }
   };
+
+  // Fetch meals for the selected date whenever it changes
+  const { selectedDate } = useSelectedDate();
+  useEffect(() => {
+    if (appUser && selectedDate) {
+      // fetchMeals(appUser.user_id, selectedDate); // This line is removed
+    }
+  }, [appUser, selectedDate]);
 
   useEffect(() => {
     if (!isLoaded || !clerkUser) {
@@ -271,7 +277,7 @@ export function useUser() {
           await Promise.all([
             fetchPreferences(user.user_id),
             fetchUserMealPreferences(user.user_id),
-            fetchMeals(user.user_id, new Date()) // Fetch for today initially
+            // fetchMeals(user.user_id, new Date()) // Fetch for today initially - REMOVED
           ]);
         }
       } catch (e: any) {
@@ -291,26 +297,10 @@ export function useUser() {
 
 
   const deleteFoodFromMeal = async (mealId: string, foodServingId: string) => {
-    const originalMeals = meals;
-    const updatedMeals = meals.map(meal => {
-      if (meal.id === mealId) {
-        return {
-          ...meal,
-          servings: meal.servings.filter(serving => serving.id !== foodServingId)  
-        };
-      }
-      return meal;
-    });
-
-    setMeals(updatedMeals);
-    storage.set(CACHED_MEALS_KEY, JSON.stringify(updatedMeals));
-    eventBus.emit('mealsUpdated');
-
     try {
       await api.delete(`/api/user/meals/servings/${foodServingId}`);
+      eventBus.emit('mealsUpdated');
     } catch (err) {
-      setMeals(originalMeals); // Revert on error
-      storage.set(CACHED_MEALS_KEY, JSON.stringify(originalMeals));
       eventBus.emit('mealsUpdated');
       console.error('Failed to delete food from meal:', err);
       setError('Failed to delete food from meal');
@@ -318,85 +308,21 @@ export function useUser() {
   };
 
   const addFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
-      const originalMeals = meals;
-      // Optimistically update UI
-      const updatedMeals = meals.map(meal => {
-        if (meal.id === mealId) {
-          return {
-            ...meal,
-            servings: [...meal.servings, ...foodsToAdd]
-          };
-        }
-        return meal;
+    // No local meals state to update
+    try {
+      await api.post(`/api/user/meals/${mealId}/servings`, {
+        foodServings: foodsToAdd
       });
-
-      setMeals(updatedMeals);
-      storage.set(CACHED_MEALS_KEY, JSON.stringify(updatedMeals));
       eventBus.emit('mealsUpdated');
-
-      // console.log("done locally")
-
-      try {
-        // API expects an array of food servings
-        await api.post(`/api/user/meals/${mealId}/servings`, {
-          foodServings: foodsToAdd
-        });
-
-      } catch (err) {
-        setMeals(originalMeals); // Revert on error
-        storage.set(CACHED_MEALS_KEY, JSON.stringify(originalMeals));
-        eventBus.emit('mealsUpdated');
-        console.error('Failed to add foods to meal:', err);
-        setError('Failed to add foods to meal');
-      } finally {
-        // console.log("done in database")
-      }
+    } catch (err) {
+      eventBus.emit('mealsUpdated');
+      console.error('Failed to add foods to meal:', err);
+      setError('Failed to add foods to meal');
+    }
   };
 
   const updateFoodPortion = async (servingId: string, quantity: number, unit: SharedServingUnit, newStatus?: 'PLANNED' | 'LOGGED') => {
     if (!appUser) return;
-
-    const mealToUpdate = meals.find(meal => meal.servings.some(s => s.id === servingId));
-    if (!mealToUpdate) {
-      console.error("Meal not found for servingId:", servingId);
-      setError('Meal not found for the item.');
-      return;
-    }
-
-    const originalServing = mealToUpdate.servings.find(s => s.id === servingId);
-    if (!originalServing) {
-        console.error("Original serving not found for optimistic update:", servingId);
-        setError('Original serving not found.');
-        return;
-    }
-
-    const originalMealsJSON = JSON.stringify(meals);
-
-    // 1. Calculate the optimistically updated meals data first
-    const optimisticallyUpdatedMealsData = meals.map(meal => {
-      if (meal.id === mealToUpdate.id) {
-        return {
-          ...meal,
-          servings: meal.servings.map(s => {
-            if (s.id === servingId) {
-              return {
-                ...s,
-                quantity: quantity,
-                unit: unit,
-              };
-            }
-            return s;
-          })
-        };
-      }
-      return meal;
-    });
-
-    // 2. Apply optimistic updates to state, storage, and emit event
-    setMeals(optimisticallyUpdatedMealsData);
-    storage.set(CACHED_MEALS_KEY, JSON.stringify(optimisticallyUpdatedMealsData));
-    eventBus.emit('mealsUpdated');
-
     try {
       const payload: any = {
         quantity: quantity,
@@ -405,49 +331,12 @@ export function useUser() {
       if (newStatus) {
         payload.status = newStatus;
       }
-
-      const res = await api.put(`/api/user/meals/servings/${servingId}`, payload);
-      const updatedServingFromServer = await res.json(); 
-
-      // 3. On success, update state, storage, and emit event with confirmed data
-      //    It's best to apply the server's version of the item to the current state
-      setMeals(currentOptimisticMeals => { // currentOptimisticMeals is optimisticallyUpdatedMealsData
-        const confirmedMeals = currentOptimisticMeals.map(m => {
-          if (m.id === mealToUpdate.id) {
-            return {
-              ...m,
-              servings: m.servings.map(s => {
-                if (s.id === servingId) {
-                  return {
-                    ...originalServing, 
-                    id: updatedServingFromServer.id, 
-                    quantity: updatedServingFromServer.quantity,
-                    unit: { 
-                      id: updatedServingFromServer.unit_id || unit.id,
-                      name: updatedServingFromServer.unit_name || unit.name,
-                      grams: updatedServingFromServer.unit_grams || unit.grams,
-                      food_id: originalServing.food.id, 
-                    },
-                    food: originalServing.food,
-                  } as FoodServing; 
-                }
-                return s;
-              })
-            };
-          }
-          return m;
-        });
-        return confirmedMeals;
-      });
-
+      await api.put(`/api/user/meals/servings/${servingId}`, payload);
+      eventBus.emit('mealsUpdated');
     } catch (err) {
+      eventBus.emit('mealsUpdated');
       console.error('Failed to update food portion:', err);
       setError('Failed to update food portion');
-      // 4. Revert state, storage, and emit event on error
-      const revertedMeals = JSON.parse(originalMealsJSON);
-      setMeals(revertedMeals);
-      storage.set(CACHED_MEALS_KEY, originalMealsJSON); // Use originalMealsJSON directly
-      eventBus.emit('mealsUpdated');
     }
   };
 
@@ -468,7 +357,7 @@ export function useUser() {
       eventBus.emit('userMealPreferencesUpdated');
 
       // Optimistically update meals for today
-      await fetchMeals(appUser.user_id, new Date());
+      // await fetchMeals(appUser.user_id, new Date()); // This line is removed
 
       return newPreference;
     } catch (err) {
@@ -493,7 +382,7 @@ export function useUser() {
       storage.set(CACHED_USER_MEAL_PREFERENCES_KEY, JSON.stringify(updatedPreferences));
       eventBus.emit('userMealPreferencesUpdated');
       // Optimistically update meals for today
-      await fetchMeals(appUser.user_id, new Date());
+      // await fetchMeals(appUser.user_id, new Date()); // This line is removed
 
       return updatedPreference;
     } catch (err) {
@@ -516,7 +405,7 @@ export function useUser() {
       // Optimistically update meals for today
       if (appUser) { // Check appUser again just in case, though outer check should cover
         console.log("Fetching meals from deleteUserMealPreference")
-        await fetchMeals(appUser.user_id, new Date());
+        // await fetchMeals(appUser.user_id, new Date()); // This line is removed
       }
 
     } catch (err) {
@@ -538,6 +427,7 @@ export function useUser() {
 
     // Preferences (General)
     preferences: macroPreferences, 
+    rawPreferences: preferences, // Add raw preferences for macro calculations
     updatePreference, 
     deletePreference,
     addPreference,
@@ -550,10 +440,11 @@ export function useUser() {
     deleteUserMealPreference,
 
     // Meals & Servings
-    meals,
+    // meals, // Removed from exports
     addFoodsToMeal,
     deleteFoodFromMeal,
     updateFoodPortion,
+    getMeals, // Added getMeals to exports
   };
 }
 

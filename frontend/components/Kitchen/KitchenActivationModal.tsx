@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, TextInput } from 'react-
 import Colors from '@/styles/colors'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { Food } from '@shared/types/foodTypes'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AnimatedModal from '../AnimatedModal'
 
 interface KitchenWithActiveFoods {
@@ -38,24 +38,32 @@ export default function KitchenActivationModal({
   // Track selected foods separately from active state
   const [selectedFoods, setSelectedFoods] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
+  const prevSelectedFoodIdsRef = useRef<string[]>([])
 
   useEffect(() => {
-    // Initialize selected foods from the passed selectedFoodIds
-    const initialSelected = new Set(selectedFoodIds)
-    setSelectedFoods(initialSelected)
+    // Check if selectedFoodIds have actually changed
+    const currentIds = selectedFoodIds.sort().join(',')
+    const prevIds = prevSelectedFoodIdsRef.current.sort().join(',')
+    
+    if (currentIds !== prevIds) {
+      // Initialize selected foods from the passed selectedFoodIds
+      const initialSelected = new Set(selectedFoodIds)
+      setSelectedFoods(initialSelected)
+      prevSelectedFoodIdsRef.current = [...selectedFoodIds]
+    }
   }, [selectedFoodIds])
 
   // Debug logging
-  useEffect(() => {
-    console.log('KitchenActivationModal Debug:', {
-      isVisible,
-      kitchenId: kitchen?.id,
-      kitchenName: kitchen?.name,
-      foodsCount: kitchen?.foods?.length || 0,
-      selectedFoodIds,
-      selectedFoodsSize: selectedFoods.size
-    })
-  }, [isVisible, kitchen, selectedFoodIds, selectedFoods])
+  // useEffect(() => {
+  //   // console.log('KitchenActivationModal Debug:', {
+  //   //   isVisible,
+  //   //   kitchenId: kitchen?.id,
+  //   //   kitchenName: kitchen?.name,
+  //   //   foodsCount: kitchen?.foods?.length || 0,
+  //   //   selectedFoodIds,
+  //   //   selectedFoodsSize: selectedFoods.size
+  //   // })
+  // }, [isVisible, kitchen, selectedFoodIds, selectedFoods])
 
   const handleToggleFood = (foodId: string) => {
     console.log('Toggling food:', foodId)

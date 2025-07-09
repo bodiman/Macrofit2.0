@@ -159,17 +159,20 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
             return;
         }
         if (!dateString) {
-            res.status(400).json({ error: 'date query parameter is required.' });
+            res.status(400).json({ error: 'date query parameter is required. Format: YYYY-MM-DD' });
             return;
         }
 
+        // Parse the date string as UTC midnight
         const userId = Number(user_id_query);
         if (isNaN(userId)) {
             res.status(400).json({ error: 'Invalid user_id format.' });
             return;
         }
 
+        // Always use the date from the query parameter
         const targetDate = toDate(new Date(dateString));
+        console.log("targetDate", targetDate);
         const userMealPreferences = await prisma.userMealPreference.findMany({
             where: { user_id: userId },
             orderBy: { default_time: 'asc' },

@@ -6,7 +6,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { useOptimizationApi } from '@/lib/api/optimization'
-import { Food } from '@shared/types/foodTypes'
+import { Food, Meal, FoodServing } from '@shared/types/foodTypes'
 import Slider from '@react-native-community/slider'
 import { Picker } from '@react-native-picker/picker'
 import React from 'react'
@@ -16,7 +16,8 @@ import useMacros from '@/app/hooks/useMacros'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useFoodSearchApi } from '@/lib/api/foodSearch'
 import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay'
-import { calculateAdjustedMacros } from '@/components/MacroDisplay/calculateMacros'
+import { calculateAllMacrosOptimized, calculateAdjustedMacrosOptimized } from '@/utils/optimizedMacroCalculation'
+import { useSelectedDate } from './_layout'
 
 interface Kitchen {
   id: string
@@ -48,7 +49,13 @@ type FlowStep = 'filters' | 'quantities'
 
 export default function PlanDetailPage() {
   const { planId } = useLocalSearchParams()
-  const { userMealPreferences, preferences, meals } = useUser()
+  const { userMealPreferences, preferences, rawPreferences, appUser, getMeals } = useUser()
+  const { selectedDate } = useSelectedDate()
+  const [mealsData, setMealsData] = useState<{
+    meals: Meal[];
+    macros: any;
+  }>({ meals: [], macros: {} });
+  const [mealsLoading, setMealsLoading] = useState(false)
   const [expandedFoods, setExpandedFoods] = useState<Set<string>>(new Set())
   const [kitchens, setKitchens] = useState<KitchenWithActiveFoods[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,6 +82,68 @@ export default function PlanDetailPage() {
   const [mealFoodQuantities, setMealFoodQuantities] = useState<
     Map<string, Map<string, { quantity: number; minQuantity: number; maxQuantity: number; selectedUnit: string; locked: boolean }>>
   >(new Map())
+
+  // Create preference set for optimized calculations
+  const preferenceSet = useMemo(() => {
+    if (!rawPreferences || rawPreferences.length === 0) {
+      return new Set<string>();
+    }
+    return new Set(rawPreferences.map(pref => pref.metric_id));
+  }, [rawPreferences]);
+
+  // Fetch meals when selectedDate or appUser changes
+  useEffect(() => {
+    console.log('PlanDetailPage: Fetch meals useEffect triggered', {
+      appUser: appUser?.user_id,
+      selectedDate: selectedDate?.toISOString(),
+      rawPreferencesLength: rawPreferences?.length
+    });
+    
+    if (appUser && selectedDate) {
+      setMealsLoading(true);
+      getMeals(appUser.user_id, selectedDate)
+        .then((fetchedMeals) => {
+          console.log('PlanDetailPage: Meals fetched successfully', {
+            mealsCount: fetchedMeals.length,
+            mealNames: fetchedMeals.map(m => m.name)
+          });
+          // Use optimized batch calculation
+          const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
+          // Update both meals and macros in single state change
+          setMealsData({ meals: fetchedMeals, macros: totalMacros });
+        })
+        .finally(() => setMealsLoading(false));
+    } else {
+      console.log('PlanDetailPage: Clearing meals data - no appUser or selectedDate');
+      setMealsData({ meals: [], macros: {} });
+      setMealsLoading(false);
+    }
+  }, [appUser, selectedDate, rawPreferences]);
+
+  // Listen for meal updates from other pages
+  useEffect(() => {
+    console.log('PlanDetailPage: Setting up mealsUpdated event listener');
+    
+    const handleMealsUpdated = () => {
+      console.log('PlanDetailPage: mealsUpdated event received');
+      if (appUser && selectedDate) {
+        getMeals(appUser.user_id, selectedDate)
+          .then((fetchedMeals) => {
+            console.log('PlanDetailPage: Meals re-fetched after update', {
+              mealsCount: fetchedMeals.length
+            });
+            const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
+            setMealsData({ meals: fetchedMeals, macros: totalMacros });
+          });
+      }
+    };
+
+    eventBus.on('mealsUpdated', handleMealsUpdated);
+    return () => {
+      console.log('PlanDetailPage: Cleaning up mealsUpdated event listener');
+      eventBus.off('mealsUpdated', handleMealsUpdated);
+    };
+  }, [appUser, selectedDate, rawPreferences]);
 
   // Helper function to get servings for a single meal
   const getMealSelectedFoodServings = (mealId: string) => {
@@ -134,11 +203,11 @@ export default function PlanDetailPage() {
     const distributionPercentage = meal.distribution_percentage;
     
     // Calculate total logged macros for this meal
-    const loggedMeal = meals.find(m => m.name === meal.name);
+    const loggedMeal = mealsData.meals.find((m: Meal) => m.name === meal.name);
     const loggedMacros: any = {};
     if (loggedMeal) {
-      loggedMeal.servings.forEach((foodServing) => {
-        const adjustedMacros = calculateAdjustedMacros(foodServing);
+      loggedMeal.servings.forEach((foodServing: FoodServing) => {
+        const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
         Object.entries(adjustedMacros).forEach(([key, value]) => {
           if (value) {
             loggedMacros[key] = (loggedMacros[key] || 0) + value;
@@ -183,7 +252,7 @@ export default function PlanDetailPage() {
       
       // Add macros from planned foods
       servings.forEach((foodServing) => {
-        const adjustedMacros = calculateAdjustedMacros(foodServing);
+        const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
         Object.entries(adjustedMacros).forEach(([key, value]) => {
           if (value) {
             totalMacros[key] = (totalMacros[key] || 0) + value;
@@ -192,10 +261,10 @@ export default function PlanDetailPage() {
       });
       
       // Add macros from logged foods for this meal
-      const loggedMeal = meals.find(m => m.name === meal.name);
+      const loggedMeal = mealsData.meals.find((m: Meal) => m.name === meal.name);
       if (loggedMeal) {
-        loggedMeal.servings.forEach((foodServing) => {
-          const adjustedMacros = calculateAdjustedMacros(foodServing);
+        loggedMeal.servings.forEach((foodServing: FoodServing) => {
+          const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
           Object.entries(adjustedMacros).forEach(([key, value]) => {
             if (value) {
               totalMacros[key] = (totalMacros[key] || 0) + value;
@@ -207,7 +276,7 @@ export default function PlanDetailPage() {
       macros[meal.id] = totalMacros;
     });
     return macros;
-  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, meals]);
+  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, preferenceSet]);
 
   // Helper function to get overall preferences accounting for all logged foods
   const getOverallPreferencesWithLoggedFoods = () => {
@@ -215,9 +284,9 @@ export default function PlanDetailPage() {
     
     // Calculate total logged macros across all meals
     const totalLoggedMacros: any = {};
-    meals.forEach(meal => {
-      meal.servings.forEach((foodServing) => {
-        const adjustedMacros = calculateAdjustedMacros(foodServing);
+    mealsData.meals.forEach((meal: Meal) => {
+      meal.servings.forEach((foodServing: FoodServing) => {
+        const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
         Object.entries(adjustedMacros).forEach(([key, value]) => {
           if (value) {
             totalLoggedMacros[key] = (totalLoggedMacros[key] || 0) + value;
@@ -237,6 +306,7 @@ export default function PlanDetailPage() {
   };
 
   useEffect(() => {
+    console.log('PlanDetailPage: fetchKitchens useEffect triggered');
     fetchKitchens()
   }, [])
 
@@ -588,10 +658,24 @@ export default function PlanDetailPage() {
   }
 
   const mealPlanMacros = useMacros(getAllSelectedFoodServings())
+  const prevMacrosRef = useRef<any>(null);
 
   // Emit meal plan macros to AppHeader whenever they change
   useEffect(() => {
-    eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros)
+    // Compare current macros with previous macros
+    const currentMacrosStr = JSON.stringify(mealPlanMacros);
+    const prevMacrosStr = JSON.stringify(prevMacrosRef.current);
+    
+    if (currentMacrosStr !== prevMacrosStr) {
+      console.log('PlanDetailPage: mealPlanMacros useEffect triggered - macros changed', {
+        mealPlanMacrosKeys: Object.keys(mealPlanMacros),
+        mealPlanMacrosValues: mealPlanMacros
+      });
+      eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros);
+      prevMacrosRef.current = mealPlanMacros;
+    } else {
+      console.log('PlanDetailPage: mealPlanMacros useEffect triggered - no change detected');
+    }
   }, [mealPlanMacros])
 
   // Helper function to optimize a single meal
@@ -891,10 +975,10 @@ export default function PlanDetailPage() {
     };
   }
 
-  if (loading) {
+  if (loading || mealsLoading) {
     return (
       <View style={styles.container}>
-        <Text>Loading foods...</Text>
+        <Text>Loading...</Text>
       </View>
     )
   }

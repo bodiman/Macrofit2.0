@@ -21,6 +21,8 @@ export default function MacroIndicator({ value, range, radius, unit, name }: Pro
     const [showTooltip, setShowTooltip] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0, arrowPosition: 'top' as 'top' | 'bottom', arrowLeft: 75 });
     const indicatorRef = useRef<View>(null);
+    const prevValueRef = useRef<number>(0);
+    const prevRangeRef = useRef<Range>(range);
     const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
     // const colorConfig = React.useMemo(() => [
@@ -45,12 +47,23 @@ export default function MacroIndicator({ value, range, radius, unit, name }: Pro
 
     useEffect(() => {
         const clippedValue = clip(value, range);
-        if (clippedValue == 0 && value == 0) {
-            setMaxValue(1);
-            setDisplayValue(1);
-        } else {
-            setMaxValue(clippedValue);
-            setDisplayValue(value);
+        
+        // Check if values have actually changed
+        const valueChanged = prevValueRef.current !== value;
+        const rangeChanged = JSON.stringify(prevRangeRef.current) !== JSON.stringify(range);
+        
+        if (valueChanged || rangeChanged) {
+            if (clippedValue === 0 && value === 0) {
+                setMaxValue(1);
+                setDisplayValue(1);
+            } else {
+                setMaxValue(clippedValue);
+                setDisplayValue(value);
+            }
+            
+            // Update refs
+            prevValueRef.current = value;
+            prevRangeRef.current = range;
         }
     }, [value, range]);
 
