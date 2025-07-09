@@ -189,7 +189,7 @@ export default function PlanDetailPage() {
     }));
   };
 
-  // Helper function to scale preferences based on meal distribution percentage and account for logged foods (for optimization)
+  // Helper function to scale preferences based on meal distribution percentage and account for logged foods and locked foods (for optimization)
   const getMealSpecificPreferences = (meal: any) => {
     if (!preferences || !meal.distribution_percentage) {
       return preferences;
@@ -211,9 +211,43 @@ export default function PlanDetailPage() {
       });
     }
     
+    // Calculate total locked food macros for this meal
+    const lockedMacros: any = {};
+    const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+    selectedFoodIds.forEach(foodId => {
+      const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+      if (q && q.locked) {
+        for (const kitchen of kitchens) {
+          const food = kitchen.foods.find(f => f.id === foodId);
+          if (food) {
+            const foodServing = {
+              id: food.id,
+              food_id: food.id,
+              quantity: q.quantity,
+              unit: {
+                id: q.selectedUnit,
+                name: q.selectedUnit,
+                food_id: food.id,
+                grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+              },
+              food: food
+            };
+            const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+            Object.entries(adjustedMacros).forEach(([key, value]) => {
+              if (value) {
+                lockedMacros[key] = (lockedMacros[key] || 0) + value;
+              }
+            });
+            break;
+          }
+        }
+      }
+    });
+    
     console.log(`Getting preferences for ${meal.name}:`);
     console.log('Distribution percentage:', distributionPercentage);
     console.log('Logged macros for this meal:', loggedMacros);
+    console.log('Locked macros for this meal:', lockedMacros);
     
     const result = preferences.map(pref => {
       const mealTarget = {
@@ -221,15 +255,18 @@ export default function PlanDetailPage() {
         max: pref.max ? pref.max * distributionPercentage : undefined,
       };
       
-      // Subtract logged macros from the targets
+      // Subtract logged macros and locked macros from the targets
       const loggedAmount = loggedMacros[pref.id] || 0;
+      const lockedAmount = lockedMacros[pref.id] || 0;
+      const totalFixedAmount = loggedAmount + lockedAmount;
+      
       const adjustedPref = {
         ...pref,
-        min: mealTarget.min ? Math.max(0, mealTarget.min - loggedAmount) : undefined,
-        max: mealTarget.max ? Math.max(0, mealTarget.max - loggedAmount) : undefined,
+        min: mealTarget.min ? Math.max(0, mealTarget.min - totalFixedAmount) : undefined,
+        max: mealTarget.max ? Math.max(0, mealTarget.max - totalFixedAmount) : undefined,
       };
       
-      console.log(`${pref.id}: original min=${pref.min}, max=${pref.max}, meal target min=${mealTarget.min}, max=${mealTarget.max}, logged=${loggedAmount}, adjusted min=${adjustedPref.min}, max=${adjustedPref.max}`);
+      console.log(`${pref.id}: original min=${pref.min}, max=${pref.max}, meal target min=${mealTarget.min}, max=${mealTarget.max}, logged=${loggedAmount}, locked=${lockedAmount}, total fixed=${totalFixedAmount}, adjusted min=${adjustedPref.min}, max=${adjustedPref.max}`);
       
       return adjustedPref;
     });
@@ -274,7 +311,7 @@ export default function PlanDetailPage() {
     return macros;
   }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, preferenceSet, mealsData.meals]);
 
-  // Helper function to get overall preferences accounting for all logged foods
+  // Helper function to get overall preferences accounting for all logged foods and locked foods
   const getOverallPreferencesWithLoggedFoods = () => {
     if (!preferences) return preferences;
     
@@ -291,13 +328,59 @@ export default function PlanDetailPage() {
       });
     });
     
+    // Calculate total locked food macros across all meals
+    const totalLockedMacros: any = {};
+    userMealPreferences.forEach(meal => {
+      const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+      selectedFoodIds.forEach(foodId => {
+        const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+        if (q && q.locked) {
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const foodServing = {
+                id: food.id,
+                food_id: food.id,
+                quantity: q.quantity,
+                unit: {
+                  id: q.selectedUnit,
+                  name: q.selectedUnit,
+                  food_id: food.id,
+                  grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+                },
+                food: food
+              };
+              const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+              Object.entries(adjustedMacros).forEach(([key, value]) => {
+                if (value) {
+                  totalLockedMacros[key] = (totalLockedMacros[key] || 0) + value;
+                }
+              });
+              break;
+            }
+          }
+        }
+      });
+    });
+    
+    console.log('Overall preferences calculation:');
+    console.log('Total logged macros:', totalLoggedMacros);
+    console.log('Total locked macros:', totalLockedMacros);
+    
     return preferences.map(pref => {
       const loggedAmount = totalLoggedMacros[pref.id] || 0;
-      return {
+      const lockedAmount = totalLockedMacros[pref.id] || 0;
+      const totalFixedAmount = loggedAmount + lockedAmount;
+      
+      const adjustedPref = {
         ...pref,
-        min: pref.min ? Math.max(0, pref.min - loggedAmount) : undefined,
-        max: pref.max ? Math.max(0, pref.max - loggedAmount) : undefined,
+        min: pref.min ? Math.max(0, pref.min - totalFixedAmount) : undefined,
+        max: pref.max ? Math.max(0, pref.max - totalFixedAmount) : undefined,
       };
+      
+      console.log(`${pref.id}: original min=${pref.min}, max=${pref.max}, logged=${loggedAmount}, locked=${lockedAmount}, total fixed=${totalFixedAmount}, adjusted min=${adjustedPref.min}, max=${adjustedPref.max}`);
+      
+      return adjustedPref;
     });
   };
 
@@ -903,7 +986,8 @@ export default function PlanDetailPage() {
         unitGrams: food.unit.grams,
         quantity: food.quantity,
         minQuantity: food.minQuantity,
-        maxQuantity: food.maxQuantity
+        maxQuantity: food.maxQuantity,
+        locked: food.locked || false
       };
     });
 
@@ -961,6 +1045,7 @@ export default function PlanDetailPage() {
                 minQuantity: q.minQuantity,
                 maxQuantity: q.maxQuantity,
                 selectedUnit: q.selectedUnit,
+                locked: q.locked,
                 food: food,
                 unit: {
                   id: q.selectedUnit,
@@ -1006,7 +1091,8 @@ export default function PlanDetailPage() {
             unitGrams: food.unit.grams,
             quantity: food.quantity,
             minQuantity: food.minQuantity,
-            maxQuantity: food.maxQuantity
+            maxQuantity: food.maxQuantity,
+            locked: food.locked || false
           };
         });
         
@@ -1050,7 +1136,8 @@ export default function PlanDetailPage() {
           unitGrams: food.unit.grams,
           quantity: food.quantity,
           minQuantity: food.minQuantity,
-          maxQuantity: food.maxQuantity
+          maxQuantity: food.maxQuantity,
+          locked: food.locked || false
         };
       });
       

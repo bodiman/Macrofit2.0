@@ -6,6 +6,7 @@ export interface FoodMacroData {
   quantity: number;      // Current quantity
   minQuantity: number;   // Minimum allowed quantity
   maxQuantity: number;   // Maximum allowed quantity
+  locked?: boolean;      // Whether this food quantity is fixed/locked
 }
 
 export interface UserPreferenceData {
