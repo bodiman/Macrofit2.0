@@ -1,50 +1,93 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import Colors from '@/styles/colors'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { useUser } from '@/app/hooks/useUser'
+import { useSelectedDate } from './_layout'
+import { useMealPlans } from '../../../hooks/useMealPlans'
+import { useEffect } from 'react'
 
 export default function MealPlanPage() {
-  const { userMealPreferences } = useUser()
+  const { appUser } = useUser()
+  const { selectedDate } = useSelectedDate()
+  const { mealPlans, loading, fetchMealPlans } = useMealPlans()
+
+  useEffect(() => {
+    if (appUser && selectedDate) {
+      fetchMealPlans(selectedDate);
+    }
+  }, [appUser, selectedDate, fetchMealPlans]);
 
   const handleCreateNewPlan = () => {
-    // TODO: Create a new meal plan and navigate to it
-    router.push('./plan-new')
+    router.push('./plan-detail')
   }
 
-  const handleLoadPlan = () => {
-    // TODO: Show list of existing meal plans
-    router.push('./plan-list')
+  const handleLoadPlan = (mealPlanId: string) => {
+    router.push(`./plan-detail?planId=${mealPlanId}`)
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Meal Planning</Text>
+      <Text style={styles.title}>Meal Plans</Text>
       <Text style={styles.subtitle}>Create a new meal plan or load an existing one</Text>
 
-      <View style={styles.optionsContainer}>
-        <Pressable 
-          style={styles.optionCard}
-          onPress={handleCreateNewPlan}
-        >
-          <MaterialIcons name="add-circle-outline" size={32} color={Colors.blue} />
-          <Text style={styles.optionTitle}>Create New Plan</Text>
-          <Text style={styles.optionDescription}>
-            Start fresh with a new meal plan based on your preferences
-          </Text>
-        </Pressable>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.blue} />
+          <Text style={styles.loadingText}>Loading meal plans...</Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.content}>
+          {/* Saved Meal Plans */}
+          {Array.from(mealPlans.values()).length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Saved Plans for {selectedDate.toLocaleDateString()}</Text>
+              {Array.from(mealPlans.values()).map(plan => (
+                <Pressable 
+                  key={plan.id}
+                  style={styles.mealPlanCard}
+                  onPress={() => handleLoadPlan(plan.id)}
+                >
+                  <View style={styles.mealPlanHeader}>
+                    <MaterialIcons name="restaurant" size={24} color={Colors.blue} />
+                    <View style={styles.mealPlanInfo}>
+                      <Text style={styles.mealPlanName}>{plan.meal.name}</Text>
+                      <Text style={styles.mealPlanDetails}>
+                        {plan.servings.length} foods planned
+                      </Text>
+                    </View>
+                    <MaterialIcons name="chevron-right" size={24} color={Colors.gray} />
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          )}
 
-        <Pressable 
-          style={styles.optionCard}
-          onPress={handleLoadPlan}
-        >
-          <MaterialIcons name="folder-open" size={32} color={Colors.blue} />
-          <Text style={styles.optionTitle}>Load Plan</Text>
-          <Text style={styles.optionDescription}>
-            Continue working on a previously saved meal plan
-          </Text>
-        </Pressable>
-      </View>
+          {/* Action Buttons */}
+          <View style={styles.optionsContainer}>
+            <Pressable 
+              style={styles.optionCard}
+              onPress={handleCreateNewPlan}
+            >
+              <MaterialIcons name="add-circle-outline" size={32} color={Colors.blue} />
+              <Text style={styles.optionTitle}>Create New Plan</Text>
+              <Text style={styles.optionDescription}>
+                Start fresh with a new meal plan based on your preferences
+              </Text>
+            </Pressable>
+
+            {Array.from(mealPlans.values()).length === 0 && (
+              <View style={styles.emptyState}>
+                <MaterialIcons name="folder-open" size={48} color={Colors.gray} />
+                <Text style={styles.emptyStateTitle}>No meal plans yet</Text>
+                <Text style={styles.emptyStateText}>
+                  Create your first meal plan to get started with meal planning
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      )}
     </View>
   )
 }
@@ -88,5 +131,71 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.gray,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: Colors.gray,
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.black,
+    marginBottom: 10,
+  },
+  mealPlanCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: Colors.coolgray,
+    marginBottom: 10,
+  },
+  mealPlanHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  mealPlanInfo: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  mealPlanName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.black,
+  },
+  mealPlanDetails: {
+    fontSize: 14,
+    color: Colors.gray,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    marginTop: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.black,
+    marginTop: 15,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: Colors.gray,
+    textAlign: 'center',
+    marginTop: 5,
   },
 })

@@ -289,6 +289,7 @@ export function useUser() {
         const params = new URLSearchParams({
             email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
         });
+        
         const res = await api.get(`/api/user?${params.toString()}`);
         const user = await res.json();
         setAppUser(user);

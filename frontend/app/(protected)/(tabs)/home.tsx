@@ -7,7 +7,7 @@ import { SignOutButton } from '@/components/SignOutButton'
 import { Meal, FoodServing, ServingUnit as SharedServingUnit } from '@shared/types/foodTypes';
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import 'react-native-get-random-values';
@@ -20,6 +20,7 @@ import CalendarHeader from '@/components/CalendarHeader';
 import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay';
 import { calculateAllMacrosOptimized, calculateAdjustedMacrosOptimized } from '@/utils/optimizedMacroCalculation';
 import { useGlobalMacrosSync } from '@/hooks/useGlobalMacrosSync';
+import { useMealPlans } from '../../../hooks/useMealPlans';
 
 export default function Page() {
   const {
@@ -35,9 +36,11 @@ export default function Page() {
 
   const { selectedDate } = useSelectedDate();
   const { syncLoggedMealsMacros, addToLoggedMeals, subtractFromLoggedMeals } = useGlobalMacrosSync();
+  const { mealPlans, fetchMealPlans, updateMealPlansWithLoggedMeals, updateMealPlansAfterLogging } = useMealPlans();
   const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
   const [activeMealPreferenceDetails, setActiveMealPreferenceDetails] = useState<UserMealPreference | null>(null);
   const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
+  const [clickedPlannedFood, setClickedPlannedFood] = useState<FoodServing | null>(null);
   const [mealsData, setMealsData] = useState<{
     meals: Meal[];
     macros: any;
@@ -57,13 +60,32 @@ export default function Page() {
           // Immediately sync with global macros display
           syncLoggedMealsMacros(totalMacros);
         })
+        .catch(error => {
+          console.error('Failed to fetch meals:', error);
+        })
         .finally(() => setMealsLoading(false));
     } else {
       setMealsData({ meals: [], macros: {} });
       syncLoggedMealsMacros({});
       setMealsLoading(false);
     }
-  }, [appUser, selectedDate, rawPreferences, syncLoggedMealsMacros]);
+  }, [appUser, selectedDate, rawPreferences]); // Removed syncLoggedMealsMacros from dependencies
+
+  // Fetch meal plans when selectedDate or appUser changes
+  useEffect(() => {
+    console.log('🔄 Meal plans useEffect triggered:', { appUser: !!appUser, selectedDate: selectedDate?.toISOString() });
+    if (appUser && selectedDate) {
+      console.log('✅ Calling fetchMealPlans');
+      fetchMealPlans(selectedDate);
+    } else {
+      console.log('❌ Not calling fetchMealPlans - missing appUser or selectedDate');
+    }
+  }, [appUser, selectedDate]); // Removed fetchMealPlans from dependencies
+
+  // Update meal plans with logged meals data
+  useEffect(() => {
+    updateMealPlansWithLoggedMeals(mealsData.meals);
+  }, [mealsData.meals]); // Removed updateMealPlansWithLoggedMeals from dependencies
 
   // Open the food search modal for a specific meal
   const openFoodSearch = (meal: Meal) => {
@@ -83,45 +105,97 @@ export default function Page() {
       eventBus.emit('foodSearchModalClose');
       setActiveMeal(null);
       setActiveMealPreferenceDetails(null); // Clear preference details on close
+      setClickedPlannedFood(null); // Clear clicked planned food
   }
 
-  // Handle food deletion with optimistic update
-  const handleDeleteFood = async (mealId: string, foodServingId: string) => {
-    // Find the food being deleted to calculate its macros
-    const meal = mealsData.meals.find(m => m.id === mealId);
-    const foodServing = meal?.servings.find(s => s.id === foodServingId);
-    
-    if (foodServing) {
-      // Convert preferences to Set for the optimized function
-      const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
-      // Calculate the macros being removed
-      const removedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
-      // Ultra-fast update - subtract the macros immediately
-      subtractFromLoggedMeals(removedMacros);
-    }
-
-    // Optimistic update - remove the food from local state immediately
-    setMealsData(prevData => ({
-      meals: prevData.meals.map(meal => 
-        meal.id === mealId 
-          ? { ...meal, servings: meal.servings.filter(serving => serving.id !== foodServingId) }
-          : meal
-      ),
-      macros: prevData.macros // Keep existing macros for now
-    }));
-
-    // Make the API call
-    await deleteFoodFromMeal(mealId, foodServingId);
-    
-    // Re-fetch meals to ensure consistency and update macros
-    if (appUser && selectedDate) {
-      const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-      const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-      setMealsData({ meals: fetchedMeals, macros: totalMacros });
-      // Update global macros with the final result
-      syncLoggedMealsMacros(totalMacros);
+  // Handle planned food press - open shopping cart with the food
+  const handlePlannedFoodPress = (foodServing: FoodServing, meal: Meal) => {
+    setActiveMeal(meal);
+    setClickedPlannedFood(foodServing);
+    // Find the corresponding UserMealPreference
+    const matchingUmp = userMealPreferences.find(ump => ump.name === meal.name);
+    if (matchingUmp) {
+      setActiveMealPreferenceDetails(matchingUmp);
     }
   };
+
+  // Helper function to get planned foods for a meal
+  const getPlannedFoodsForMeal = useCallback((mealId: string) => {
+    const mealPlan = mealPlans.get(mealId);
+    
+    if (!mealPlan) {
+      return [];
+    }
+    
+    const plannedFoods = mealPlan.servings
+      .filter((serving: any) => (serving.remainingQuantity || 0) > 0)
+      .map((serving: any) => ({
+        foodServing: {
+          id: serving.id,
+          food: {
+            id: serving.food.id,
+            name: serving.food.name,
+            brand: serving.food.brand,
+            macros: serving.food.macros,
+            servingUnits: [{
+              id: serving.unit.id,
+              name: serving.unit.name,
+              grams: serving.unit.grams,
+              food_id: serving.food.id
+            }]
+          },
+          quantity: serving.remainingQuantity,
+          unit: {
+            id: serving.unit.id,
+            name: serving.unit.name,
+            grams: serving.unit.grams,
+            food_id: serving.food.id
+          }
+        },
+        remainingQuantity: serving.remainingQuantity,
+        isBeingReduced: serving.remainingQuantity < serving.originalQuantity
+      }));
+    
+    return plannedFoods;
+  }, [mealPlans]);
+
+  // Handle food deletion with optimistic update
+  // const handleDeleteFood = async (mealId: string, foodServingId: string) => {
+  //   // Find the food being deleted to calculate its macros
+  //   const meal = mealsData.meals.find(m => m.id === mealId);
+  //   const foodServing = meal?.servings.find(s => s.id === foodServingId);
+    
+  //   if (foodServing) {
+  //     // Convert preferences to Set for the optimized function
+  //     const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
+  //     // Calculate the macros being removed
+  //     const removedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+  //     // Ultra-fast update - subtract the macros immediately
+  //     subtractFromLoggedMeals(removedMacros);
+  //   }
+
+  //   // Optimistic update - remove the food from local state immediately
+  //   setMealsData(prevData => ({
+  //     meals: prevData.meals.map(meal => 
+  //       meal.id === mealId 
+  //         ? { ...meal, servings: meal.servings.filter(serving => serving.id !== foodServingId) }
+  //         : meal
+  //     ),
+  //     macros: prevData.macros // Keep existing macros for now
+  //   }));
+
+  //   // Make the API call
+  //   await deleteFoodFromMeal(mealId, foodServingId);
+    
+  //   // Re-fetch meals to ensure consistency and update macros
+  //   if (appUser && selectedDate) {
+  //     const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
+  //     const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
+  //     setMealsData({ meals: fetchedMeals, macros: totalMacros });
+  //     // Update global macros with the final result
+  //     syncLoggedMealsMacros(totalMacros);
+  //   }
+  // };
 
   // Handle adding foods with optimistic update
   const handleAddFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
@@ -153,6 +227,9 @@ export default function Page() {
 
     // Make the API call
     await addFoodsToMeal(mealId, foodsToAdd);
+    
+    // Update meal plans to subtract logged quantities
+    await updateMealPlansAfterLogging(mealId, foodsToAdd, selectedDate);
     
     // Re-fetch meals to ensure consistency and update macros
     if (appUser && selectedDate) {
@@ -219,8 +296,87 @@ export default function Page() {
     }
   };
 
+  // Memoized callback functions to prevent unnecessary re-renders
+  const memoizedOpenFoodSearch = useCallback((meal: Meal) => {
+    setActiveMeal(meal);
+    // Find the corresponding UserMealPreference
+    const matchingUmp = userMealPreferences.find(ump => ump.name === meal.name);
+    if (matchingUmp) {
+      setActiveMealPreferenceDetails(matchingUmp);
+    } else {
+      console.warn(`No UserMealPreference found for meal name: ${meal.name}`);
+      setActiveMealPreferenceDetails(null); // Or handle as an error / default
+    }
+  }, [userMealPreferences]);
+
+  const memoizedOnFoodPress = useCallback((food: FoodServing) => {
+    setEditingFood(food);
+  }, []);
+
+  const memoizedHandleDeleteFood = useCallback(async (mealId: string, foodServingId: string) => {
+    // Find the food being deleted to calculate its macros
+    const meal = mealsData.meals.find(m => m.id === mealId);
+    const foodServing = meal?.servings.find(s => s.id === foodServingId);
+    
+    if (foodServing) {
+      // Convert preferences to Set for the optimized function
+      const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
+      // Calculate the macros being removed
+      const removedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+      // Ultra-fast update - subtract the macros immediately
+      subtractFromLoggedMeals(removedMacros);
+    }
+
+    // Optimistic update - remove the food from local state immediately
+    setMealsData(prevData => ({
+      meals: prevData.meals.map(meal => 
+        meal.id === mealId 
+          ? { ...meal, servings: meal.servings.filter(serving => serving.id !== foodServingId) }
+          : meal
+      ),
+      macros: prevData.macros // Keep existing macros for now
+    }));
+
+    // Make the API call
+    await deleteFoodFromMeal(mealId, foodServingId);
+    
+    // Re-fetch meals to ensure consistency and update macros
+    if (appUser && selectedDate) {
+      const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
+      const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
+      setMealsData({ meals: fetchedMeals, macros: totalMacros });
+      // Update global macros with the final result
+      syncLoggedMealsMacros(totalMacros);
+    }
+  }, [mealsData.meals, rawPreferences, subtractFromLoggedMeals, deleteFoodFromMeal, appUser, selectedDate, getMeals, syncLoggedMealsMacros]);
+
+  const memoizedHandlePlannedFoodPress = useCallback((foodServing: FoodServing, meal: Meal) => {
+    setActiveMeal(meal);
+    setClickedPlannedFood(foodServing);
+    // Find the corresponding UserMealPreference
+    const matchingUmp = userMealPreferences.find(ump => ump.name === meal.name);
+    if (matchingUmp) {
+      setActiveMealPreferenceDetails(matchingUmp);
+    }
+  }, [userMealPreferences]);
+
+  // Memoized key extractor
+  const keyExtractor = useCallback((item: Meal) => item.id, []);
+
+  // Memoized render item function
+  const renderMealItem = useCallback(({ item }: { item: Meal }) => (
+    <MealDisplay 
+      meal={item} 
+      modalLauncher={() => memoizedOpenFoodSearch(item)}
+      onFoodPress={memoizedOnFoodPress}
+      handleDeleteFood={(serving: FoodServing) => memoizedHandleDeleteFood(item.id, serving.id)}
+      plannedFoods={getPlannedFoodsForMeal(item.id)}
+      onPlannedFoodPress={(foodServing) => memoizedHandlePlannedFoodPress(foodServing, item)}
+    />
+  ), [memoizedOpenFoodSearch, memoizedOnFoodPress, memoizedHandleDeleteFood, memoizedHandlePlannedFoodPress, getPlannedFoodsForMeal]);
+
   useEffect(() => {
-    console.log("mealsHome", mealsData.meals);
+    // console.log("mealsHome", mealsData.meals);
   }, [mealsData.meals]);
 
   return (
@@ -233,15 +389,8 @@ export default function Page() {
             <FlatList
               style={styles.mealContent}
               data={mealsData.meals}
-              keyExtractor={(item: Meal) => item.id}
-              renderItem={({ item }: { item: Meal }) => (
-                <MealDisplay 
-                  meal={item} 
-                  modalLauncher={() => openFoodSearch(item)}
-                  onFoodPress={(food) => setEditingFood(food)}
-                  handleDeleteFood={(serving: FoodServing) => handleDeleteFood(item.id, serving.id)}
-                />
-              )}
+              keyExtractor={keyExtractor}
+              renderItem={renderMealItem}
               ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 40, paddingTop: 40 }}
@@ -254,6 +403,7 @@ export default function Page() {
             onClose={closeFoodSearch}
             addFoodsToMeal={handleAddFoodsToMeal}
             dailyMacroPreferences={preferences}
+            clickedPlannedFood={clickedPlannedFood}
           />
           {editingFood && (
             <EditFoodModal

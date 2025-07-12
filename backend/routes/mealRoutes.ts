@@ -7,9 +7,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
-const toDate = (date: Date): Date => {
-    date = new Date(date);
-    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+const toDate = (date: Date | string): Date => {
+    if (typeof date === 'string') {
+        // Handle date strings like "2025-07-12" by parsing them as UTC
+        const [year, month, day] = date.split('-').map(Number);
+        return new Date(Date.UTC(year, month - 1, day)); // month is 0-indexed
+    }
+    // Handle Date objects
+    const dateObj = new Date(date);
+    return new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
 };
 
 const toTime = (date: Date): string => {
@@ -171,8 +177,8 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
         }
 
         // Always use the date from the query parameter
-        const targetDate = toDate(new Date(dateString));
-        console.log("targetDate", targetDate);
+        const targetDate = toDate(dateString);
+        
         const userMealPreferences = await prisma.userMealPreference.findMany({
             where: { user_id: userId },
             orderBy: { default_time: 'asc' },
@@ -210,6 +216,9 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
             },
             include: {
                 servings: {
+                    where: {
+                        mealPlanId: null // Only include logged foods, not planned foods
+                    },
                     include: {
                         food: {
                             include: {
@@ -233,6 +242,14 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
                 .map(meal => meal.id);
 
             if (mealsToDeleteIds.length > 0) {
+                // First delete any meal plans that reference these meals
+                await prisma.mealPlan.deleteMany({
+                    where: {
+                        meal_id: { in: mealsToDeleteIds }
+                    }
+                });
+                
+                // Then delete the meals
                 await prisma.meal.deleteMany({
                     where: {
                         id: { in: mealsToDeleteIds },
@@ -369,7 +386,10 @@ router.get('/user/meals/:mealId/servings', async (req: Request, res: Response, n
     try {
         const { mealId } = req.params;
         const servings = await prisma.foodServing.findMany({
-            where: { meal_id: mealId },
+            where: { 
+                meal_id: mealId,
+                mealPlanId: null // Only include logged foods, not planned foods
+            },
             include: {
                 food: { include: { macros: { include: { metric: true }}, servingUnits: true }},
                 unit: true

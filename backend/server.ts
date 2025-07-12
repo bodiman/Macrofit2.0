@@ -5,6 +5,7 @@ import metricsRoutes from './routes/metricsRoutes';
 import mealRoutes from './routes/mealRoutes';
 import mealPreferencesRouter from './routes/mealPreferences';
 import optimizationRoutes from './routes/optimizationRoutes';
+import mealPlanRoutes from './routes/mealPlanRoutes';
 import { requireAuth } from './middleware/auth';
 import { Request, Response, NextFunction } from 'express';
 
@@ -60,6 +61,7 @@ app.use('/api/metrics', metricsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/user/meal-preferences', mealPreferencesRouter);
 app.use('/api/optimize', optimizationRoutes);
+app.use('/api/meal-plans', mealPlanRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

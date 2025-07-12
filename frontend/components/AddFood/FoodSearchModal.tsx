@@ -22,12 +22,20 @@ interface Props {
     modalCloser: () => void;
     addFoodsToMeal: (mealId: string, foodsToAdd: FoodServing[]) => Promise<void>;
     dailyMacroPreferences: MacroPreferences;
+    clickedPlannedFood?: FoodServing | null;
 }
 
-export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
+export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences, clickedPlannedFood }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
     const { rawPreferences } = useUser();
     const { syncShoppingCartMacros, clearShoppingCart } = useGlobalMacrosSync();
+
+    // Pre-populate shopping cart with clicked planned food
+    useEffect(() => {
+        if (clickedPlannedFood && shoppingCart.length === 0) {
+            setShoppingCart([clickedPlannedFood]);
+        }
+    }, [clickedPlannedFood, shoppingCart.length, setShoppingCart]);
 
     // Calculate cart macros using optimized function
     const cartMacros = useMemo(() => {

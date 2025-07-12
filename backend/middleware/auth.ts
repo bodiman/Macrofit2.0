@@ -62,11 +62,19 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
             const fullUser = await clerkClient.users.getUser(req.auth.userId);
             req.user = fullUser;
             // console.log('Auth Middleware: req.user populated.'); // Simplified log for brevity
-        } catch (userError) {
+        } catch (userError: any) {
             console.error(`Auth Middleware: Failed to fetch full user object for userId ${req.auth.userId}:`, userError);
-            // Depending on your getUserIdFromRequest logic, this might be acceptable or a hard error.
-            // If getUserIdFromRequest can work without req.user (e.g., by having a clerk_id on your User table),
-            // then not having req.user might be okay. For now, proceeding.
+            
+            // Handle rate limiting specifically
+            if (userError.status === 429) {
+                console.warn('Auth Middleware: Rate limited by Clerk API, proceeding without full user object');
+                // Don't fail the request, just proceed without req.user
+                // The getUserIdFromRequest function can fall back to query parameters
+            } else {
+                console.error('Auth Middleware: Unexpected error fetching user object:', userError);
+                // For other errors, still proceed but log the error
+            }
+            // Continue with the request - getUserIdFromRequest can handle missing req.user
         }
 
         next();

@@ -6,6 +6,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { useOptimizationApi } from '@/lib/api/optimization'
+import { useMealPlanApi } from '@/lib/api/mealPlan'
 import { Food, Meal, FoodServing } from '@shared/types/foodTypes'
 import Slider from '@react-native-community/slider'
 import { Picker } from '@react-native-picker/picker'
@@ -76,6 +77,7 @@ export default function PlanDetailPage() {
   
   const menuApi = useMenuApi()
   const optimizationApi = useOptimizationApi()
+  const mealPlanApi = useMealPlanApi()
   const minInputRef = useRef<TextInput>(null)
   const maxInputRef = useRef<TextInput>(null)
   const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
@@ -92,6 +94,85 @@ export default function PlanDetailPage() {
     }
     return new Set(rawPreferences.map(pref => pref.metric_id));
   }, [rawPreferences]);
+
+  // Save meal plan function
+  const saveMealPlan = async () => {
+    if (!appUser) {
+      alert('User not found');
+      return;
+    }
+
+    try {
+      // Get all selected foods with their quantities for all meals
+      const allFoodServings: { mealId: string; foodServings: any[] }[] = [];
+      
+      userMealPreferences.forEach(meal => {
+        const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+        const mealFoodServings: any[] = [];
+        
+        selectedFoodIds.forEach(foodId => {
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const q = mealFoodQuantities.get(meal.id)?.get(foodId) || {
+                quantity: 1,
+                minQuantity: 0,
+                maxQuantity: 3,
+                selectedUnit: food.servingUnits[0]?.name || 'g',
+                locked: false,
+              };
+              
+              mealFoodServings.push({
+                food_id: food.id,
+                quantity: q.quantity,
+                unit_name: q.selectedUnit
+              });
+              break;
+            }
+          }
+        });
+        
+        if (mealFoodServings.length > 0) {
+          allFoodServings.push({
+            mealId: meal.id,
+            foodServings: mealFoodServings
+          });
+        }
+      });
+
+      // Save meal plans for each meal
+      const savedMealPlans = [];
+      for (const { mealId, foodServings } of allFoodServings) {
+        try {
+          const mealPlan = await mealPlanApi.createMealPlan(
+            appUser.user_id,
+            mealId,
+            selectedDate,
+            foodServings
+          );
+          savedMealPlans.push(mealPlan);
+        } catch (error) {
+          console.error(`Failed to save meal plan for meal ${mealId}:`, error);
+          // Try to update if it already exists
+          try {
+            const mealPlan = await mealPlanApi.updateMealPlan(
+              mealId,
+              foodServings
+            );
+            savedMealPlans.push(mealPlan);
+          } catch (updateError) {
+            console.error(`Failed to update meal plan for meal ${mealId}:`, updateError);
+            throw updateError;
+          }
+        }
+      }
+
+      alert(`Successfully saved ${savedMealPlans.length} meal plans!`);
+    } catch (error) {
+      console.error('Failed to save meal plan:', error);
+      alert('Failed to save meal plan. Please try again.');
+    }
+  };
 
   // Fetch meals when selectedDate or appUser changes
   useEffect(() => {
@@ -1508,15 +1589,26 @@ export default function PlanDetailPage() {
       
       {/* Optimize button at the bottom */}
       <View style={styles.optimizeContainer}>
-        <Pressable 
-          style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
-          onPress={optimizeQuantities}
-          disabled={isOptimizing}
-        >
-          <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
-            {isOptimizing ? 'Optimizing...' : 'Optimize All Quantities'}
-          </Text>
-        </Pressable>
+        <View style={styles.buttonRow}>
+          <Pressable 
+            style={[styles.optimizeButton, isOptimizing && styles.optimizeButtonDisabled]}
+            onPress={optimizeQuantities}
+            disabled={isOptimizing}
+          >
+            <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
+              {isOptimizing ? 'Optimizing...' : 'Optimize All Quantities'}
+            </Text>
+          </Pressable>
+          
+          <Pressable 
+            style={styles.saveButton}
+            onPress={saveMealPlan}
+          >
+            <Text style={styles.saveButtonText}>
+              Save Meal Plan
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Food Selection Modal */}
@@ -1820,5 +1912,22 @@ const styles = StyleSheet.create({
   },
   minMaxLabelLocked: {
     color: Colors.gray,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  saveButton: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: Colors.green,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
   },
 }) 

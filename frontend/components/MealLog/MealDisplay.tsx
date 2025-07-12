@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, Pressable } from 'react-native'
 import Colors from '@/styles/colors'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import TableDisplay from './TableDisplay';
+import PlannedFoodCard from './PlannedFoodCard';
 import storage from '@/app/storage/storage';
 import React, { useEffect } from 'react';
 import eventBus from '@/app/storage/eventEmitter';
@@ -13,11 +14,31 @@ type Props = {
     modalLauncher: ()=> void,
     onFoodPress: (food: FoodServing) => void,
     handleDeleteFood: (food: FoodServing) => void,
+    plannedFoods?: Array<{
+        foodServing: FoodServing;
+        remainingQuantity: number;
+        isBeingReduced?: boolean;
+    }>;
+    onPlannedFoodPress?: (foodServing: FoodServing) => void;
 }
 
-export default function MealDisplay({ meal, modalLauncher, onFoodPress, handleDeleteFood }: Props) {
+export default function MealDisplay({ 
+    meal, 
+    modalLauncher, 
+    onFoodPress, 
+    handleDeleteFood, 
+    plannedFoods = [],
+    onPlannedFoodPress 
+}: Props) {
+    // console.log('MealDisplay: Rendering meal', {
+    //     mealId: meal.id,
+    //     mealName: meal.name,
+    //     servingsCount: meal.servings.length,
+    //     plannedFoodsCount: plannedFoods.length
+    // });
+    
     return (
-        <View style={styles.mealContainer}>
+        <View style={[styles.mealContainer, { backgroundColor: 'rgba(0, 255, 0, 0.1)' }]}>
             <View style={styles.mealHeader}>
                 <Text key={meal.id} style={styles.mealTitle}>{meal.name}</Text>
                 <Pressable onPress={modalLauncher}>
@@ -25,8 +46,10 @@ export default function MealDisplay({ meal, modalLauncher, onFoodPress, handleDe
                 </Pressable>
             </View>
             <View style={styles.foodContainer}>
-                {
-                meal.servings.map((food, idx)=> {
+                {/* Logged foods */}
+                {/* {(() => { console.log('MealDisplay: Rendering servings', meal.servings.length); return null; })()} */}
+                {meal.servings.map((food, idx)=> {
+                    // console.log('MealDisplay: Rendering serving', { idx, foodName: food.food.name });
                     return (
                         <TableDisplay 
                             key={idx} 
@@ -35,8 +58,18 @@ export default function MealDisplay({ meal, modalLauncher, onFoodPress, handleDe
                             onPress={() => onFoodPress(food)}
                         />
                     )
-                })
-                }
+                })}
+                
+                {/* Planned foods - green cards */}
+                {plannedFoods.map((plannedFood, idx) => (
+                    <PlannedFoodCard
+                        key={`planned-${idx}`}
+                        foodServing={plannedFood.foodServing}
+                        remainingQuantity={plannedFood.remainingQuantity}
+                        isBeingReduced={plannedFood.isBeingReduced}
+                        onPress={() => onPlannedFoodPress?.(plannedFood.foodServing)}
+                    />
+                ))}
             </View>
         </View>
     )
