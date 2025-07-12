@@ -191,115 +191,80 @@ export default function PlanDetailPage() {
 
   // Helper function to scale preferences based on meal distribution percentage and account for logged foods and locked foods (for optimization)
   const getMealSpecificPreferences = (meal: any) => {
-    // if (!preferences || !meal.distribution_percentage) {
-    //   return preferences;
-    // }
+    if (!preferences || !meal.distribution_percentage) {
+      return preferences;
+    }
     
-    // const distributionPercentage = meal.distribution_percentage;
+    const distributionPercentage = meal.distribution_percentage;
     
-    // // Calculate total logged macros for this meal
-    // const loggedMeal = mealsData.meals.find((m: Meal) => m.name === meal.name);
-    // const loggedMacros: any = {};
-    // if (loggedMeal) {
-    //   loggedMeal.servings.forEach((foodServing: FoodServing) => {
-    //     const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
-    //     Object.entries(adjustedMacros).forEach(([key, value]) => {
-    //       if (value) {
-    //         loggedMacros[key] = (loggedMacros[key] || 0) + value;
-    //       }
-    //     });
-    //   });
-    // }
+    // Calculate total logged macros for this meal
+    const loggedMeal = mealsData.meals.find((m: Meal) => m.name === meal.name);
+    const loggedMacros: any = {};
+    if (loggedMeal) {
+      loggedMeal.servings.forEach((foodServing: FoodServing) => {
+        const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+        Object.entries(adjustedMacros).forEach(([key, value]) => {
+          if (value) {
+            loggedMacros[key] = (loggedMacros[key] || 0) + value;
+          }
+        });
+      });
+    }
     
-    // // Calculate total locked food macros for this meal
-    // const lockedMacros: any = {};
-    // const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
-    // selectedFoodIds.forEach(foodId => {
-    //   const q = mealFoodQuantities.get(meal.id)?.get(foodId);
-    //   if (q && q.locked) {
-    //     for (const kitchen of kitchens) {
-    //       const food = kitchen.foods.find(f => f.id === foodId);
-    //       if (food) {
-    //         const foodServing = {
-    //           id: food.id,
-    //           food_id: food.id,
-    //           quantity: q.quantity,
-    //           unit: {
-    //             id: q.selectedUnit,
-    //             name: q.selectedUnit,
-    //             food_id: food.id,
-    //             grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
-    //           },
-    //           food: food
-    //         };
-    //         const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
-    //         Object.entries(adjustedMacros).forEach(([key, value]) => {
-    //           if (value) {
-    //             lockedMacros[key] = (lockedMacros[key] || 0) + value;
-    //           }
-    //         });
-    //         break;
-    //       }
-    //     }
-    //   }
-    // });
+    // Calculate total locked food macros for this meal
+    const lockedMacros: any = {};
+    const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+    selectedFoodIds.forEach(foodId => {
+      const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+      if (q && q.locked) {
+        for (const kitchen of kitchens) {
+          const food = kitchen.foods.find(f => f.id === foodId);
+          if (food) {
+            const foodServing = {
+              id: food.id,
+              food_id: food.id,
+              quantity: q.quantity,
+              unit: {
+                id: q.selectedUnit,
+                name: q.selectedUnit,
+                food_id: food.id,
+                grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+              },
+              food: food
+            };
+            const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+            Object.entries(adjustedMacros).forEach(([key, value]) => {
+              if (value) {
+                lockedMacros[key] = (lockedMacros[key] || 0) + value;
+              }
+            });
+            break;
+          }
+        }
+      }
+    });
     
-    // const result = preferences.map(pref => {
-    //   const mealTarget = {
-    //     min: pref.min ? pref.min * distributionPercentage : undefined,
-    //     max: pref.max ? pref.max * distributionPercentage : undefined,
-    //   };
+    const result = preferences.map(pref => {
+      const mealTarget = {
+        min: pref.min ? pref.min * distributionPercentage : undefined,
+        max: pref.max ? pref.max * distributionPercentage : undefined,
+      };
       
-    //   // Subtract logged macros and locked macros from the targets
-    //   const loggedAmount = loggedMacros[pref.id] || 0;
-    //   const lockedAmount = lockedMacros[pref.id] || 0;
-    //   const totalFixedAmount = loggedAmount + lockedAmount;
+      // Subtract logged macros and locked macros from the targets
+      const loggedAmount = loggedMacros[pref.id] || 0;
+      const lockedAmount = lockedMacros[pref.id] || 0;
+      const totalFixedAmount = loggedAmount + lockedAmount;
       
-    //   const adjustedPref = {
-    //     ...pref,
-    //     min: mealTarget.min ? mealTarget.min - totalFixedAmount : undefined,
-    //     max: mealTarget.max ? mealTarget.max - totalFixedAmount : undefined,
-    //   };
+      const adjustedPref = {
+        ...pref,
+        min: mealTarget.min ? mealTarget.min - totalFixedAmount : undefined,
+        max: mealTarget.max ? mealTarget.max - totalFixedAmount : undefined,
+      };
       
-    //   return adjustedPref;
-    // });
+      return adjustedPref;
+    });
     
-    // return result;
-     // Hard-coded preferences for debugging
-     const hardCodedPreferences = [
-      {
-        id: 'calories',
-        min: 255 - 106,
-        max: 270 - 106
-      },
-      {
-        id: 'protein',
-        min: 24 - 18,
-        max: 27 - 18
-      },
-      {
-        id: 'carbs',
-        min: 26,
-        max: 41
-      },
-      {
-        id: 'fat',
-        min: 0 - 4,
-        max: 9 - 4
-      }, 
-      {
-        id: 'fiber',
-        min: 4,
-        max: 6
-      },
-      {
-        id: 'sodium',
-        min: 0 - 100,
-        max: 345 - 100
-      },
-    ];
-
-    return hardCodedPreferences;
+    return result;
   };
 
   // Calculate macros for all meals at the top level - now using global macros context

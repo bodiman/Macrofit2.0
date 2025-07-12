@@ -29,10 +29,7 @@ export default function Register() {
 
     return (
         <View>
-            <Text>Register you cheapskate fucker</Text>
-            <Text>{clerkUser?.fullName}</Text>
-            <Text>{JSON.stringify(appUser)}</Text>
-            <Text>{JSON.stringify(error)}</Text>
+            <Text>Creating account for {clerkUser?.fullName}</Text>
         </View>
     )
 }
