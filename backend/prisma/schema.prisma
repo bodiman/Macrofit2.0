@@ -13,6 +13,7 @@ model User {
   name             String?
   email            String               @unique
   meals            Meal[]
+  mealPlans        MealPlan[]
   mealPreferences  UserMealPreference[]
   macroPreferences UserPreference[]
 }
@@ -72,14 +73,16 @@ model UserPreference {
 }
 
 model FoodServing {
-  id       String      @id
-  food_id  String
-  meal_id  String
-  quantity Float
-  unit_id  String
-  food     Food        @relation(fields: [food_id], references: [id])
-  meal     Meal        @relation(fields: [meal_id], references: [id])
-  unit     ServingUnit @relation(fields: [unit_id], references: [id])
+  id             String      @id
+  food_id        String
+  meal_id        String
+  quantity       Float
+  unit_id        String
+  food           Food        @relation(fields: [food_id], references: [id])
+  meal           Meal        @relation(fields: [meal_id], references: [id])
+  unit           ServingUnit @relation(fields: [unit_id], references: [id])
+  MealPlan       MealPlan?   @relation(fields: [mealPlanId], references: [id])
+  mealPlanId     String?
 }
 
 model Meal {
@@ -88,11 +91,21 @@ model Meal {
   date     DateTime      @db.Date
   user_id  Int
   time     String
-  servings FoodServing[]
   user     User          @relation(fields: [user_id], references: [user_id])
+  servings FoodServing[]
+  plans    MealPlan[]
 
   @@unique([user_id, date, time])
   @@unique([user_id, date, name])
+}
+
+model MealPlan {
+  id          String        @id
+  meal_id     String
+  servings    FoodServing[]
+  meal        Meal          @relation(fields: [meal_id], references: [id])
+  User        User?         @relation(fields: [userUser_id], references: [user_id])
+  userUser_id Int?
 }
 
 model ServingUnit {
