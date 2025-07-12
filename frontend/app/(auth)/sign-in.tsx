@@ -63,7 +63,7 @@ export default function SignInPage() {
         .then(({ createdSessionId, setActive }) => {
           if (createdSessionId) {
             setActive?.({ session: createdSessionId });
-            router.replace('/(protected)/home');
+            router.replace('./(protected)/home');
           }
         })
         .catch((err) => {

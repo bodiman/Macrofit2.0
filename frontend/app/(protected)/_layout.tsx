@@ -9,13 +9,13 @@ export default function Layout() {
 
   if (loading) {
     return (<Text>
-        Loading...
+        { "Signing In..." }
+        <br/>
+        {clerkUser && <Text>Welcome {JSON.stringify(clerkUser.fullName)}</Text>}
 
-        { loading ? "loading" : "not loading"}
+        {/* {JSON.stringify(clerkUser)}
 
-        {JSON.stringify(clerkUser)}
-
-        {JSON.stringify(error)}
+        {JSON.stringify(error)} */}
       </Text>)
   }
 
