@@ -5,18 +5,34 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { useUser } from '@/app/hooks/useUser'
 import { useSelectedDate } from './_layout'
 import { useMealPlans } from '../../../hooks/useMealPlans'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function MealPlanPage() {
-  const { appUser } = useUser()
+  const { appUser, getMeals } = useUser()
   const { selectedDate } = useSelectedDate()
-  const { mealPlans, loading, fetchMealPlans } = useMealPlans()
+  const [mealsData, setMealsData] = useState<{
+    meals: any[];
+    mealPlans: any[];
+  }>({ meals: [], mealPlans: [] });
+  const [loading, setLoading] = useState(false);
+  const { mealPlans } = useMealPlans(mealsData.mealPlans);
 
   useEffect(() => {
     if (appUser && selectedDate) {
-      fetchMealPlans(selectedDate);
+      setLoading(true);
+      getMeals(appUser.user_id, selectedDate)
+        .then((fetched) => {
+          setMealsData({ meals: fetched.meals, mealPlans: fetched.mealPlans });
+        })
+        .catch(error => {
+          console.error('Failed to fetch meals:', error);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setMealsData({ meals: [], mealPlans: [] });
+      setLoading(false);
     }
-  }, [appUser, selectedDate, fetchMealPlans]);
+  }, [appUser, selectedDate]);
 
   const handleCreateNewPlan = () => {
     router.push('./plan-detail')

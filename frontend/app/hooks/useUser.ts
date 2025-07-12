@@ -260,12 +260,13 @@ export function useUser() {
     try {
       const dateString = date.toISOString().split('T')[0];
       const res = await api.get(`/api/user/meals?user_id=${userId}&date=${dateString}`);
-      const data: FoodTypeMeal[] = await res.json();
+      const data = await res.json();
+      // data: { meals, mealPlans }
       return data;
     } catch (err) {
       console.error('Failed to fetch meals:', err);
       setError('Failed to fetch meals');
-      return [];
+      return { meals: [], mealPlans: [] };
     }
   };
 

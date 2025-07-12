@@ -1,5 +1,6 @@
 import express from 'express';
 import { PrismaClient } from '../generated/prisma';
+import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -125,7 +126,7 @@ router.post('/', async (req: express.Request, res: express.Response) => {
         data: {
           servings: {
             create: processedServings.map((serving: any) => ({
-              id: `${Date.now()}-${Math.random()}`,
+              id: uuidv4(),
               food: {
                 connect: { id: serving.food_id }
               },
@@ -209,7 +210,7 @@ router.post('/', async (req: express.Request, res: express.Response) => {
         date: new Date(date),
         servings: {
           create: processedServings.map((serving: any) => ({
-            id: `${Date.now()}-${Math.random()}`,
+            id: uuidv4(),
             food: {
               connect: { id: serving.food_id }
             },
@@ -360,7 +361,7 @@ router.put('/:id', async (req: express.Request, res: express.Response) => {
       data: {
         servings: {
           create: processedServings.map((serving: any) => ({
-            id: `${Date.now()}-${Math.random()}`,
+            id: uuidv4(),
             food: {
               connect: { id: serving.food_id }
             },

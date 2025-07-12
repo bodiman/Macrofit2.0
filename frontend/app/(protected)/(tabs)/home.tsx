@@ -36,28 +36,28 @@ export default function Page() {
 
   const { selectedDate } = useSelectedDate();
   const { syncLoggedMealsMacros, addToLoggedMeals, subtractFromLoggedMeals } = useGlobalMacrosSync();
-  const { mealPlans, fetchMealPlans, updateMealPlansWithLoggedMeals, updateMealPlansAfterLogging } = useMealPlans();
   const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
   const [activeMealPreferenceDetails, setActiveMealPreferenceDetails] = useState<UserMealPreference | null>(null);
   const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
   const [clickedPlannedFood, setClickedPlannedFood] = useState<FoodServing | null>(null);
   const [mealsData, setMealsData] = useState<{
     meals: Meal[];
+    mealPlans: any[];
     macros: any;
-  }>({ meals: [], macros: {} });
+  }>({ meals: [], mealPlans: [], macros: {} });
   const [mealsLoading, setMealsLoading] = useState(false);
 
-  // Fetch meals when selectedDate or appUser changes
+  const { mealPlans, updateMealPlansWithLoggedMeals, updateMealPlansAfterLogging } = useMealPlans(mealsData.mealPlans);
+
+  // Fetch meals and meal plans when selectedDate or appUser changes
   useEffect(() => {
     if (appUser && selectedDate) {
       setMealsLoading(true);
       getMeals(appUser.user_id, selectedDate)
-        .then((fetchedMeals) => {
-          // Use optimized batch calculation
-          const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-          // Update both meals and macros in single state change
-          setMealsData({ meals: fetchedMeals, macros: totalMacros });
-          // Immediately sync with global macros display
+        .then((fetched) => {
+          // fetched: { meals, mealPlans }
+          const totalMacros = calculateAllMacrosOptimized(fetched.meals, rawPreferences);
+          setMealsData({ meals: fetched.meals, mealPlans: fetched.mealPlans, macros: totalMacros });
           syncLoggedMealsMacros(totalMacros);
         })
         .catch(error => {
@@ -65,22 +65,11 @@ export default function Page() {
         })
         .finally(() => setMealsLoading(false));
     } else {
-      setMealsData({ meals: [], macros: {} });
+      setMealsData({ meals: [], mealPlans: [], macros: {} });
       syncLoggedMealsMacros({});
       setMealsLoading(false);
     }
-  }, [appUser, selectedDate, rawPreferences]); // Removed syncLoggedMealsMacros from dependencies
-
-  // Fetch meal plans when selectedDate or appUser changes
-  useEffect(() => {
-    console.log('🔄 Meal plans useEffect triggered:', { appUser: !!appUser, selectedDate: selectedDate?.toISOString() });
-    if (appUser && selectedDate) {
-      console.log('✅ Calling fetchMealPlans');
-      fetchMealPlans(selectedDate);
-    } else {
-      console.log('❌ Not calling fetchMealPlans - missing appUser or selectedDate');
-    }
-  }, [appUser, selectedDate]); // Removed fetchMealPlans from dependencies
+  }, [appUser, selectedDate, rawPreferences]);
 
   // Update meal plans with logged meals data
   useEffect(() => {
@@ -222,6 +211,7 @@ export default function Page() {
           ? { ...meal, servings: [...meal.servings, ...foodsToAdd] }
           : meal
       ),
+      mealPlans: prevData.mealPlans,
       macros: prevData.macros // Keep existing macros for now
     }));
 
@@ -234,8 +224,8 @@ export default function Page() {
     // Re-fetch meals to ensure consistency and update macros
     if (appUser && selectedDate) {
       const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-      const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-      setMealsData({ meals: fetchedMeals, macros: totalMacros });
+      const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
+      setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
       // Update global macros with the final result
       syncLoggedMealsMacros(totalMacros);
     }
@@ -280,6 +270,7 @@ export default function Page() {
             : serving
         )
       })),
+      mealPlans: prevData.mealPlans,
       macros: prevData.macros // Keep existing macros for now
     }));
 
@@ -289,8 +280,8 @@ export default function Page() {
     // Re-fetch meals to ensure consistency and update macros
     if (appUser && selectedDate) {
       const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-      const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-      setMealsData({ meals: fetchedMeals, macros: totalMacros });
+      const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
+      setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
       // Update global macros with the final result
       syncLoggedMealsMacros(totalMacros);
     }
@@ -334,6 +325,7 @@ export default function Page() {
           ? { ...meal, servings: meal.servings.filter(serving => serving.id !== foodServingId) }
           : meal
       ),
+      mealPlans: prevData.mealPlans,
       macros: prevData.macros // Keep existing macros for now
     }));
 
@@ -343,8 +335,8 @@ export default function Page() {
     // Re-fetch meals to ensure consistency and update macros
     if (appUser && selectedDate) {
       const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-      const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-      setMealsData({ meals: fetchedMeals, macros: totalMacros });
+      const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
+      setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
       // Update global macros with the final result
       syncLoggedMealsMacros(totalMacros);
     }

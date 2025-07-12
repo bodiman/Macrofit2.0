@@ -187,13 +187,13 @@ export default function PlanDetailPage() {
       getMeals(appUser.user_id, selectedDate)
         .then((fetchedMeals) => {
           console.log('PlanDetailPage: Meals fetched successfully', {
-            mealsCount: fetchedMeals.length,
-            mealNames: fetchedMeals.map(m => m.name)
+            mealsCount: fetchedMeals.meals.length,
+            mealNames: fetchedMeals.meals.map((m: any) => m.name)
           });
           // Use optimized batch calculation
-          const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
+          const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
           // Update both meals and macros in single state change
-          setMealsData({ meals: fetchedMeals, macros: totalMacros });
+          setMealsData({ meals: fetchedMeals.meals, macros: totalMacros });
         })
         .finally(() => setMealsLoading(false));
     } else {
@@ -209,8 +209,8 @@ export default function PlanDetailPage() {
       if (appUser && selectedDate) {
         getMeals(appUser.user_id, selectedDate)
           .then((fetchedMeals) => {
-            const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-            setMealsData({ meals: fetchedMeals, macros: totalMacros });
+            const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
+            setMealsData({ meals: fetchedMeals.meals, macros: totalMacros });
           });
       }
     };

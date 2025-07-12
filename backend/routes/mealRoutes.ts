@@ -274,7 +274,29 @@ router.get('/user/meals', async (req: Request, res: Response, next: NextFunction
 
         const finalMealsDto = toMeals(allMealsForDaySorted);
 
-        res.status(200).json(finalMealsDto);
+        // Fetch all meal plans for this user and date
+        const mealPlans = await prisma.mealPlan.findMany({
+            where: {
+                user_id: userId,
+                date: targetDate
+            },
+            include: {
+                servings: {
+                    include: {
+                        food: {
+                            include: {
+                                macros: { include: { metric: true } },
+                                servingUnits: true
+                            }
+                        },
+                        unit: true
+                    }
+                },
+                meal: true
+            }
+        });
+
+        res.status(200).json({ meals: finalMealsDto, mealPlans });
         return;
     } catch (err) {
         console.error('Failed to get meals (with preferences logic):', err);
@@ -303,15 +325,15 @@ router.post('/user/meals/:mealId/servings', async (req: Request, res: Response, 
         }
         
         const newServingsData = foodServings.map(serving => {
-            const { food, quantity, unit, id } = serving;
+            const { food, quantity, unit } = serving;
             const food_id = food?.id;
             const unit_id = unit?.id;
 
-            if (!id || !food_id || !unit_id || quantity === undefined ) {
-                throw new Error('Each serving must have id, food.id, unit.id, and quantity');
+            if (!food_id || !unit_id || quantity === undefined ) {
+                throw new Error('Each serving must have food.id, unit.id, and quantity');
             }
             return {
-                id: serving.id, 
+                id: uuidv4(), // Generate new UUID instead of using frontend ID
                 unit_id: unit_id,
                 food_id: food_id,
                 meal_id: mealId,
