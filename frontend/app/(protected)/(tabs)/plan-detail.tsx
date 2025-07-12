@@ -6,17 +6,19 @@ import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { useOptimizationApi } from '@/lib/api/optimization'
-import { Food } from '@shared/types/foodTypes'
+import { Food, Meal, FoodServing } from '@shared/types/foodTypes'
 import Slider from '@react-native-community/slider'
 import { Picker } from '@react-native-picker/picker'
 import React from 'react'
 import KitchenActivationModal from '@/components/Kitchen/KitchenActivationModal'
 import eventBus from '@/app/storage/eventEmitter'
-import useMacros from '@/app/hooks/useMacros'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useFoodSearchApi } from '@/lib/api/foodSearch'
 import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay'
-import { calculateAdjustedMacros } from '@/components/MacroDisplay/calculateMacros'
+import { calculateAllMacrosOptimized, calculateAdjustedMacrosOptimized } from '@/utils/optimizedMacroCalculation'
+import { useSelectedDate } from './_layout'
+import { useGlobalMacros } from '@/context/GlobalMacrosContext'
+import { useGlobalMacrosSync } from '@/hooks/useGlobalMacrosSync'
 
 interface Kitchen {
   id: string
@@ -48,7 +50,14 @@ type FlowStep = 'filters' | 'quantities'
 
 export default function PlanDetailPage() {
   const { planId } = useLocalSearchParams()
-  const { userMealPreferences, preferences, meals } = useUser()
+  const { userMealPreferences, preferences, rawPreferences, appUser, getMeals } = useUser()
+  const { selectedDate } = useSelectedDate()
+  const { updateMealPlanMacros } = useGlobalMacros()
+  const [mealsData, setMealsData] = useState<{
+    meals: Meal[];
+    macros: any;
+  }>({ meals: [], macros: {} });
+  const [mealsLoading, setMealsLoading] = useState(false)
   const [expandedFoods, setExpandedFoods] = useState<Set<string>>(new Set())
   const [kitchens, setKitchens] = useState<KitchenWithActiveFoods[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,6 +84,61 @@ export default function PlanDetailPage() {
   const [mealFoodQuantities, setMealFoodQuantities] = useState<
     Map<string, Map<string, { quantity: number; minQuantity: number; maxQuantity: number; selectedUnit: string; locked: boolean }>>
   >(new Map())
+
+  // Create preference set for optimized calculations
+  const preferenceSet = useMemo(() => {
+    if (!rawPreferences || rawPreferences.length === 0) {
+      return new Set<string>();
+    }
+    return new Set(rawPreferences.map(pref => pref.metric_id));
+  }, [rawPreferences]);
+
+  // Fetch meals when selectedDate or appUser changes
+  useEffect(() => {
+    console.log('PlanDetailPage: Fetch meals useEffect triggered', {
+      appUser: appUser?.user_id,
+      selectedDate: selectedDate?.toISOString(),
+      rawPreferencesLength: rawPreferences?.length
+    });
+    
+    if (appUser && selectedDate) {
+      setMealsLoading(true);
+      getMeals(appUser.user_id, selectedDate)
+        .then((fetchedMeals) => {
+          console.log('PlanDetailPage: Meals fetched successfully', {
+            mealsCount: fetchedMeals.length,
+            mealNames: fetchedMeals.map(m => m.name)
+          });
+          // Use optimized batch calculation
+          const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
+          // Update both meals and macros in single state change
+          setMealsData({ meals: fetchedMeals, macros: totalMacros });
+        })
+        .finally(() => setMealsLoading(false));
+    } else {
+      console.log('PlanDetailPage: Clearing meals data - no appUser or selectedDate');
+      setMealsData({ meals: [], macros: {} });
+      setMealsLoading(false);
+    }
+  }, [appUser, selectedDate, rawPreferences]);
+
+  // Listen for meal updates from other pages
+  useEffect(() => {
+    const handleMealsUpdated = () => {
+      if (appUser && selectedDate) {
+        getMeals(appUser.user_id, selectedDate)
+          .then((fetchedMeals) => {
+            const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
+            setMealsData({ meals: fetchedMeals, macros: totalMacros });
+          });
+      }
+    };
+
+    eventBus.on('mealsUpdated', handleMealsUpdated);
+    return () => {
+      eventBus.off('mealsUpdated', handleMealsUpdated);
+    };
+  }, [appUser, selectedDate, rawPreferences]);
 
   // Helper function to get servings for a single meal
   const getMealSelectedFoodServings = (mealId: string) => {
@@ -125,55 +189,121 @@ export default function PlanDetailPage() {
     }));
   };
 
-  // Helper function to scale preferences based on meal distribution percentage and account for logged foods (for optimization)
+  // Helper function to scale preferences based on meal distribution percentage and account for logged foods and locked foods (for optimization)
   const getMealSpecificPreferences = (meal: any) => {
-    if (!preferences || !meal.distribution_percentage) {
-      return preferences;
-    }
+    // if (!preferences || !meal.distribution_percentage) {
+    //   return preferences;
+    // }
     
-    const distributionPercentage = meal.distribution_percentage;
+    // const distributionPercentage = meal.distribution_percentage;
     
-    // Calculate total logged macros for this meal
-    const loggedMeal = meals.find(m => m.name === meal.name);
-    const loggedMacros: any = {};
-    if (loggedMeal) {
-      loggedMeal.servings.forEach((foodServing) => {
-        const adjustedMacros = calculateAdjustedMacros(foodServing);
-        Object.entries(adjustedMacros).forEach(([key, value]) => {
-          if (value) {
-            loggedMacros[key] = (loggedMacros[key] || 0) + value;
-          }
-        });
-      });
-    }
+    // // Calculate total logged macros for this meal
+    // const loggedMeal = mealsData.meals.find((m: Meal) => m.name === meal.name);
+    // const loggedMacros: any = {};
+    // if (loggedMeal) {
+    //   loggedMeal.servings.forEach((foodServing: FoodServing) => {
+    //     const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+    //     Object.entries(adjustedMacros).forEach(([key, value]) => {
+    //       if (value) {
+    //         loggedMacros[key] = (loggedMacros[key] || 0) + value;
+    //       }
+    //     });
+    //   });
+    // }
     
-    console.log(`Getting preferences for ${meal.name}:`);
-    console.log('Distribution percentage:', distributionPercentage);
-    console.log('Logged macros for this meal:', loggedMacros);
+    // // Calculate total locked food macros for this meal
+    // const lockedMacros: any = {};
+    // const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+    // selectedFoodIds.forEach(foodId => {
+    //   const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+    //   if (q && q.locked) {
+    //     for (const kitchen of kitchens) {
+    //       const food = kitchen.foods.find(f => f.id === foodId);
+    //       if (food) {
+    //         const foodServing = {
+    //           id: food.id,
+    //           food_id: food.id,
+    //           quantity: q.quantity,
+    //           unit: {
+    //             id: q.selectedUnit,
+    //             name: q.selectedUnit,
+    //             food_id: food.id,
+    //             grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+    //           },
+    //           food: food
+    //         };
+    //         const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+    //         Object.entries(adjustedMacros).forEach(([key, value]) => {
+    //           if (value) {
+    //             lockedMacros[key] = (lockedMacros[key] || 0) + value;
+    //           }
+    //         });
+    //         break;
+    //       }
+    //     }
+    //   }
+    // });
     
-    const result = preferences.map(pref => {
-      const mealTarget = {
-        min: pref.min ? pref.min * distributionPercentage : undefined,
-        max: pref.max ? pref.max * distributionPercentage : undefined,
-      };
+    // const result = preferences.map(pref => {
+    //   const mealTarget = {
+    //     min: pref.min ? pref.min * distributionPercentage : undefined,
+    //     max: pref.max ? pref.max * distributionPercentage : undefined,
+    //   };
       
-      // Subtract logged macros from the targets
-      const loggedAmount = loggedMacros[pref.id] || 0;
-      const adjustedPref = {
-        ...pref,
-        min: mealTarget.min ? Math.max(0, mealTarget.min - loggedAmount) : undefined,
-        max: mealTarget.max ? Math.max(0, mealTarget.max - loggedAmount) : undefined,
-      };
+    //   // Subtract logged macros and locked macros from the targets
+    //   const loggedAmount = loggedMacros[pref.id] || 0;
+    //   const lockedAmount = lockedMacros[pref.id] || 0;
+    //   const totalFixedAmount = loggedAmount + lockedAmount;
       
-      console.log(`${pref.id}: original min=${pref.min}, max=${pref.max}, meal target min=${mealTarget.min}, max=${mealTarget.max}, logged=${loggedAmount}, adjusted min=${adjustedPref.min}, max=${adjustedPref.max}`);
+    //   const adjustedPref = {
+    //     ...pref,
+    //     min: mealTarget.min ? mealTarget.min - totalFixedAmount : undefined,
+    //     max: mealTarget.max ? mealTarget.max - totalFixedAmount : undefined,
+    //   };
       
-      return adjustedPref;
-    });
+    //   return adjustedPref;
+    // });
     
-    return result;
+    // return result;
+     // Hard-coded preferences for debugging
+     const hardCodedPreferences = [
+      {
+        id: 'calories',
+        min: 255 - 106,
+        max: 270 - 106
+      },
+      {
+        id: 'protein',
+        min: 24 - 18,
+        max: 27 - 18
+      },
+      {
+        id: 'carbs',
+        min: 26,
+        max: 41
+      },
+      {
+        id: 'fat',
+        min: 0 - 4,
+        max: 9 - 4
+      }, 
+      {
+        id: 'fiber',
+        min: 4,
+        max: 6
+      },
+      {
+        id: 'sodium',
+        min: 0 - 100,
+        max: 345 - 100
+      },
+    ];
+
+    return hardCodedPreferences;
   };
 
-  // Calculate macros for all meals at the top level
+  // Calculate macros for all meals at the top level - now using global macros context
+  const { totalMacros: globalTotalMacros } = useGlobalMacros();
   const mealMacros = useMemo(() => {
     const macros: { [mealId: string]: any } = {};
     userMealPreferences.forEach(meal => {
@@ -183,7 +313,7 @@ export default function PlanDetailPage() {
       
       // Add macros from planned foods
       servings.forEach((foodServing) => {
-        const adjustedMacros = calculateAdjustedMacros(foodServing);
+        const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
         Object.entries(adjustedMacros).forEach(([key, value]) => {
           if (value) {
             totalMacros[key] = (totalMacros[key] || 0) + value;
@@ -192,10 +322,10 @@ export default function PlanDetailPage() {
       });
       
       // Add macros from logged foods for this meal
-      const loggedMeal = meals.find(m => m.name === meal.name);
+      const loggedMeal = mealsData.meals.find((m: Meal) => m.name === meal.name);
       if (loggedMeal) {
-        loggedMeal.servings.forEach((foodServing) => {
-          const adjustedMacros = calculateAdjustedMacros(foodServing);
+        loggedMeal.servings.forEach((foodServing: FoodServing) => {
+          const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
           Object.entries(adjustedMacros).forEach(([key, value]) => {
             if (value) {
               totalMacros[key] = (totalMacros[key] || 0) + value;
@@ -207,17 +337,17 @@ export default function PlanDetailPage() {
       macros[meal.id] = totalMacros;
     });
     return macros;
-  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, meals]);
+  }, [userMealPreferences, selectedFoods, mealFoodQuantities, kitchens, preferenceSet, mealsData.meals]);
 
-  // Helper function to get overall preferences accounting for all logged foods
+  // Helper function to get overall preferences accounting for all logged foods and locked foods
   const getOverallPreferencesWithLoggedFoods = () => {
     if (!preferences) return preferences;
     
     // Calculate total logged macros across all meals
     const totalLoggedMacros: any = {};
-    meals.forEach(meal => {
-      meal.servings.forEach((foodServing) => {
-        const adjustedMacros = calculateAdjustedMacros(foodServing);
+    mealsData.meals.forEach((meal: Meal) => {
+      meal.servings.forEach((foodServing: FoodServing) => {
+        const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
         Object.entries(adjustedMacros).forEach(([key, value]) => {
           if (value) {
             totalLoggedMacros[key] = (totalLoggedMacros[key] || 0) + value;
@@ -226,17 +356,58 @@ export default function PlanDetailPage() {
       });
     });
     
+    // Calculate total locked food macros across all meals
+    const totalLockedMacros: any = {};
+    userMealPreferences.forEach(meal => {
+      const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+      selectedFoodIds.forEach(foodId => {
+        const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+        if (q && q.locked) {
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const foodServing = {
+                id: food.id,
+                food_id: food.id,
+                quantity: q.quantity,
+                unit: {
+                  id: q.selectedUnit,
+                  name: q.selectedUnit,
+                  food_id: food.id,
+                  grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+                },
+                food: food
+              };
+              const adjustedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+              Object.entries(adjustedMacros).forEach(([key, value]) => {
+                if (value) {
+                  totalLockedMacros[key] = (totalLockedMacros[key] || 0) + value;
+                }
+              });
+              break;
+            }
+          }
+        }
+      });
+    });
+    
     return preferences.map(pref => {
       const loggedAmount = totalLoggedMacros[pref.id] || 0;
-      return {
+      const lockedAmount = totalLockedMacros[pref.id] || 0;
+      const totalFixedAmount = loggedAmount + lockedAmount;
+      
+      const adjustedPref = {
         ...pref,
-        min: pref.min ? Math.max(0, pref.min - loggedAmount) : undefined,
-        max: pref.max ? Math.max(0, pref.max - loggedAmount) : undefined,
+        min: pref.min ? pref.min - totalFixedAmount : undefined,
+        max: pref.max ? pref.max - totalFixedAmount : undefined,
       };
+      
+      return adjustedPref;
     });
   };
 
   useEffect(() => {
+    console.log('PlanDetailPage: fetchKitchens useEffect triggered');
     fetchKitchens()
   }, [])
 
@@ -587,12 +758,190 @@ export default function PlanDetailPage() {
     return allServings
   }
 
-  const mealPlanMacros = useMacros(getAllSelectedFoodServings())
+  // Calculate meal plan macros using ultra-fast incremental updates
+  const { addToMealPlan, subtractFromMealPlan, clearMealPlan } = useGlobalMacrosSync();
+  const prevMealPlanRef = useRef<{
+    selectedFoods: Map<string, Set<string>>;
+    mealFoodQuantities: Map<string, Map<string, any>>;
+  }>({ selectedFoods: new Map(), mealFoodQuantities: new Map() });
 
-  // Emit meal plan macros to AppHeader whenever they change
+  // Ultra-fast meal plan macros calculation and sync
   useEffect(() => {
-    eventBus.emit('mealPlanMacrosUpdated', mealPlanMacros)
-  }, [mealPlanMacros])
+    const currentState = {
+      selectedFoods: new Map(selectedFoods),
+      mealFoodQuantities: new Map(mealFoodQuantities)
+    };
+    const prevState = prevMealPlanRef.current;
+
+    // Calculate the difference and apply incremental updates
+    let hasChanges = false;
+
+    // Check for food selection changes
+    for (const [mealId, currentFoodIds] of selectedFoods) {
+      const prevFoodIds = prevState.selectedFoods.get(mealId) || new Set();
+      
+      // Find added foods
+      for (const foodId of currentFoodIds) {
+        if (!prevFoodIds.has(foodId)) {
+          // Food was added - add its macros
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const q = mealFoodQuantities.get(mealId)?.get(foodId) || {
+                quantity: 1,
+                minQuantity: 0,
+                maxQuantity: 3,
+                selectedUnit: food.servingUnits[0]?.name || 'g',
+                locked: false,
+              };
+              
+              // Create a proper FoodServing object for optimized calculation
+              const foodServing = {
+                id: food.id,
+                food_id: food.id,
+                quantity: q.quantity,
+                unit: {
+                  id: q.selectedUnit,
+                  name: q.selectedUnit,
+                  food_id: food.id,
+                  grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+                },
+                food: food
+              };
+              
+              // Calculate macros using the optimized function (includes weight multiplication)
+              const foodMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+              addToMealPlan(foodMacros);
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+      }
+      
+      // Find removed foods
+      for (const foodId of prevFoodIds) {
+        if (!currentFoodIds.has(foodId)) {
+          // Food was removed - subtract its macros
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const prevQ = prevState.mealFoodQuantities.get(mealId)?.get(foodId) || {
+                quantity: 1,
+                minQuantity: 0,
+                maxQuantity: 3,
+                selectedUnit: food.servingUnits[0]?.name || 'g',
+                locked: false,
+              };
+              
+              // Create a proper FoodServing object for optimized calculation
+              const foodServing = {
+                id: food.id,
+                food_id: food.id,
+                quantity: prevQ.quantity,
+                unit: {
+                  id: prevQ.selectedUnit,
+                  name: prevQ.selectedUnit,
+                  food_id: food.id,
+                  grams: food.servingUnits.find(u => u.name === prevQ.selectedUnit)?.grams || 1
+                },
+                food: food
+              };
+              
+              // Calculate macros using the optimized function (includes weight multiplication)
+              const foodMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+              subtractFromMealPlan(foodMacros);
+              hasChanges = true;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Check for quantity changes
+    for (const [mealId, currentMealQuantities] of mealFoodQuantities) {
+      const prevMealQuantities = prevState.mealFoodQuantities.get(mealId) || new Map();
+      
+      for (const [foodId, currentQ] of currentMealQuantities) {
+        const prevQ = prevMealQuantities.get(foodId);
+        
+        if (prevQ && currentQ.quantity !== prevQ.quantity) {
+          // Quantity changed - calculate and apply the difference
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const quantityDiff = currentQ.quantity - prevQ.quantity;
+              
+              if (quantityDiff !== 0) {
+                // Create FoodServing objects for both old and new quantities
+                const oldFoodServing = {
+                  id: food.id,
+                  food_id: food.id,
+                  quantity: prevQ.quantity,
+                  unit: {
+                    id: prevQ.selectedUnit,
+                    name: prevQ.selectedUnit,
+                    food_id: food.id,
+                    grams: food.servingUnits.find(u => u.name === prevQ.selectedUnit)?.grams || 1
+                  },
+                  food: food
+                };
+                
+                const newFoodServing = {
+                  id: food.id,
+                  food_id: food.id,
+                  quantity: currentQ.quantity,
+                  unit: {
+                    id: currentQ.selectedUnit,
+                    name: currentQ.selectedUnit,
+                    food_id: food.id,
+                    grams: food.servingUnits.find(u => u.name === currentQ.selectedUnit)?.grams || 1
+                  },
+                  food: food
+                };
+                
+                // Calculate the macro difference using optimized functions
+                const oldMacros = calculateAdjustedMacrosOptimized(oldFoodServing, preferenceSet);
+                const newMacros = calculateAdjustedMacrosOptimized(newFoodServing, preferenceSet);
+                
+                // Calculate the difference
+                const macroDiff = Object.keys(newMacros).reduce((diff, key) => {
+                  const change = (newMacros[key] || 0) - (oldMacros[key] || 0);
+                  if (change !== 0) {
+                    diff[key] = change;
+                  }
+                  return diff;
+                }, {} as any);
+                
+                if (Object.keys(macroDiff).length > 0) {
+                  // Always add the difference - it can be positive or negative
+                  // The addToMealPlan function will handle both cases correctly
+                  addToMealPlan(macroDiff);
+                  hasChanges = true;
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Update the previous state reference
+    prevMealPlanRef.current = currentState;
+
+    if (hasChanges) {
+      console.log('PlanDetailPage: Meal plan macros updated incrementally');
+    }
+  }, [selectedFoods, mealFoodQuantities, kitchens, addToMealPlan, subtractFromMealPlan, preferenceSet]);
+
+  // Clear meal plan macros when leaving this page
+  useEffect(() => {
+    return () => {
+      clearMealPlan();
+    };
+  }, [clearMealPlan]);
 
   // Helper function to optimize a single meal
   const optimizeSingleMeal = async (meal: any) => {
@@ -645,6 +994,12 @@ export default function PlanDetailPage() {
       return;
     }
 
+    // Debug: Show meal-specific preferences before conversion
+    console.log(`=== ${meal.name} Meal-Specific Preferences ===`);
+    console.log('Original preferences:', preferences);
+    console.log('Meal-specific preferences (after adjustments):', mealSpecificPrefs);
+    console.log('===============================================');
+
     console.log(`Optimizing ${meal.name}:`);
     console.log('Original preferences:', preferences);
     console.log('Meal-specific preferences (with logged foods subtracted):', mealSpecificPrefs);
@@ -659,13 +1014,14 @@ export default function PlanDetailPage() {
         unitGrams: food.unit.grams,
         quantity: food.quantity,
         minQuantity: food.minQuantity,
-        maxQuantity: food.maxQuantity
+        maxQuantity: food.maxQuantity,
+        locked: food.locked || false
       };
     });
 
     const optimizationPreferences = mealSpecificPrefs.map(pref => ({
-      min_value: pref.min || 0,
-      max_value: pref.max || Infinity
+      min_value: pref.min !== undefined ? pref.min : null,
+      max_value: pref.max !== undefined ? pref.max : Infinity
     }));
 
     console.log('Optimization preferences:', optimizationPreferences);
@@ -677,6 +1033,27 @@ export default function PlanDetailPage() {
         macroNames,
         maxIterations: 500
       });
+
+      // Debug: Show calculated macros, preferences, and error
+      console.log(`=== ${meal.name} Optimization Debug ===`);
+      console.log('Macro Names:', macroNames);
+      console.log('Optimization Preferences:', optimizationPreferences);
+      console.log('Final Macros:', mealResult.finalMacros);
+      console.log('Optimization Error:', mealResult.error);
+      
+      // Calculate what the planned foods contribute
+      // const plannedMacros: any = {};
+      // mealFoods.forEach((food, idx) => {
+      //   const quantity = mealResult.optimizedQuantities[idx];
+      //   const totalGrams = quantity * food.unit.grams;
+      //   food.macroValues.forEach((valuePerGram: number, macroIndex: number) => {
+      //     const macroName = macroNames[macroIndex];
+      //     const totalValue = totalGrams * valuePerGram;
+      //     plannedMacros[macroName] = (plannedMacros[macroName] || 0) + totalValue;
+      //   });
+      // });
+      // console.log('Planned Food Macros:', plannedMacros);
+      console.log('=====================================');
 
       // Update quantities for this meal
       setMealFoodQuantities(prev => {
@@ -717,6 +1094,7 @@ export default function PlanDetailPage() {
                 minQuantity: q.minQuantity,
                 maxQuantity: q.maxQuantity,
                 selectedUnit: q.selectedUnit,
+                locked: q.locked,
                 food: food,
                 unit: {
                   id: q.selectedUnit,
@@ -753,6 +1131,12 @@ export default function PlanDetailPage() {
         const mealSpecificPrefs = getMealSpecificPreferences(meal);
         if (!mealSpecificPrefs) continue;
         
+        // Debug: Show meal-specific preferences before conversion
+        console.log(`=== ${meal.name} Meal-Specific Preferences ===`);
+        console.log('Original preferences:', preferences);
+        console.log('Meal-specific preferences (after adjustments):', mealSpecificPrefs);
+        console.log('===============================================');
+        
         const foods = mealFoods.map(food => {
           const macroValues = macroNames.map(macroName => {
             return (food.food.macros as any)?.[macroName] || 0;
@@ -762,7 +1146,8 @@ export default function PlanDetailPage() {
             unitGrams: food.unit.grams,
             quantity: food.quantity,
             minQuantity: food.minQuantity,
-            maxQuantity: food.maxQuantity
+            maxQuantity: food.maxQuantity,
+            locked: food.locked || false
           };
         });
         
@@ -806,7 +1191,8 @@ export default function PlanDetailPage() {
           unitGrams: food.unit.grams,
           quantity: food.quantity,
           minQuantity: food.minQuantity,
-          maxQuantity: food.maxQuantity
+          maxQuantity: food.maxQuantity,
+          locked: food.locked || false
         };
       });
       
@@ -821,6 +1207,13 @@ export default function PlanDetailPage() {
         macroNames,
         maxIterations: 1000
       });
+      
+      // Debug: Show calculated macros, preferences, and error for overall optimization
+      console.log(`=== Overall Optimization Debug ===`);
+      console.log('Macro Names:', macroNames);
+      console.log('Optimization Preferences:', optimizationPreferences);
+      console.log('Final Macros:', result.finalMacros);
+      console.log('Optimization Error:', result.error);
       
       // Update all quantities with final optimized values
       setMealFoodQuantities(prev => {
@@ -891,10 +1284,10 @@ export default function PlanDetailPage() {
     };
   }
 
-  if (loading) {
+  if (loading || mealsLoading) {
     return (
       <View style={styles.container}>
-        <Text>Loading foods...</Text>
+        <Text>Loading...</Text>
       </View>
     )
   }

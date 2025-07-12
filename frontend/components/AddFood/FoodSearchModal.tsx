@@ -1,34 +1,80 @@
-import { View, Text, Pressable, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { PropsWithChildren, useEffect, useState, useMemo } from 'react';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable, FlatList } from 'react-native';
 import { Meal, FoodServing, ServingUnit } from '@shared/types/foodTypes';
 import { UserMealPreference } from '@shared/types/databaseTypes';
-import Colors from '@/styles/colors';
-import AddFood from './AddFood';
+import { MacroPreferences } from '@/tempdata';
 import AnimatedModal from '../AnimatedModal';
-import eventBus from '@/app/storage/eventEmitter';
-import useShoppingCart from '@/app/hooks/useShoppingCart';
-import { MacroPreference } from '@shared/types/macroTypes';
+import AddFood from './AddFood';
 import FoodCard from './FoodCard';
 import MacrosDisplay from '../MacroDisplay/MacrosDisplay';
-import useMacros from '@/app/hooks/useMacros';
+import Colors from '@/styles/colors';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import useShoppingCart from '@/app/hooks/useShoppingCart';
+import eventBus from '@/app/storage/eventEmitter';
+import { useGlobalMacrosSync } from '@/hooks/useGlobalMacrosSync';
+import { calculateAllMacrosOptimized } from '@/utils/optimizedMacroCalculation';
+import useUser from '@/app/hooks/useUser';
 
-type Props = PropsWithChildren<{
-    onClose: () => void,
-    modalCloser: () => void,
-    activeMeal: Meal | null,
-    activeMealPreference: UserMealPreference | null,
-    addFoodsToMeal: (mealId: string, updatedMeal: FoodServing[]) => Promise<void>
-    dailyMacroPreferences: MacroPreference[]
-}>;
+interface Props {
+    onClose: () => void;
+    activeMeal: Meal | null;
+    activeMealPreference: UserMealPreference | null;
+    modalCloser: () => void;
+    addFoodsToMeal: (mealId: string, foodsToAdd: FoodServing[]) => Promise<void>;
+    dailyMacroPreferences: MacroPreferences;
+}
 
 export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
-    const totalMacrosInCart = useMacros([...shoppingCart, ...(activeMeal?.servings || [])]);
+    const { rawPreferences } = useUser();
+    const { syncShoppingCartMacros, clearShoppingCart } = useGlobalMacrosSync();
+
+    // Calculate cart macros using optimized function
+    const cartMacros = useMemo(() => {
+        if (shoppingCart.length === 0) return {};
+        
+        // Create a meal-like structure for the cart
+        const cartMeal = {
+            id: 'cart',
+            name: 'Cart',
+            servings: shoppingCart
+        };
+        
+        return calculateAllMacrosOptimized([cartMeal], rawPreferences);
+    }, [shoppingCart, rawPreferences]);
+
+    // Calculate display macros (cart + logged foods) for user experience
+    const displayMacros = useMemo(() => {
+        if (!activeMeal) return cartMacros;
+        
+        // Start with cart macros
+        const totalMacros = { ...cartMacros };
+        
+        // Add logged foods macros
+        activeMeal.servings.forEach((foodServing: FoodServing) => {
+            const adjustedMacros = calculateAllMacrosOptimized([{ id: 'logged', name: 'Logged', servings: [foodServing] }], rawPreferences);
+            Object.entries(adjustedMacros).forEach(([key, value]) => {
+                if (value) {
+                    totalMacros[key] = (totalMacros[key] || 0) + value;
+                }
+            });
+        });
+        
+        return totalMacros;
+    }, [cartMacros, activeMeal, rawPreferences]);
+
+    // Sync cart macros with global display (only cart foods, not logged foods)
+    useEffect(() => {
+        syncShoppingCartMacros(cartMacros);
+        
+        // Clear cart macros when component unmounts
+        return () => {
+            clearShoppingCart();
+        };
+    }, [cartMacros, syncShoppingCartMacros, clearShoppingCart]);
 
     const adjustedPreferences = useMemo(() => {
         const distributionPercentage = activeMealPreference?.distribution_percentage;
-        // console.log("distributionPercentage", distributionPercentage);
         if (!distributionPercentage) return dailyMacroPreferences;
         
         return dailyMacroPreferences.map(pref => ({
@@ -71,6 +117,8 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
 
     const handleLog = () => {
         if (activeMeal) {
+            // Clear shopping cart macros immediately to prevent double counting
+            clearShoppingCart();
             modalCloser();
             addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
                 clearCart();
@@ -91,7 +139,7 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                     <View style={styles.macroContainer}>
                         <MacrosDisplay 
                             macroPreferences={adjustedPreferences}
-                            macroValues={totalMacrosInCart}
+                            macroValues={displayMacros}
                             indicators={4} 
                             radius={30} 
                         />
@@ -119,13 +167,13 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                     </View>
 
                     <View style={styles.buttonContainer}>
-                        <TouchableOpacity 
-                            style={[styles.button, shoppingCart.length === 0 && styles.buttonDisabled]} 
+                        <Pressable 
+                            style={[styles.button, shoppingCart.length === 0 && styles.buttonDisabled]}
                             onPress={handleLog}
                             disabled={shoppingCart.length === 0}
                         >
-                            <Text style={styles.buttonText}>Log</Text>
-                        </TouchableOpacity>
+                            <Text style={styles.buttonText}>Log Foods</Text>
+                        </Pressable>
                     </View>
                 </View>
             </View>

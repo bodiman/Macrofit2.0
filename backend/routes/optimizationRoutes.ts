@@ -11,6 +11,7 @@ interface FoodMacroData {
   quantity: number;      // Current quantity
   minQuantity: number;   // Minimum allowed quantity
   maxQuantity: number;   // Maximum allowed quantity
+  locked?: boolean;      // Whether this food quantity is fixed/locked
 }
 
 interface UserPreferenceData {
@@ -55,23 +56,46 @@ const calculateTotalMacros = (foods: FoodMacroData[], quantities: number[], macr
 };
 
 // Calculate squared error between current macros and preferences
-const calculateSquaredError = (currentMacros: Record<string, number>, preferences: UserPreferenceData[], macroNames: string[]): number => {
+const calculateSquaredError = (
+  currentMacros: Record<string, number>, 
+  preferences: UserPreferenceData[], 
+  macroNames: string[]
+): number => {
   let totalError = 0;
   
   preferences.forEach((pref, index) => {
     const macroName = macroNames[index];
     const currentValue = currentMacros[macroName] || 0;
-    const minValue = pref.min_value || 0;
-    const maxValue = pref.max_value || Infinity;
     
-    if (currentValue < minValue) {
-      // Below minimum - calculate percentage error
-      const percentageError = (minValue - currentValue) / minValue;
-      totalError += percentageError * percentageError;
-    } else if (currentValue > maxValue) {
-      // Above maximum - calculate percentage error
-      const percentageError = (currentValue - maxValue) / maxValue;
-      totalError += percentageError * percentageError;
+    const minValue = pref.min_value;
+    const maxValue = pref.max_value;
+    
+    if (minValue !== null && currentValue < minValue) {
+      // Below minimum
+      if (minValue === 0) {
+        // If min is 0, use absolute error
+        totalError += (minValue - currentValue) * (minValue - currentValue);
+      } else if (minValue < 0) {
+        // If min is negative, use absolute error to avoid percentage issues
+        totalError += (minValue - currentValue) * (minValue - currentValue);
+      } else {
+        // If min is positive, use percentage error
+        const percentageError = (minValue - currentValue) / minValue;
+        totalError += percentageError * percentageError;
+      }
+    } else if (maxValue !== null && currentValue > maxValue) {
+      // Above maximum
+      if (maxValue === 0) {
+        // If max is 0, use absolute error
+        totalError += (currentValue - maxValue) * (currentValue - maxValue);
+      } else if (maxValue < 0) {
+        // If max is negative, use absolute error to avoid percentage issues
+        totalError += (currentValue - maxValue) * (currentValue - maxValue);
+      } else {
+        // If max is positive, use percentage error
+        const percentageError = (currentValue - maxValue) / maxValue;
+        totalError += percentageError * percentageError;
+      }
     }
     // If within range, no error
   });
@@ -79,7 +103,7 @@ const calculateSquaredError = (currentMacros: Record<string, number>, preference
   return totalError;
 };
 
-// Simple gradient descent optimization
+// Constrained Linear Programming using Simplex-like approach
 const optimizeQuantities = (
   foods: FoodMacroData[],
   preferences: UserPreferenceData[],
@@ -87,57 +111,150 @@ const optimizeQuantities = (
   initialQuantities: number[],
   maxIterations: number
 ): { quantities: number[]; error: number } => {
-  const learningRate = 0.1;
   const tolerance = 1e-6;
   
+  // Create mutable quantities array (copy of initial)
   let quantities = [...initialQuantities];
-  let currentError = calculateSquaredError(calculateTotalMacros(foods, quantities, macroNames), preferences, macroNames);
+  
+  // Separate mutable and locked foods
+  const mutableFoodIndices: number[] = [];
+  const lockedFoodIndices: number[] = [];
+  
+  foods.forEach((food, index) => {
+    if (food.locked) {
+      lockedFoodIndices.push(index);
+    } else {
+      mutableFoodIndices.push(index);
+    }
+  });
+  
+  // If no mutable foods, return initial quantities
+  if (mutableFoodIndices.length === 0) {
+    const error = calculateSquaredError(
+      calculateTotalMacros(foods, quantities, macroNames),
+      preferences,
+      macroNames
+    );
+    return { quantities, error };
+  }
+  
+  // Calculate locked food contribution to macros
+  const lockedMacros: Record<string, number> = {};
+  macroNames.forEach(name => {
+    lockedMacros[name] = 0;
+  });
+  
+  lockedFoodIndices.forEach(foodIndex => {
+    const food = foods[foodIndex];
+    const totalGrams = food.quantity * food.unitGrams;
+    food.macroValues.forEach((valuePerGram, macroIndex) => {
+      const macroName = macroNames[macroIndex];
+      lockedMacros[macroName] += totalGrams * valuePerGram;
+    });
+  });
+  
+  // Adjust preferences by subtracting locked food contribution
+  const adjustedPreferences = preferences.map((pref, index) => {
+    const macroName = macroNames[index];
+    const lockedContribution = lockedMacros[macroName] || 0;
+    
+    return {
+      min_value: pref.min_value !== null ? pref.min_value - lockedContribution : null,
+      max_value: pref.max_value !== null ? pref.max_value - lockedContribution : null
+    };
+  });
+  
+  // Use a combination of coordinate descent and constraint satisfaction
+  let currentError = calculateSquaredError(
+    calculateTotalMacros(foods, quantities, macroNames),
+    preferences,
+    macroNames
+  );
   let prevError = Infinity;
+  let noImprovementCount = 0;
   
   for (let iteration = 0; iteration < maxIterations; iteration++) {
-    // Calculate gradients using finite differences
-    const gradients = new Array(quantities.length).fill(0);
-    const h = 1e-6; // Small step for finite difference
+    let improved = false;
     
-    for (let i = 0; i < quantities.length; i++) {
-      const qPlus = [...quantities];
-      const qMinus = [...quantities];
-      qPlus[i] += h;
-      qMinus[i] -= h;
+    // Try optimizing each mutable food one at a time
+    for (const foodIndex of mutableFoodIndices) {
+      const food = foods[foodIndex];
+      const currentQuantity = quantities[foodIndex];
       
-      // Ensure finite difference calculations respect bounds
-      const minQuantity = foods[i].minQuantity;
-      const maxQuantity = foods[i].maxQuantity;
-      qPlus[i] = Math.max(minQuantity, Math.min(maxQuantity, qPlus[i]));
-      qMinus[i] = Math.max(minQuantity, Math.min(maxQuantity, qMinus[i]));
+      // Calculate current macros without this food
+      const macrosWithoutFood: Record<string, number> = {};
+      macroNames.forEach(name => {
+        macrosWithoutFood[name] = lockedMacros[name] || 0;
+      });
       
-      const errorPlus = calculateSquaredError(calculateTotalMacros(foods, qPlus, macroNames), preferences, macroNames);
-      const errorMinus = calculateSquaredError(calculateTotalMacros(foods, qMinus, macroNames), preferences, macroNames);
+      mutableFoodIndices.forEach(idx => {
+        if (idx !== foodIndex) {
+          const otherFood = foods[idx];
+          const totalGrams = quantities[idx] * otherFood.unitGrams;
+          otherFood.macroValues.forEach((valuePerGram, macroIndex) => {
+            const macroName = macroNames[macroIndex];
+            macrosWithoutFood[macroName] += totalGrams * valuePerGram;
+          });
+        }
+      });
       
-      gradients[i] = (errorPlus - errorMinus) / (2 * h);
+      // Find optimal quantity for this food
+      let bestQuantity = currentQuantity;
+      let bestError = currentError;
+      
+      // Try different quantities within bounds
+      const stepSize = Math.max(0.1, (food.maxQuantity - food.minQuantity) / 20);
+      for (let q = food.minQuantity; q <= food.maxQuantity; q += stepSize) {
+        // Calculate macros with this quantity
+        const testMacros = { ...macrosWithoutFood };
+        const totalGrams = q * food.unitGrams;
+        food.macroValues.forEach((valuePerGram, macroIndex) => {
+          const macroName = macroNames[macroIndex];
+          testMacros[macroName] += totalGrams * valuePerGram;
+        });
+        
+        // Calculate error with adjusted preferences
+        const testError = calculateSquaredError(testMacros, adjustedPreferences, macroNames);
+        
+        if (testError < bestError) {
+          bestError = testError;
+          bestQuantity = q;
+          improved = true;
+        }
+      }
+      
+      // Update quantity if improvement found
+      if (bestQuantity !== currentQuantity) {
+        quantities[foodIndex] = bestQuantity;
+        currentError = bestError;
+      }
     }
-    
-    // Update quantities using gradient descent
-    for (let i = 0; i < quantities.length; i++) {
-      quantities[i] -= learningRate * gradients[i];
-      // Ensure quantities respect min/max bounds
-      const minQuantity = foods[i].minQuantity;
-      const maxQuantity = foods[i].maxQuantity;
-      quantities[i] = Math.max(minQuantity, Math.min(maxQuantity, quantities[i]));
-    }
-    
-    // Calculate new error
-    currentError = calculateSquaredError(calculateTotalMacros(foods, quantities, macroNames), preferences, macroNames);
     
     // Check convergence
     if (Math.abs(currentError - prevError) < tolerance) {
       break;
     }
     
+    if (!improved) {
+      noImprovementCount++;
+      if (noImprovementCount > 5) {
+        break; // No improvement for several iterations
+      }
+    } else {
+      noImprovementCount = 0;
+    }
+    
     prevError = currentError;
   }
   
-  return { quantities, error: currentError };
+  // Final error calculation with original preferences
+  const finalError = calculateSquaredError(
+    calculateTotalMacros(foods, quantities, macroNames),
+    preferences,
+    macroNames
+  );
+  
+  return { quantities, error: finalError };
 };
 
 // POST /api/optimize
@@ -170,11 +287,19 @@ router.post('/', async (req, res) => {
       req.body.maxIterations || 1000
     );
     
+    // Ensure locked foods maintain their original quantities
+    const finalQuantities = optimizedQuantities.map((quantity, index) => {
+      if (foods[index].locked) {
+        return foods[index].quantity; // Return original quantity for locked foods
+      }
+      return quantity; // Return optimized quantity for mutable foods
+    });
+    
     // Calculate final macros with optimized quantities
-    const finalMacros = calculateTotalMacros(foods, optimizedQuantities, macroNames);
+    const finalMacros = calculateTotalMacros(foods, finalQuantities, macroNames);
     
     const response: OptimizationResponse = {
-      optimizedQuantities,
+      optimizedQuantities: finalQuantities,
       finalMacros,
       error
     };
