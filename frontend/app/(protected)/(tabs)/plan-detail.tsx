@@ -664,16 +664,56 @@ export default function PlanDetailPage() {
 
   const handleUnitChange = (mealId: string, foodId: string, unit: string) => {
     setMealFoodQuantities(prev => {
-      const newMap = new Map(prev)
-      const mealMap = new Map(newMap.get(mealId) || new Map())
-      const entry = mealMap.get(foodId)
+      const newMap = new Map(prev);
+      const mealMap = new Map(newMap.get(mealId) || new Map());
+      const entry = mealMap.get(foodId);
       if (entry && !entry.locked) {
-        mealMap.set(foodId, { ...entry, selectedUnit: unit })
-        newMap.set(mealId, mealMap)
+        // Find the food to get the new unit's grams
+        let food;
+        for (const kitchen of kitchens) {
+          food = kitchen.foods.find(f => f.id === foodId);
+          if (food) break;
+        }
+        
+        if (food) {
+          const newUnitGrams = food.servingUnits.find(u => u.name === unit)?.grams || 1;
+          const oldUnitGrams = food.servingUnits.find(u => u.name === entry.selectedUnit)?.grams || 1;
+          
+          // Calculate the new quantity to maintain the same grams
+          const currentGrams = entry.quantity * oldUnitGrams;
+          const newQuantity = currentGrams / newUnitGrams;
+          
+          // Update the entry with new unit and adjusted quantity
+          const updatedEntry = { 
+            ...entry, 
+            selectedUnit: unit,
+            quantity: newQuantity,
+            minQuantity: entry.minQuantity * oldUnitGrams / newUnitGrams,
+            maxQuantity: entry.maxQuantity * oldUnitGrams / newUnitGrams
+          };
+          
+          mealMap.set(foodId, updatedEntry);
+          newMap.set(mealId, mealMap);
+          
+          // Update the text input to reflect the new quantity
+          const key = `${mealId}:${foodId}`;
+          setQuantityTextInputs(prev => {
+            const newTextMap = new Map(prev);
+            newTextMap.set(key, newQuantity.toFixed(1));
+            return newTextMap;
+          });
+          
+          // Update the last valid quantity
+          setLastValidQuantities(prev => {
+            const newValidMap = new Map(prev);
+            newValidMap.set(key, newQuantity);
+            return newValidMap;
+          });
+        }
       }
-      return newMap
-    })
-  }
+      return newMap;
+    });
+  };
 
   const handleLockToggle = (mealId: string, foodId: string) => {
     setMealFoodQuantities(prev => {
