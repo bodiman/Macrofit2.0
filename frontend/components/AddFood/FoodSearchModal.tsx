@@ -43,7 +43,27 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
         return calculateAllMacrosOptimized([cartMeal], rawPreferences);
     }, [shoppingCart, rawPreferences]);
 
-    // Sync cart macros with global display
+    // Calculate display macros (cart + logged foods) for user experience
+    const displayMacros = useMemo(() => {
+        if (!activeMeal) return cartMacros;
+        
+        // Start with cart macros
+        const totalMacros = { ...cartMacros };
+        
+        // Add logged foods macros
+        activeMeal.servings.forEach((foodServing: FoodServing) => {
+            const adjustedMacros = calculateAllMacrosOptimized([{ id: 'logged', name: 'Logged', servings: [foodServing] }], rawPreferences);
+            Object.entries(adjustedMacros).forEach(([key, value]) => {
+                if (value) {
+                    totalMacros[key] = (totalMacros[key] || 0) + value;
+                }
+            });
+        });
+        
+        return totalMacros;
+    }, [cartMacros, activeMeal, rawPreferences]);
+
+    // Sync cart macros with global display (only cart foods, not logged foods)
     useEffect(() => {
         syncShoppingCartMacros(cartMacros);
         
@@ -119,7 +139,7 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                     <View style={styles.macroContainer}>
                         <MacrosDisplay 
                             macroPreferences={adjustedPreferences}
-                            macroValues={cartMacros}
+                            macroValues={displayMacros}
                             indicators={4} 
                             radius={30} 
                         />

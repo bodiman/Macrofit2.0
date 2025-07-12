@@ -74,10 +74,17 @@ export default function KitchenActivationModal({
       } else {
         newSelected.add(foodId)
       }
-      // Notify parent of selection change
-      onSelectedFoodsChange(Array.from(newSelected))
       return newSelected
     })
+    
+    // Notify parent of selection change after state update
+    const newSelected = new Set(selectedFoods)
+    if (newSelected.has(foodId)) {
+      newSelected.delete(foodId)
+    } else {
+      newSelected.add(foodId)
+    }
+    onSelectedFoodsChange(Array.from(newSelected))
   }
 
   // Early return if kitchen is not available
