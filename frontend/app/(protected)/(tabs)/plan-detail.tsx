@@ -1228,70 +1228,10 @@ export default function PlanDetailPage() {
       }
       const macroNames = userPrefs.map(pref => pref.id);
       
-      // Phase 1: Optimize each meal individually to meal-specific preferences
-      console.log('Starting Phase 1: Individual meal optimization...');
-      for (const meal of userMealPreferences) {
-        const mealFoods = selectedFoodList.filter(food => food.mealId === meal.id);
-        if (mealFoods.length === 0) continue;
-        
-        const mealSpecificPrefs = getMealSpecificPreferences(meal);
-        if (!mealSpecificPrefs) continue;
-        
-        // Debug: Show meal-specific preferences before conversion
-        console.log(`=== ${meal.name} Meal-Specific Preferences ===`);
-        console.log('Original preferences:', preferences);
-        console.log('Meal-specific preferences (after adjustments):', mealSpecificPrefs);
-        console.log('===============================================');
-        
-        const foods = mealFoods.map(food => {
-          const macroValues = macroNames.map(macroName => {
-            return (food.food.macros as any)?.[macroName] || 0;
-          });
-          return {
-            macroValues,
-            unitGrams: food.unit.grams,
-            quantity: food.quantity,
-            minQuantity: food.minQuantity,
-            maxQuantity: food.maxQuantity,
-            locked: food.locked || false
-          };
-        });
-        
-        const optimizationPreferences = mealSpecificPrefs.map(pref => ({
-          min_value: pref.min || 0,
-          max_value: pref.max || Infinity
-        }));
-        
-        // Get daily max values for weighting
-        const dailyMaxValues = userPrefs.map(pref => pref.max || 1);
-        
-        const mealResult = await optimizationApi.optimizeQuantities({
-          foods,
-          preferences: optimizationPreferences,
-          macroNames,
-          dailyMaxValues,
-          maxIterations: 500
-        });
-        
-        // Update quantities for this meal
-        setMealFoodQuantities(prev => {
-          const newMap = new Map(prev);
-          mealFoods.forEach((food, idx) => {
-            const mealMap = new Map(newMap.get(meal.id) || new Map());
-            const entry = mealMap.get(food.foodId);
-            if (entry && !entry.locked) {
-              mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
-              newMap.set(meal.id, mealMap);
-            }
-          });
-          return newMap;
-        });
-        
-        console.log(`Phase 1: ${meal.name} optimized with error: ${mealResult.error.toFixed(4)}`);
-      }
+      // Single-stage optimization: optimize all meals together
+      console.log('Starting single-stage optimization for all meals...');
       
-      // Phase 2: Optimize everything together to daily preferences
-      console.log('Starting Phase 2: Overall optimization...');
+      // Create a unified optimization problem
       const allFoods = selectedFoodList.map(food => {
         const macroValues = macroNames.map(macroName => {
           return (food.food.macros as any)?.[macroName] || 0;
@@ -1306,7 +1246,9 @@ export default function PlanDetailPage() {
         };
       });
       
-      const optimizationPreferences = getOverallPreferencesWithLoggedFoods().map(pref => ({
+      // Create unified preferences that represent the sum of all meal errors
+      // We'll use the overall preferences with logged foods subtracted
+      const unifiedPreferences = getOverallPreferencesWithLoggedFoods().map(pref => ({
         min_value: pref.min || 0,
         max_value: pref.max || Infinity
       }));
@@ -1314,20 +1256,24 @@ export default function PlanDetailPage() {
       // Get daily max values for weighting
       const dailyMaxValues = userPrefs.map(pref => pref.max || 1);
       
+      console.log('Unified optimization preferences:', unifiedPreferences);
+      console.log('Daily max values for weighting:', dailyMaxValues);
+      
       const result = await optimizationApi.optimizeQuantities({
         foods: allFoods,
-        preferences: optimizationPreferences,
+        preferences: unifiedPreferences,
         macroNames,
         dailyMaxValues,
-        maxIterations: 1000
+        maxIterations: 2000 // More iterations for the unified problem
       });
       
-      // Debug: Show calculated macros, preferences, and error for overall optimization
-      console.log(`=== Overall Optimization Debug ===`);
+      // Debug: Show calculated macros, preferences, and error for unified optimization
+      console.log(`=== Unified Optimization Debug ===`);
       console.log('Macro Names:', macroNames);
-      console.log('Optimization Preferences:', optimizationPreferences);
+      console.log('Unified Preferences:', unifiedPreferences);
       console.log('Final Macros:', result.finalMacros);
       console.log('Optimization Error:', result.error);
+      console.log('Optimized Quantities:', result.optimizedQuantities);
       
       // Update all quantities with final optimized values
       setMealFoodQuantities(prev => {
@@ -1343,7 +1289,18 @@ export default function PlanDetailPage() {
         return newMap;
       });
       
-      alert(`Two-phase optimization completed!\nPhase 1: Individual meals optimized\nPhase 2: Overall optimization - Final error: ${result.error.toFixed(4)}`);
+      // Calculate and display individual meal errors for verification
+      console.log('=== Individual Meal Error Analysis ===');
+      let totalMealError = 0;
+      userMealPreferences.forEach(meal => {
+        const mealError = calculateMealError(meal);
+        console.log(`${meal.name} error: ${mealError.error.toFixed(6)}`);
+        totalMealError += mealError.error;
+      });
+      console.log(`Total meal errors: ${totalMealError.toFixed(6)}`);
+      console.log(`Unified optimization error: ${result.error.toFixed(6)}`);
+      
+      alert(`Unified optimization completed!\nFinal error: ${result.error.toFixed(4)}\nTotal meal errors: ${totalMealError.toFixed(4)}`);
     } catch (error) {
       console.error('Optimization error:', error);
       alert('Failed to optimize quantities. Please try again.');

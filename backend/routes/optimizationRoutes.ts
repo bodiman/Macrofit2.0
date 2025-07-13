@@ -202,10 +202,13 @@ const optimizeQuantitiesQP = (
   console.log('V matrix (food macro values):', V);
   console.log('Quantity bounds (ell, u):', { ell, u });
   
-  // Use a simple grid search to find the best quantities
-  // This is more reliable than QP for this problem
-  const gridStep = 0.05; // Smaller step size for finer precision
-  const maxIterations = 2000; // More iterations for better search
+  // Use a two-phase grid search to find the best quantities
+  // Phase 1: Coarse grid search to identify promising regions
+  // Phase 2: Fine grid search focused on the best regions
+  const coarseGridStep = 0.1; // Finer coarse step size (was 0.2)
+  const fineGridStep = 0.01;  // Much finer step size for precision (was 0.02)
+  const coarseIterations = 500; // Fewer iterations for coarse search
+  const fineIterations = 1500;  // More iterations for fine search
   
   let bestQuantities = mutableFoodIndices.map(i => foods[i].quantity);
   let bestError = calculateWeightedSquaredError(
@@ -215,13 +218,16 @@ const optimizeQuantitiesQP = (
     dailyMaxValues
   );
   
-  console.log('QP Debug - Starting grid search optimization');
+  console.log('QP Debug - Starting two-phase grid search optimization');
   console.log('Initial quantities:', bestQuantities);
   console.log('Initial error:', bestError.toFixed(6));
   
-  // Grid search with random restarts
-  for (let iteration = 0; iteration < maxIterations; iteration++) {
-    // Generate candidate quantities
+  // Phase 1: Coarse grid search
+  console.log('Phase 1: Coarse grid search...');
+  const coarseCandidates: { quantities: number[]; error: number }[] = [];
+  
+  for (let iteration = 0; iteration < coarseIterations; iteration++) {
+    // Generate candidate quantities with coarse step
     const candidateQuantities = mutableFoodIndices.map((foodIndex, i) => {
       const minQty = ell[i];
       const maxQty = u[i];
@@ -229,15 +235,15 @@ const optimizeQuantitiesQP = (
       if (iteration === 0) {
         // First iteration: use current quantities
         return foods[foodIndex].quantity;
-      } else if (iteration < 20) {
-        // Early iterations: try grid points with finer step
-        const steps = Math.floor((maxQty - minQty) / gridStep) + 1;
+      } else if (iteration < 50) {
+        // Early iterations: try coarse grid points
+        const steps = Math.floor((maxQty - minQty) / coarseGridStep) + 1;
         const stepIndex = (iteration - 1) % steps;
-        return minQty + stepIndex * gridStep;
+        return minQty + stepIndex * coarseGridStep;
       } else {
-        // Later iterations: random search around best solution with smaller range
+        // Later iterations: random search with larger range
         const current = bestQuantities[i];
-        const range = (maxQty - minQty) * 0.05; // 5% of range for finer search
+        const range = (maxQty - minQty) * 0.2; // 20% of range for coarse search
         const randomOffset = (Math.random() - 0.5) * range;
         return Math.max(minQty, Math.min(maxQty, current + randomOffset));
       }
@@ -256,24 +262,104 @@ const optimizeQuantitiesQP = (
       dailyMaxValues
     );
     
+    // Store promising candidates (error within 50% of best)
+    if (candidateError <= bestError * 1.5) {
+      coarseCandidates.push({ quantities: [...candidateQuantities], error: candidateError });
+    }
+    
     // Update best solution if better
     if (candidateError < bestError) {
       bestError = candidateError;
       bestQuantities = [...candidateQuantities];
       
       if (iteration % 100 === 0) {
-        console.log(`QP Debug - Iteration ${iteration}: New best error = ${bestError.toFixed(6)}`);
+        console.log(`Phase 1 - Iteration ${iteration}: New best error = ${bestError.toFixed(6)}`);
       }
-    }
-    
-    // Early stopping if error is very low
-    if (bestError < 0.0001) {
-      console.log(`QP Debug - Early stopping at iteration ${iteration} with error ${bestError.toFixed(6)}`);
-      break;
     }
   }
   
-  console.log('QP Debug - Grid search completed');
+  console.log(`Phase 1 completed. Found ${coarseCandidates.length} promising candidates.`);
+  console.log('Best error after coarse search:', bestError.toFixed(6));
+  
+  // Phase 2: Fine grid search around promising regions
+  console.log('Phase 2: Fine grid search around promising regions...');
+  
+  // Create search regions around the best candidates
+  const searchRegions: { center: number[]; radius: number }[] = [];
+  
+  // Add region around the best solution
+  searchRegions.push({
+    center: [...bestQuantities],
+    radius: coarseGridStep * 0.5 // Search within half the coarse step size
+  });
+  
+  // Add regions around other promising candidates
+  coarseCandidates.slice(0, 5).forEach(candidate => { // Top 5 candidates
+    searchRegions.push({
+      center: [...candidate.quantities],
+      radius: coarseGridStep * 0.3
+    });
+  });
+  
+  // Fine grid search in each region
+  for (let regionIndex = 0; regionIndex < searchRegions.length; regionIndex++) {
+    const region = searchRegions[regionIndex];
+    console.log(`Searching region ${regionIndex + 1}/${searchRegions.length} around:`, region.center.map(x => x.toFixed(3)));
+    
+    for (let iteration = 0; iteration < fineIterations / searchRegions.length; iteration++) {
+      // Generate candidate quantities with fine step around region center
+      const candidateQuantities = mutableFoodIndices.map((foodIndex, i) => {
+        const minQty = ell[i];
+        const maxQty = u[i];
+        const center = region.center[i];
+        const radius = region.radius;
+        
+        if (iteration < 20) {
+          // Try fine grid points within the region
+          const regionMin = Math.max(minQty, center - radius);
+          const regionMax = Math.min(maxQty, center + radius);
+          const steps = Math.floor((regionMax - regionMin) / fineGridStep) + 1;
+          const stepIndex = iteration % steps;
+          return regionMin + stepIndex * fineGridStep;
+        } else {
+          // Random search within the region
+          const regionMin = Math.max(minQty, center - radius);
+          const regionMax = Math.min(maxQty, center + radius);
+          const randomOffset = (Math.random() - 0.5) * radius * 2;
+          return Math.max(regionMin, Math.min(regionMax, center + randomOffset));
+        }
+      });
+      
+      // Calculate error for candidate quantities
+      const candidateQuantitiesFull = [...initialQuantities];
+      mutableFoodIndices.forEach((foodIndex, i) => {
+        candidateQuantitiesFull[foodIndex] = candidateQuantities[i];
+      });
+      
+      const candidateError = calculateWeightedSquaredError(
+        calculateTotalMacros(foods, candidateQuantitiesFull, macroNames),
+        preferences,
+        macroNames,
+        dailyMaxValues
+      );
+      
+      // Update best solution if better
+      if (candidateError < bestError) {
+        bestError = candidateError;
+        bestQuantities = [...candidateQuantities];
+        
+        console.log(`Phase 2 - Region ${regionIndex + 1}, Iteration ${iteration}: New best error = ${bestError.toFixed(6)}`);
+      }
+      
+      // Early stopping if error is very low
+      if (bestError < 0.0001) {
+        console.log(`Phase 2 - Early stopping with error ${bestError.toFixed(6)}`);
+        break;
+      }
+    }
+  }
+  
+  console.log('Two-phase grid search completed');
   console.log('Best quantities found:', bestQuantities);
   console.log('Best error:', bestError.toFixed(6));
   
