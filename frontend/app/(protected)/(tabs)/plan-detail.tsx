@@ -592,7 +592,7 @@ export default function PlanDetailPage() {
         const q = getMealFoodQuantity(mealId, foodId)
         setQuantityTextInputs(prev => {
           const newMap = new Map(prev)
-          newMap.set(key, q.quantity.toFixed(1))
+          newMap.set(key, getSafeQuantity(q).toFixed(1))
           return newMap
         })
       }
@@ -614,7 +614,7 @@ export default function PlanDetailPage() {
     if (!quantityTextInputs.has(key)) {
       setQuantityTextInputs(prev => {
         const newMap = new Map(prev)
-        newMap.set(key, q.quantity.toFixed(1))
+        newMap.set(key, getSafeQuantity(q).toFixed(1))
         return newMap
       })
     }
@@ -1091,6 +1091,10 @@ export default function PlanDetailPage() {
     console.log('Meal-specific preferences (with logged foods subtracted):', mealSpecificPrefs);
     console.log('Selected foods:', mealFoods.map(f => f.food.name));
 
+    // Log initial error
+    const initialError = calculateMealError(meal);
+    console.log(`Initial weighted absolute error for ${meal.name}:`, initialError.error.toFixed(6));
+
     const foods = mealFoods.map(food => {
       const macroValues = macroNames.map(macroName => {
         return (food.food.macros as any)?.[macroName] || 0;
@@ -1110,13 +1114,18 @@ export default function PlanDetailPage() {
       max_value: pref.max !== undefined ? pref.max : Infinity
     }));
 
+    // Get daily max values for weighting
+    const dailyMaxValues = userPrefs.map(pref => pref.max || 1);
+
     console.log('Optimization preferences:', optimizationPreferences);
+    console.log('Daily max values for weighting:', dailyMaxValues);
 
     try {
       const mealResult = await optimizationApi.optimizeQuantities({
         foods,
         preferences: optimizationPreferences,
         macroNames,
+        dailyMaxValues,
         maxIterations: 500
       });
 
@@ -1126,6 +1135,13 @@ export default function PlanDetailPage() {
       console.log('Optimization Preferences:', optimizationPreferences);
       console.log('Final Macros:', mealResult.finalMacros);
       console.log('Optimization Error:', mealResult.error);
+      console.log('Optimized Quantities:', mealResult.optimizedQuantities);
+      console.log('Original Quantities:', mealFoods.map(f => f.quantity));
+      
+      // Log final error
+      const finalError = calculateMealError(meal);
+      console.log(`Final weighted absolute error for ${meal.name}:`, finalError.error.toFixed(6));
+      console.log(`Error improvement: ${(initialError.error - finalError.error).toFixed(6)}`);
       
       // Calculate what the planned foods contribute
       // const plannedMacros: any = {};
@@ -1144,11 +1160,15 @@ export default function PlanDetailPage() {
       // Update quantities for this meal
       setMealFoodQuantities(prev => {
         const newMap = new Map(prev);
+        console.log(`Updating quantities for ${meal.name}:`);
         mealFoods.forEach((food, idx) => {
           const mealMap = new Map(newMap.get(meal.id) || new Map());
           const entry = mealMap.get(food.foodId);
           if (entry && !entry.locked) {
-            mealMap.set(food.foodId, { ...entry, quantity: mealResult.optimizedQuantities[idx] });
+            const oldQuantity = entry.quantity;
+            const newQuantity = mealResult.optimizedQuantities[idx];
+            console.log(`  ${food.food.name}: ${oldQuantity} -> ${newQuantity}`);
+            mealMap.set(food.foodId, { ...entry, quantity: newQuantity });
             newMap.set(meal.id, mealMap);
           }
         });
@@ -1242,10 +1262,14 @@ export default function PlanDetailPage() {
           max_value: pref.max || Infinity
         }));
         
+        // Get daily max values for weighting
+        const dailyMaxValues = userPrefs.map(pref => pref.max || 1);
+        
         const mealResult = await optimizationApi.optimizeQuantities({
           foods,
           preferences: optimizationPreferences,
           macroNames,
+          dailyMaxValues,
           maxIterations: 500
         });
         
@@ -1287,10 +1311,14 @@ export default function PlanDetailPage() {
         max_value: pref.max || Infinity
       }));
       
+      // Get daily max values for weighting
+      const dailyMaxValues = userPrefs.map(pref => pref.max || 1);
+      
       const result = await optimizationApi.optimizeQuantities({
         foods: allFoods,
         preferences: optimizationPreferences,
         macroNames,
+        dailyMaxValues,
         maxIterations: 1000
       });
       
@@ -1369,6 +1397,174 @@ export default function PlanDetailPage() {
       locked: false,
     };
   }
+
+  // Helper function to safely get quantity with null safety
+  const getSafeQuantity = (q: any) => {
+    if (q && typeof q.quantity === 'number' && !isNaN(q.quantity)) {
+      return q.quantity;
+    }
+    return 1; // Default fallback
+  };
+
+  // Helper function to safely get min quantity with null safety
+  const getSafeMinQuantity = (q: any) => {
+    if (q && typeof q.minQuantity === 'number' && !isNaN(q.minQuantity)) {
+      return q.minQuantity;
+    }
+    return 0; // Default fallback
+  };
+
+  // Helper function to safely get max quantity with null safety
+  const getSafeMaxQuantity = (q: any) => {
+    if (q && typeof q.maxQuantity === 'number' && !isNaN(q.maxQuantity)) {
+      return q.maxQuantity;
+    }
+    return 3; // Default fallback
+  };
+
+  // Helper function to calculate error for a meal
+  const calculateMealError = (meal: any) => {
+    const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+    if (selectedFoodIds.size === 0) {
+      return { error: 0, details: 'No foods selected' };
+    }
+
+    const userPrefs = preferences || [];
+    if (userPrefs.length === 0) {
+      return { error: 0, details: 'No preferences set' };
+    }
+
+    const macroNames = userPrefs.map(pref => pref.id);
+    
+    // Get current quantities for this meal
+    const mealFoods: any[] = [];
+    selectedFoodIds.forEach(foodId => {
+      for (const kitchen of kitchens) {
+        const food = kitchen.foods.find(f => f.id === foodId);
+        if (food) {
+          const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+          if (q) {
+            mealFoods.push({
+              foodId: food.id,
+              quantity: q.quantity,
+              unit: {
+                id: q.selectedUnit,
+                name: q.selectedUnit,
+                food_id: food.id,
+                grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+              },
+              food: food
+            });
+          }
+          break;
+        }
+      }
+    });
+
+    // Calculate current macros
+    const currentMacros: any = {};
+    mealFoods.forEach(food => {
+      const totalGrams = food.quantity * food.unit.grams;
+      Object.entries(food.food.macros || {}).forEach(([macroName, valuePerGram]) => {
+        const totalValue = totalGrams * (valuePerGram as number);
+        currentMacros[macroName] = (currentMacros[macroName] || 0) + totalValue;
+      });
+    });
+
+    // Get meal-specific preferences
+    const mealSpecificPrefs = getMealSpecificPreferences(meal);
+    if (!mealSpecificPrefs) {
+      return { error: 0, details: 'No preferences found for meal' };
+    }
+
+    // Calculate weighted squared error (matching backend logic exactly)
+    let totalError = 0;
+    const errorDetails: string[] = [];
+    
+    mealSpecificPrefs.forEach((pref, index) => {
+      const macroName = macroNames[index];
+      const currentValue = currentMacros[macroName] || 0;
+      
+      const minValue = pref.min;
+      const maxValue = pref.max;
+      
+      // Get the daily maximum for this macro to calculate the weight
+      const dailyMax = userPrefs[index]?.max || 1; // Use 1 as fallback to avoid division by zero
+      const weight = 1 / dailyMax;
+      
+      // Handle min value constraints (independent of max)
+      if (minValue !== null && minValue !== undefined) {
+        if (minValue > 0 && currentValue < minValue) {
+          // Below positive minimum - use squared error weighted by 1/daily_max
+          const squaredError = (minValue - currentValue) * (minValue - currentValue);
+          const weightedError = squaredError * weight;
+          totalError += weightedError;
+          errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} < ${minValue} (squared error: ${squaredError.toFixed(2)}, weighted: ${weightedError.toFixed(4)})`);
+        } else if (minValue <= 0 && currentValue > 0) {
+          // Negative minimum means we've exceeded the target - penalize any positive consumption
+          const exceededAmount = Math.abs(minValue);
+          const penalty = currentValue * (1 + exceededAmount / dailyMax);
+          const squaredError = penalty * penalty;
+          const weightedError = squaredError * weight;
+          totalError += weightedError;
+          errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} > 0 (exceeded by ${exceededAmount.toFixed(2)}, penalty: ${penalty.toFixed(2)}, weighted: ${weightedError.toFixed(4)})`);
+        } else {
+          // Within range or no violation for min
+          errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} (min OK)`);
+        }
+      } else {
+        // No min constraint
+        errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} (no min constraint)`);
+      }
+      
+      // Handle max value constraints (independent of min)
+      if (maxValue !== null && maxValue !== undefined) {
+        if (maxValue > 0 && currentValue > maxValue) {
+          // Above positive maximum - use squared error weighted by 1/daily_max
+          const squaredError = (currentValue - maxValue) * (currentValue - maxValue);
+          const weightedError = squaredError * weight;
+          totalError += weightedError;
+          errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} > ${maxValue} (squared error: ${squaredError.toFixed(2)}, weighted: ${weightedError.toFixed(4)})`);
+        } else if (maxValue <= 0 && currentValue > 0) {
+          // Negative maximum means we've exceeded the target - penalize any positive consumption
+          const exceededAmount = Math.abs(maxValue);
+          const penalty = currentValue * (1 + exceededAmount / dailyMax);
+          const squaredError = penalty * penalty;
+          const weightedError = squaredError * weight;
+          totalError += weightedError;
+          errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} > 0 (exceeded by ${exceededAmount.toFixed(2)}, penalty: ${penalty.toFixed(2)}, weighted: ${weightedError.toFixed(4)})`);
+        } else {
+          // Within range or no violation for max
+          errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} (max OK)`);
+        }
+      } else {
+        // No max constraint
+        errorDetails.push(`${macroName}: ${currentValue.toFixed(2)} (no max constraint)`);
+      }
+    });
+
+    return {
+      error: totalError,
+      details: errorDetails.join('\n'),
+      currentMacros,
+      targetPreferences: mealSpecificPrefs
+    };
+  };
+
+  // Function to check and display meal error
+  const checkMealError = (meal: any) => {
+    const result = calculateMealError(meal);
+    
+    console.log(`=== ${meal.name} Error Analysis ===`);
+    console.log('Total Error:', result.error.toFixed(6));
+    console.log('Current Macros:', result.currentMacros);
+    console.log('Target Preferences:', result.targetPreferences);
+    console.log('Error Details:');
+    console.log(result.details);
+    console.log('=====================================');
+    
+    alert(`${meal.name} Error Analysis:\n\nTotal Error: ${result.error.toFixed(6)}\n\nError Details:\n${result.details}`);
+  };
 
   if (loading || mealsLoading) {
     return (
@@ -1453,7 +1649,7 @@ export default function PlanDetailPage() {
                               </Text>
                               {!isExpanded && (
                                 <Text style={styles.summaryText} numberOfLines={1} ellipsizeMode="tail">
-                                  {q.quantity.toFixed(1)} {q.selectedUnit}
+                                  {getSafeQuantity(q).toFixed(1)} {q.selectedUnit}
                                 </Text>
                               )}
                               <MaterialIcons 
@@ -1483,7 +1679,7 @@ export default function PlanDetailPage() {
                                       styles.quantityTextInput,
                                       q.locked && styles.quantityTextInputLocked
                                     ]}
-                                    value={quantityTextInputs.get(quantityKey) ?? q.quantity.toFixed(1)}
+                                    value={quantityTextInputs.get(quantityKey) ?? getSafeQuantity(q).toFixed(1)}
                                     onChangeText={(text) => handleQuantityTextChange(meal.id, food.id, text)}
                                     keyboardType="numeric"
                                     selectionColor={Colors.blue}
@@ -1524,7 +1720,7 @@ export default function PlanDetailPage() {
                                         q.locked && styles.rangeInputLocked,
                                         { outlineWidth: 0 } as any
                                       ]}
-                                      value={q.minQuantity.toString()}
+                                      value={getSafeMinQuantity(q).toString()}
                                       onChangeText={(text) => handleMinQuantityChange(meal.id, food.id, text)}
                                       keyboardType="numeric"
                                       selectionColor={Colors.blue}
@@ -1544,7 +1740,7 @@ export default function PlanDetailPage() {
                                         q.locked && styles.rangeInputLocked,
                                         { outlineWidth: 0 } as any
                                       ]}
-                                      value={q.maxQuantity.toString()}
+                                      value={getSafeMaxQuantity(q).toString()}
                                       onChangeText={(text) => handleMaxQuantityChange(meal.id, food.id, text)}
                                       keyboardType="numeric"
                                       selectionColor={Colors.blue}
@@ -1562,13 +1758,13 @@ export default function PlanDetailPage() {
                                       onPress={() => !q.locked && handleMinClick(food.id)}
                                       style={styles.minMaxLabelContainer}
                                     >
-                                      <Text style={q.locked ? styles.minMaxLabelLocked : styles.minMaxLabel}>{q.minQuantity.toFixed(1)}</Text>
+                                      <Text style={q.locked ? styles.minMaxLabelLocked : styles.minMaxLabel}>{getSafeMinQuantity(q).toFixed(1)}</Text>
                                     </Pressable>
                                     <Slider
                                       style={styles.slider}
-                                      minimumValue={q.minQuantity}
-                                      maximumValue={q.maxQuantity}
-                                      value={q.quantity}
+                                      minimumValue={getSafeMinQuantity(q)}
+                                      maximumValue={getSafeMaxQuantity(q)}
+                                      value={getSafeQuantity(q)}
                                       onValueChange={(value) => !q.locked && handleQuantityChange(meal.id, food.id, value)}
                                       minimumTrackTintColor={q.locked ? Colors.lightgray : Colors.green}
                                       maximumTrackTintColor={Colors.lightgray}
@@ -1577,7 +1773,7 @@ export default function PlanDetailPage() {
                                       onPress={() => !q.locked && handleMaxClick(food.id)}
                                       style={styles.minMaxLabelContainer}
                                     >
-                                      <Text style={q.locked ? styles.minMaxLabelLocked : styles.minMaxLabel}>{q.maxQuantity.toFixed(1)}</Text>
+                                      <Text style={q.locked ? styles.minMaxLabelLocked : styles.minMaxLabel}>{getSafeMaxQuantity(q).toFixed(1)}</Text>
                                     </Pressable>
                                   </View>
                                 )}
@@ -1612,12 +1808,21 @@ export default function PlanDetailPage() {
                     
                     {/* Optimize button for this meal - moved below food cards */}
                     <View style={styles.mealOptimizeContainer}>
-                      <Pressable 
-                        style={styles.mealOptimizeButton}
-                        onPress={() => optimizeSingleMeal(meal)}
-                      >
-                        <Text style={styles.mealOptimizeButtonText}>Optimize {meal.name}</Text>
-                      </Pressable>
+                      <View style={styles.mealButtonRow}>
+                        <Pressable 
+                          style={styles.mealOptimizeButton}
+                          onPress={() => optimizeSingleMeal(meal)}
+                        >
+                          <Text style={styles.mealOptimizeButtonText}>Optimize {meal.name}</Text>
+                        </Pressable>
+                        
+                        <Pressable 
+                          style={styles.mealCheckErrorButton}
+                          onPress={() => checkMealError(meal)}
+                        >
+                          <Text style={styles.mealCheckErrorButtonText}>Check Error</Text>
+                        </Pressable>
+                      </View>
                     </View>
                   </View>
                 )}
@@ -1636,7 +1841,7 @@ export default function PlanDetailPage() {
             disabled={isOptimizing}
           >
             <Text style={[styles.optimizeButtonText, isOptimizing && styles.optimizeButtonTextDisabled]}>
-              {isOptimizing ? 'Optimizing...' : 'Optimize All Quantities'}
+              {isOptimizing ? 'Optimizing...' : 'Optimize All'}
             </Text>
           </Pressable>
           
@@ -1967,6 +2172,23 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+  mealButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  mealCheckErrorButton: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: Colors.orange,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  mealCheckErrorButtonText: {
+    fontSize: 12,
     fontWeight: '600',
     color: Colors.white,
   },
