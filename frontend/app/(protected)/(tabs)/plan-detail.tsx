@@ -3,7 +3,7 @@ import { useLocalSearchParams, router } from 'expo-router'
 import Colors from '@/styles/colors'
 import { useUser } from '@/app/hooks/useUser'
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useMenuApi } from '@/lib/api/menu'
 import { useOptimizationApi } from '@/lib/api/optimization'
 import { useMealPlanApi } from '@/lib/api/mealPlan'
@@ -66,6 +66,10 @@ export default function PlanDetailPage() {
   const [focusedInput, setFocusedInput] = useState<{ foodId: string, type: 'min' | 'max' } | null>(null)
   const [selectedFoods, setSelectedFoods] = useState<Map<string, Set<string>>>(new Map())
   const [isOptimizing, setIsOptimizing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  
+  // Track existing meal plans to optimize save operations
+  const [existingMealPlans, setExistingMealPlans] = useState<Set<string>>(new Set())
   
   // Food selection modal state
   const [showSelectionModal, setShowSelectionModal] = useState(false)
@@ -95,17 +99,28 @@ export default function PlanDetailPage() {
     return new Set(rawPreferences.map(pref => pref.metric_id));
   }, [rawPreferences]);
 
-  // Save meal plan function
+  // Save meal plan function - ultra-optimized for speed
+  // Optimization strategy:
+  // 1. Immediate UI feedback (redirect to home)
+  // 2. Pre-fetch existing meal plans to avoid create/update guessing
+  // 3. Parallel API calls for all meal plans
+  // 4. Background save completion (non-blocking)
+  // 5. Optimistic macro updates
   const saveMealPlan = async () => {
     if (!appUser) {
       alert('User not found');
       return;
     }
 
+    // Set saving state immediately
+    setIsSaving(true);
+
     try {
-      // Get all selected foods with their quantities for all meals
+      // Pre-calculate all the data we need to avoid repeated calculations
       const allFoodServings: { mealId: string; foodServings: any[] }[] = [];
+      const savedMealPlanMacros: any = {};
       
+      // Build food servings and calculate macros in a single pass
       userMealPreferences.forEach(meal => {
         const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
         const mealFoodServings: any[] = [];
@@ -127,6 +142,29 @@ export default function PlanDetailPage() {
                 quantity: q.quantity,
                 unit_name: q.selectedUnit
               });
+              
+              // Calculate macros for this food serving
+              const unit = food.servingUnits.find(u => u.name === q.selectedUnit);
+              if (unit) {
+                const foodServingObj = {
+                  id: food.id,
+                  food_id: food.id,
+                  quantity: q.quantity,
+                  unit: {
+                    id: q.selectedUnit,
+                    name: q.selectedUnit,
+                    food_id: food.id,
+                    grams: unit.grams
+                  },
+                  food: food
+                };
+                const adjustedMacros = calculateAdjustedMacrosOptimized(foodServingObj, preferenceSet);
+                Object.entries(adjustedMacros).forEach(([key, value]) => {
+                  if (value) {
+                    savedMealPlanMacros[key] = (savedMealPlanMacros[key] || 0) + value;
+                  }
+                });
+              }
               break;
             }
           }
@@ -140,39 +178,89 @@ export default function PlanDetailPage() {
         }
       });
 
-      // Save meal plans for each meal
-      const savedMealPlans = [];
-      for (const { mealId, foodServings } of allFoodServings) {
-        try {
-          const mealPlan = await mealPlanApi.createMealPlan(
-            appUser.user_id,
-            mealId,
-            selectedDate,
-            foodServings
-          );
-          savedMealPlans.push(mealPlan);
-        } catch (error) {
-          console.error(`Failed to save meal plan for meal ${mealId}:`, error);
-          // Try to update if it already exists
+      // Update global macros immediately for better UX
+      subtractFromMealPlan(savedMealPlanMacros);
+      addToLoggedMeals(savedMealPlanMacros);
+
+      // Redirect to home page immediately for instant feedback
+      router.push('/');
+
+      // Save all meal plans in parallel with smart create/update logic
+      const savePromises = allFoodServings.map(async ({ mealId, foodServings }) => {
+        // Use existing meal plans knowledge to make smart decisions
+        if (existingMealPlans.has(mealId)) {
+          // Update existing meal plan
+          return await mealPlanApi.updateMealPlan(mealId, foodServings);
+        } else {
+          // Try to create new meal plan
           try {
-            const mealPlan = await mealPlanApi.updateMealPlan(
+            const result = await mealPlanApi.createMealPlan(
+              appUser.user_id,
               mealId,
+              selectedDate,
               foodServings
             );
-            savedMealPlans.push(mealPlan);
-          } catch (updateError) {
-            console.error(`Failed to update meal plan for meal ${mealId}:`, updateError);
-            throw updateError;
+            // Mark as existing for future operations
+            setExistingMealPlans(prev => new Set(prev).add(mealId));
+            return result;
+          } catch (error: any) {
+            // If creation fails due to existing meal plan, update instead
+            if (error.message?.includes('already exists') || error.status === 409) {
+              // Mark as existing for future operations
+              setExistingMealPlans(prev => new Set(prev).add(mealId));
+              return await mealPlanApi.updateMealPlan(mealId, foodServings);
+            }
+            // For other errors, re-throw
+            throw error;
           }
         }
-      }
+      });
 
-      alert(`Successfully saved ${savedMealPlans.length} meal plans!`);
+      // Wait for all saves to complete in background
+      Promise.all(savePromises)
+        .then((savedMealPlans) => {
+          console.log(`Successfully saved ${savedMealPlans.length} meal plans!`);
+          console.log('Saved meal plan macros (now logged):', savedMealPlanMacros);
+          // Show success message in console for debugging
+          console.log('✅ Meal plan saved successfully!');
+        })
+        .catch((error) => {
+          console.error('Background save failed:', error);
+          // Show error message in console for debugging
+          console.error('❌ Meal plan save failed:', error.message);
+        });
+
     } catch (error) {
       console.error('Failed to save meal plan:', error);
       alert('Failed to save meal plan. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  // Pre-fetch existing meal plans to optimize save operations
+  const fetchExistingMealPlans = useCallback(async () => {
+    if (!appUser || !selectedDate) return;
+    
+    try {
+      // Fetch all meal plans for this date
+      const mealPlansData = await mealPlanApi.getMealPlans(appUser.user_id, selectedDate);
+      
+      // Extract existing meal plan IDs
+      const existingIds = mealPlansData.map((plan: any) => plan.meal_id);
+      setExistingMealPlans(new Set(existingIds));
+      console.log('Pre-fetched existing meal plans:', existingIds);
+    } catch (error) {
+      console.error('Failed to pre-fetch existing meal plans:', error);
+      // If fetch fails, assume no existing meal plans
+      setExistingMealPlans(new Set());
+    }
+  }, [appUser, selectedDate, mealPlanApi]);
+
+  // Fetch existing meal plans when component loads
+  useEffect(() => {
+    fetchExistingMealPlans();
+  }, [fetchExistingMealPlans]);
 
   // Fetch meals when selectedDate or appUser changes
   useEffect(() => {
@@ -350,6 +438,7 @@ export default function PlanDetailPage() {
 
   // Calculate macros for all meals at the top level - now using global macros context
   const { totalMacros: globalTotalMacros } = useGlobalMacros();
+  const { addToMealPlan, subtractFromMealPlan, clearMealPlan, addToLoggedMeals } = useGlobalMacrosSync();
   const mealMacros = useMemo(() => {
     const macros: { [mealId: string]: any } = {};
     userMealPreferences.forEach(meal => {
@@ -845,7 +934,6 @@ export default function PlanDetailPage() {
   }
 
   // Calculate meal plan macros using ultra-fast incremental updates
-  const { addToMealPlan, subtractFromMealPlan, clearMealPlan } = useGlobalMacrosSync();
   const prevMealPlanRef = useRef<{
     selectedFoods: Map<string, Set<string>>;
     mealFoodQuantities: Map<string, Map<string, any>>;
@@ -1824,11 +1912,12 @@ export default function PlanDetailPage() {
           </Pressable>
           
           <Pressable 
-            style={styles.saveButton}
+            style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
             onPress={saveMealPlan}
+            disabled={isSaving}
           >
-            <Text style={styles.saveButtonText}>
-              Save Meal Plan
+            <Text style={[styles.saveButtonText, isSaving && styles.saveButtonTextDisabled]}>
+              {isSaving ? 'Saving & Redirecting...' : 'Save & Go Home'}
             </Text>
           </Pressable>
         </View>
@@ -2152,6 +2241,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: Colors.white,
+  },
+  saveButtonDisabled: {
+    backgroundColor: Colors.lightgray,
+  },
+  saveButtonTextDisabled: {
+    color: Colors.gray,
   },
   mealButtonRow: {
     flexDirection: 'row',

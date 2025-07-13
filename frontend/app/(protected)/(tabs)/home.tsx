@@ -7,7 +7,7 @@ import { SignOutButton } from '@/components/SignOutButton'
 import { Meal, FoodServing, ServingUnit as SharedServingUnit } from '@shared/types/foodTypes';
 import MealDisplay from '@/components/MealLog/MealDisplay'
 import { Platform } from 'react-native';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import FoodSearchModal from '@/components/AddFood/FoodSearchModal';
 import EditFoodModal from '@/components/EditFood/EditFoodModal';
 import 'react-native-get-random-values';
@@ -21,6 +21,17 @@ import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay';
 import { calculateAllMacrosOptimized, calculateAdjustedMacrosOptimized } from '@/utils/optimizedMacroCalculation';
 import { useGlobalMacrosSync } from '@/hooks/useGlobalMacrosSync';
 import { useMealPlans } from '../../../hooks/useMealPlans';
+
+// Operation queue types
+interface PendingOperation {
+  id: string;
+  type: 'delete' | 'add' | 'update';
+  promise: Promise<any>;
+  resolve: (value: any) => void;
+  reject: (error: any) => void;
+  rollback?: () => void; // Function to rollback optimistic updates
+  description: string; // Human-readable description for error messages
+}
 
 export default function Page() {
   const {
@@ -49,6 +60,94 @@ export default function Page() {
 
   const { mealPlans, updateMealPlansWithLoggedMeals, updateMealPlansAfterLogging } = useMealPlans(mealsData.mealPlans);
 
+  // Operation queue to prevent race conditions
+  const operationQueueRef = useRef<PendingOperation[]>([]);
+  const isProcessingQueueRef = useRef(false);
+  const originalMealsDataRef = useRef(mealsData); // Store original state for rollback
+
+  // Process the operation queue with proper error handling and rollback
+  const processOperationQueue = useCallback(async () => {
+    if (isProcessingQueueRef.current || operationQueueRef.current.length === 0) {
+      return;
+    }
+
+    isProcessingQueueRef.current = true;
+    let operations: PendingOperation[] = [];
+
+    try {
+      // Store current state for potential rollback
+      originalMealsDataRef.current = { ...mealsData };
+      
+      // Wait for all pending operations to complete
+      operations = [...operationQueueRef.current];
+      operationQueueRef.current = [];
+
+      console.log(`Processing ${operations.length} pending operations...`);
+
+      // Wait for all operations to complete
+      await Promise.all(operations.map(op => op.promise));
+
+      // Only re-fetch after all operations are complete
+      if (appUser && selectedDate) {
+        console.log('All operations complete, re-fetching meals...');
+        const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
+        const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
+        setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
+        syncLoggedMealsMacros(totalMacros);
+      }
+
+      // Resolve all operations
+      operations.forEach(op => op.resolve(undefined));
+      console.log('✅ All operations completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Error processing operation queue:', error);
+      
+      // Rollback all optimistic updates
+      console.log('🔄 Rolling back optimistic updates...');
+      setMealsData(originalMealsDataRef.current);
+      syncLoggedMealsMacros(originalMealsDataRef.current.macros);
+      
+      // Execute rollback functions for each operation
+      operations.forEach((op: PendingOperation) => {
+        if (op.rollback) {
+          try {
+            op.rollback();
+          } catch (rollbackError) {
+            console.error('Rollback failed for operation:', op.description, rollbackError);
+          }
+        }
+      });
+      
+      // Alert the user about the failure
+      const failedOperations = operations.map((op: PendingOperation) => op.description).join(', ');
+      alert(`Failed to save changes: ${failedOperations}\n\nYour changes have been reverted. Please try again.`);
+      
+      // Reject all operations
+      operations.forEach((op: PendingOperation) => op.reject(error));
+    } finally {
+      isProcessingQueueRef.current = false;
+    }
+  }, [mealsData, appUser, selectedDate, getMeals, rawPreferences, syncLoggedMealsMacros]);
+
+  // Add operation to queue with rollback support
+  const addToOperationQueue = useCallback((operation: Omit<PendingOperation, 'resolve' | 'reject'>) => {
+    return new Promise((resolve, reject) => {
+      const queuedOperation: PendingOperation = {
+        ...operation,
+        resolve,
+        reject
+      };
+      
+      operationQueueRef.current.push(queuedOperation);
+      
+      // Process queue after a short delay to allow batching
+      setTimeout(() => {
+        processOperationQueue();
+      }, 50);
+    });
+  }, [processOperationQueue]);
+
   // Fetch meals and meal plans when selectedDate or appUser changes
   useEffect(() => {
     if (appUser && selectedDate) {
@@ -70,6 +169,17 @@ export default function Page() {
       setMealsLoading(false);
     }
   }, [appUser, selectedDate, rawPreferences]);
+
+  // Cleanup effect to process any remaining operations when selectedDate changes
+  useEffect(() => {
+    return () => {
+      // Process any remaining operations when component unmounts or selectedDate changes
+      if (operationQueueRef.current.length > 0) {
+        console.log('Processing remaining operations on cleanup...');
+        processOperationQueue();
+      }
+    };
+  }, [selectedDate, processOperationQueue]);
 
   // Update meal plans with logged meals data
   useEffect(() => {
@@ -215,20 +325,34 @@ export default function Page() {
       macros: prevData.macros // Keep existing macros for now
     }));
 
-    // Make the API call
-    await addFoodsToMeal(mealId, foodsToAdd);
-    
-    // Update meal plans to subtract logged quantities
-    await updateMealPlansAfterLogging(mealId, foodsToAdd, selectedDate);
-    
-    // Re-fetch meals to ensure consistency and update macros
-    if (appUser && selectedDate) {
-      const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-      const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
-      setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
-      // Update global macros with the final result
-      syncLoggedMealsMacros(totalMacros);
-    }
+    // Queue the API operations
+    await addToOperationQueue({
+      id: `add-${mealId}-${Date.now()}`,
+      type: 'add',
+      promise: (async () => {
+        // Make the API call
+        await addFoodsToMeal(mealId, foodsToAdd);
+        
+        // Update meal plans to subtract logged quantities
+        await updateMealPlansAfterLogging(mealId, foodsToAdd, selectedDate);
+      })(),
+      rollback: () => {
+        // If add fails, revert the local state
+        setMealsData(prevData => ({
+          meals: prevData.meals.map(meal => 
+            meal.id === mealId 
+              ? { ...meal, servings: meal.servings.filter(serving => !foodsToAdd.some(food => food.id === serving.id)) }
+              : meal
+          ),
+          mealPlans: prevData.mealPlans,
+          macros: prevData.macros // Keep existing macros for now
+        }));
+        
+        // Revert macro updates
+        subtractFromLoggedMeals(addedMacros);
+      },
+      description: `Add ${foodsToAdd.length} foods to meal ${mealId}`
+    });
   };
 
   // Handle updating food portion with optimistic update
@@ -274,17 +398,48 @@ export default function Page() {
       macros: prevData.macros // Keep existing macros for now
     }));
 
-    // Make the API call
-    await updateFoodPortion(servingId, quantity, unit);
-    
-    // Re-fetch meals to ensure consistency and update macros
-    if (appUser && selectedDate) {
-      const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-      const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
-      setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
-      // Update global macros with the final result
-      syncLoggedMealsMacros(totalMacros);
-    }
+    // Queue the API operation
+    await addToOperationQueue({
+      id: `update-${servingId}-${Date.now()}`,
+      type: 'update',
+      promise: updateFoodPortion(servingId, quantity, unit),
+      rollback: () => {
+        // If update fails, revert the local state
+        setMealsData(prevData => ({
+          meals: prevData.meals.map(meal => ({
+            ...meal,
+            servings: meal.servings.map(serving => 
+              serving.id === servingId 
+                ? oldServing // Revert to original serving
+                : serving
+            ).filter((serving): serving is FoodServing => serving !== undefined)
+          })),
+          mealPlans: prevData.mealPlans,
+          macros: prevData.macros // Keep existing macros for now
+        }));
+        
+        // Revert macro updates
+        if (oldServing && newServing) {
+          const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
+          const oldMacros = calculateAdjustedMacrosOptimized(oldServing, preferenceSet);
+          const newMacros = calculateAdjustedMacrosOptimized(newServing, preferenceSet);
+          
+          // Calculate the difference and revert it
+          const macroDiff = Object.keys(newMacros).reduce((diff, key) => {
+            const change = (newMacros[key] || 0) - (oldMacros[key] || 0);
+            if (change !== 0) {
+              diff[key] = -change; // Revert the change
+            }
+            return diff;
+          }, {} as any);
+          
+          if (Object.keys(macroDiff).length > 0) {
+            addToLoggedMeals(macroDiff);
+          }
+        }
+      },
+      description: `Update serving ${servingId} to ${quantity} ${unit.name}`
+    });
   };
 
   // Memoized callback functions to prevent unnecessary re-renders
@@ -329,18 +484,33 @@ export default function Page() {
       macros: prevData.macros // Keep existing macros for now
     }));
 
-    // Make the API call
-    await deleteFoodFromMeal(mealId, foodServingId);
-    
-    // Re-fetch meals to ensure consistency and update macros
-    if (appUser && selectedDate) {
-      const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-      const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
-      setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
-      // Update global macros with the final result
-      syncLoggedMealsMacros(totalMacros);
-    }
-  }, [mealsData.meals, rawPreferences, subtractFromLoggedMeals, deleteFoodFromMeal, appUser, selectedDate, getMeals, syncLoggedMealsMacros]);
+    // Queue the API operation
+    await addToOperationQueue({
+      id: `delete-${mealId}-${foodServingId}-${Date.now()}`,
+      type: 'delete',
+      promise: deleteFoodFromMeal(mealId, foodServingId),
+      rollback: () => {
+        // If delete fails, revert the local state
+        if (foodServing) {
+          setMealsData(prevData => ({
+            meals: prevData.meals.map(meal => 
+              meal.id === mealId 
+                ? { ...meal, servings: [...meal.servings, foodServing] } // Revert by adding back
+                : meal
+            ),
+            mealPlans: prevData.mealPlans,
+            macros: prevData.macros // Keep existing macros for now
+          }));
+          
+          // Revert macro updates
+          const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
+          const removedMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
+          addToLoggedMeals(removedMacros);
+        }
+      },
+      description: `Delete food serving ${foodServingId} from meal ${mealId}`
+    });
+  }, [mealsData.meals, rawPreferences, subtractFromLoggedMeals, deleteFoodFromMeal, addToOperationQueue]);
 
   const memoizedHandlePlannedFoodPress = useCallback((foodServing: FoodServing, meal: Meal) => {
     setActiveMeal(meal);
