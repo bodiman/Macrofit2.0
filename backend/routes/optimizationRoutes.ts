@@ -118,7 +118,7 @@ const calculateWeightedSquaredError = (
   return totalError;
 };
 
-// Direct optimization using gradient descent to minimize weighted squared error
+// Hybrid optimization: grid search + gradient descent
 const optimizeQuantitiesQP = (
   foods: FoodMacroData[],
   preferences: UserPreferenceData[],
@@ -202,13 +202,10 @@ const optimizeQuantitiesQP = (
   console.log('V matrix (food macro values):', V);
   console.log('Quantity bounds (ell, u):', { ell, u });
   
-  // Use a two-phase grid search to find the best quantities
-  // Phase 1: Coarse grid search to identify promising regions
-  // Phase 2: Fine grid search focused on the best regions
-  const coarseGridStep = 0.1; // Finer coarse step size (was 0.2)
-  const fineGridStep = 0.01;  // Much finer step size for precision (was 0.02)
-  const coarseIterations = 500; // Fewer iterations for coarse search
-  const fineIterations = 1500;  // More iterations for fine search
+  // Phase 1: Grid search to find promising initial solution
+  console.log('Phase 1: Grid search for initial solution...');
+  const gridStep = 0.1;
+  const gridIterations = 300;
   
   let bestQuantities = mutableFoodIndices.map(i => foods[i].quantity);
   let bestError = calculateWeightedSquaredError(
@@ -218,38 +215,31 @@ const optimizeQuantitiesQP = (
     dailyMaxValues
   );
   
-  console.log('QP Debug - Starting two-phase grid search optimization');
   console.log('Initial quantities:', bestQuantities);
   console.log('Initial error:', bestError.toFixed(6));
   
-  // Phase 1: Coarse grid search
-  console.log('Phase 1: Coarse grid search...');
-  const coarseCandidates: { quantities: number[]; error: number }[] = [];
-  
-  for (let iteration = 0; iteration < coarseIterations; iteration++) {
-    // Generate candidate quantities with coarse step
+  // Grid search
+  for (let iteration = 0; iteration < gridIterations; iteration++) {
     const candidateQuantities = mutableFoodIndices.map((foodIndex, i) => {
       const minQty = ell[i];
       const maxQty = u[i];
       
       if (iteration === 0) {
-        // First iteration: use current quantities
         return foods[foodIndex].quantity;
       } else if (iteration < 50) {
-        // Early iterations: try coarse grid points
-        const steps = Math.floor((maxQty - minQty) / coarseGridStep) + 1;
+        // Systematic grid points
+        const steps = Math.floor((maxQty - minQty) / gridStep) + 1;
         const stepIndex = (iteration - 1) % steps;
-        return minQty + stepIndex * coarseGridStep;
+        return minQty + stepIndex * gridStep;
       } else {
-        // Later iterations: random search with larger range
+        // Random search
         const current = bestQuantities[i];
-        const range = (maxQty - minQty) * 0.2; // 20% of range for coarse search
+        const range = (maxQty - minQty) * 0.15;
         const randomOffset = (Math.random() - 0.5) * range;
         return Math.max(minQty, Math.min(maxQty, current + randomOffset));
       }
     });
     
-    // Calculate error for candidate quantities
     const candidateQuantitiesFull = [...initialQuantities];
     mutableFoodIndices.forEach((foodIndex, i) => {
       candidateQuantitiesFull[foodIndex] = candidateQuantities[i];
@@ -262,116 +252,124 @@ const optimizeQuantitiesQP = (
       dailyMaxValues
     );
     
-    // Store promising candidates (error within 50% of best)
-    if (candidateError <= bestError * 1.5) {
-      coarseCandidates.push({ quantities: [...candidateQuantities], error: candidateError });
-    }
-    
-    // Update best solution if better
     if (candidateError < bestError) {
       bestError = candidateError;
       bestQuantities = [...candidateQuantities];
       
-      if (iteration % 100 === 0) {
-        console.log(`Phase 1 - Iteration ${iteration}: New best error = ${bestError.toFixed(6)}`);
+      if (iteration % 50 === 0) {
+        console.log(`Grid search - Iteration ${iteration}: New best error = ${bestError.toFixed(6)}`);
       }
     }
   }
   
-  console.log(`Phase 1 completed. Found ${coarseCandidates.length} promising candidates.`);
-  console.log('Best error after coarse search:', bestError.toFixed(6));
+  console.log(`Grid search completed. Best error: ${bestError.toFixed(6)}`);
+  console.log('Best quantities from grid search:', bestQuantities);
   
-  // Phase 2: Fine grid search around promising regions
-  console.log('Phase 2: Fine grid search around promising regions...');
+  // Phase 2: Gradient descent for fine-tuning
+  console.log('Phase 2: Gradient descent for fine-tuning...');
   
-  // Create search regions around the best candidates
-  const searchRegions: { center: number[]; radius: number }[] = [];
+  const learningRate = 0.001;
+  const maxGradientIterations = 1000;
+  const tolerance = 1e-6;
   
-  // Add region around the best solution
-  searchRegions.push({
-    center: [...bestQuantities],
-    radius: coarseGridStep * 0.5 // Search within half the coarse step size
-  });
+  let currentQuantities = [...bestQuantities];
+  let currentError = bestError;
+  let prevError = Infinity;
+  let noImprovementCount = 0;
   
-  // Add regions around other promising candidates
-  coarseCandidates.slice(0, 5).forEach(candidate => { // Top 5 candidates
-    searchRegions.push({
-      center: [...candidate.quantities],
-      radius: coarseGridStep * 0.3
-    });
-  });
-  
-  // Fine grid search in each region
-  for (let regionIndex = 0; regionIndex < searchRegions.length; regionIndex++) {
-    const region = searchRegions[regionIndex];
-    console.log(`Searching region ${regionIndex + 1}/${searchRegions.length} around:`, region.center.map(x => x.toFixed(3)));
+  for (let iteration = 0; iteration < maxGradientIterations; iteration++) {
+    // Calculate gradient numerically
+    const gradient: number[] = [];
     
-    for (let iteration = 0; iteration < fineIterations / searchRegions.length; iteration++) {
-      // Generate candidate quantities with fine step around region center
-      const candidateQuantities = mutableFoodIndices.map((foodIndex, i) => {
-        const minQty = ell[i];
-        const maxQty = u[i];
-        const center = region.center[i];
-        const radius = region.radius;
-        
-        if (iteration < 20) {
-          // Try fine grid points within the region
-          const regionMin = Math.max(minQty, center - radius);
-          const regionMax = Math.min(maxQty, center + radius);
-          const steps = Math.floor((regionMax - regionMin) / fineGridStep) + 1;
-          const stepIndex = iteration % steps;
-          return regionMin + stepIndex * fineGridStep;
-        } else {
-          // Random search within the region
-          const regionMin = Math.max(minQty, center - radius);
-          const regionMax = Math.min(maxQty, center + radius);
-          const randomOffset = (Math.random() - 0.5) * radius * 2;
-          return Math.max(regionMin, Math.min(regionMax, center + randomOffset));
-        }
-      });
+    for (let i = 0; i < numMutableFoods; i++) {
+      const h = 0.001; // Small step for numerical differentiation
       
-      // Calculate error for candidate quantities
-      const candidateQuantitiesFull = [...initialQuantities];
-      mutableFoodIndices.forEach((foodIndex, i) => {
-        candidateQuantitiesFull[foodIndex] = candidateQuantities[i];
+      // Forward step
+      const forwardQuantities = [...currentQuantities];
+      forwardQuantities[i] += h;
+      const forwardQuantitiesFull = [...initialQuantities];
+      mutableFoodIndices.forEach((foodIndex, j) => {
+        forwardQuantitiesFull[foodIndex] = forwardQuantities[j];
       });
-      
-      const candidateError = calculateWeightedSquaredError(
-        calculateTotalMacros(foods, candidateQuantitiesFull, macroNames),
+      const forwardError = calculateWeightedSquaredError(
+        calculateTotalMacros(foods, forwardQuantitiesFull, macroNames),
         preferences,
         macroNames,
         dailyMaxValues
       );
       
-      // Update best solution if better
-      if (candidateError < bestError) {
-        bestError = candidateError;
-        bestQuantities = [...candidateQuantities];
-        
-        console.log(`Phase 2 - Region ${regionIndex + 1}, Iteration ${iteration}: New best error = ${bestError.toFixed(6)}`);
-      }
+      // Backward step
+      const backwardQuantities = [...currentQuantities];
+      backwardQuantities[i] -= h;
+      const backwardQuantitiesFull = [...initialQuantities];
+      mutableFoodIndices.forEach((foodIndex, j) => {
+        backwardQuantitiesFull[foodIndex] = backwardQuantities[j];
+      });
+      const backwardError = calculateWeightedSquaredError(
+        calculateTotalMacros(foods, backwardQuantitiesFull, macroNames),
+        preferences,
+        macroNames,
+        dailyMaxValues
+      );
       
-      // Early stopping if error is very low
-      if (bestError < 0.0001) {
-        console.log(`Phase 2 - Early stopping with error ${bestError.toFixed(6)}`);
-        break;
-      }
+      // Numerical gradient
+      gradient[i] = (forwardError - backwardError) / (2 * h);
     }
+    
+    // Update quantities with gradient descent
+    const newQuantities = currentQuantities.map((qty, i) => {
+      const newQty = qty - learningRate * gradient[i];
+      return Math.max(ell[i], Math.min(u[i], newQty)); // Clamp to bounds
+    });
+    
+    // Calculate new error
+    const newQuantitiesFull = [...initialQuantities];
+    mutableFoodIndices.forEach((foodIndex, i) => {
+      newQuantitiesFull[foodIndex] = newQuantities[i];
+    });
+    
+    const newError = calculateWeightedSquaredError(
+      calculateTotalMacros(foods, newQuantitiesFull, macroNames),
+      preferences,
+      macroNames,
+      dailyMaxValues
+    );
+    
+    // Check for improvement
+    if (newError < currentError) {
+      currentQuantities = newQuantities;
+      currentError = newError;
+      noImprovementCount = 0;
+      
+      if (iteration % 100 === 0) {
+        console.log(`Gradient descent - Iteration ${iteration}: Error = ${currentError.toFixed(6)}`);
+      }
+    } else {
+      noImprovementCount++;
+    }
+    
+    // Check convergence
+    if (Math.abs(currentError - prevError) < tolerance || noImprovementCount > 50) {
+      console.log(`Gradient descent converged at iteration ${iteration}`);
+      break;
+    }
+    
+    prevError = currentError;
   }
   
-  console.log('Two-phase grid search completed');
-  console.log('Best quantities found:', bestQuantities);
-  console.log('Best error:', bestError.toFixed(6));
+  console.log('Hybrid optimization completed');
+  console.log('Final quantities:', currentQuantities);
+  console.log('Final error:', currentError.toFixed(6));
   
-  // Apply best quantities to the full solution
+  // Apply final quantities to the full solution
   const optimizedQuantities = [...initialQuantities];
   mutableFoodIndices.forEach((foodIndex, i) => {
-    optimizedQuantities[foodIndex] = bestQuantities[i];
+    optimizedQuantities[foodIndex] = currentQuantities[i];
   });
   
   console.log('Final optimized quantities:', optimizedQuantities);
   
-  return { quantities: optimizedQuantities, error: bestError };
+  return { quantities: optimizedQuantities, error: currentError };
 };
 
 // POST /api/optimize

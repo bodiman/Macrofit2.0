@@ -1183,39 +1183,7 @@ export default function PlanDetailPage() {
   };
 
   const optimizeQuantities = async () => {
-    // Build selectedFoodList using per-meal, per-food quantities
-    const selectedFoodList: any[] = [];
-    userMealPreferences.forEach(meal => {
-      const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
-      selectedFoodIds.forEach(foodId => {
-        for (const kitchen of kitchens) {
-          const food = kitchen.foods.find(f => f.id === foodId);
-          if (food) {
-            const q = mealFoodQuantities.get(meal.id)?.get(foodId);
-            if (q) {
-              selectedFoodList.push({
-                mealId: meal.id,
-                foodId: food.id,
-                quantity: q.quantity,
-                minQuantity: q.minQuantity,
-                maxQuantity: q.maxQuantity,
-                selectedUnit: q.selectedUnit,
-                locked: q.locked,
-                food: food,
-                unit: {
-                  id: q.selectedUnit,
-                  name: q.selectedUnit,
-                  food_id: food.id,
-                  grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
-                }
-              });
-            }
-            break;
-          }
-        }
-      });
-    });
-    if (selectedFoodList.length === 0) {
+    if (selectedFoods.size === 0) {
       alert('No foods selected for optimization');
       return;
     }
@@ -1228,11 +1196,55 @@ export default function PlanDetailPage() {
       }
       const macroNames = userPrefs.map(pref => pref.id);
       
-      // Single-stage optimization: optimize all meals together
-      console.log('Starting single-stage optimization for all meals...');
+      // Global optimization: optimize all foods across all meals together
+      console.log('Starting global optimization...');
       
-      // Create a unified optimization problem
-      const allFoods = selectedFoodList.map(food => {
+      // Build a single list of all foods across all meals
+      const allFoods: any[] = [];
+      const foodToMealMap = new Map<string, string>(); // Map food index to meal ID
+      let foodIndex = 0;
+      
+      userMealPreferences.forEach(meal => {
+        const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
+        selectedFoodIds.forEach(foodId => {
+          for (const kitchen of kitchens) {
+            const food = kitchen.foods.find(f => f.id === foodId);
+            if (food) {
+              const q = mealFoodQuantities.get(meal.id)?.get(foodId);
+              if (q) {
+                allFoods.push({
+                  mealId: meal.id,
+                  foodId: food.id,
+                  quantity: q.quantity,
+                  minQuantity: q.minQuantity,
+                  maxQuantity: q.maxQuantity,
+                  selectedUnit: q.selectedUnit,
+                  locked: q.locked,
+                  food: food,
+                  unit: {
+                    id: q.selectedUnit,
+                    name: q.selectedUnit,
+                    food_id: food.id,
+                    grams: food.servingUnits.find(u => u.name === q.selectedUnit)?.grams || 1
+                  }
+                });
+                foodToMealMap.set(foodIndex.toString(), meal.id);
+                foodIndex++;
+              }
+              break;
+            }
+          }
+        });
+      });
+      
+      console.log(`Global optimization: ${allFoods.length} foods across ${userMealPreferences.length} meals`);
+      
+      // Calculate overall preferences accounting for logged foods
+      const overallPrefs = getOverallPreferencesWithLoggedFoods();
+      console.log('Overall preferences (after logged foods):', overallPrefs);
+      
+      // Prepare foods for optimization
+      const foods = allFoods.map(food => {
         const macroValues = macroNames.map(macroName => {
           return (food.food.macros as any)?.[macroName] || 0;
         });
@@ -1246,61 +1258,70 @@ export default function PlanDetailPage() {
         };
       });
       
-      // Create unified preferences that represent the sum of all meal errors
-      // We'll use the overall preferences with logged foods subtracted
-      const unifiedPreferences = getOverallPreferencesWithLoggedFoods().map(pref => ({
-        min_value: pref.min || 0,
-        max_value: pref.max || Infinity
+      // Convert preferences to optimization format
+      const optimizationPreferences = overallPrefs.map(pref => ({
+        min_value: pref.min !== undefined ? pref.min : null,
+        max_value: pref.max !== undefined ? pref.max : null
       }));
       
       // Get daily max values for weighting
       const dailyMaxValues = userPrefs.map(pref => pref.max || 1);
       
-      console.log('Unified optimization preferences:', unifiedPreferences);
+      console.log('Global optimization preferences:', optimizationPreferences);
       console.log('Daily max values for weighting:', dailyMaxValues);
       
-      const result = await optimizationApi.optimizeQuantities({
-        foods: allFoods,
-        preferences: unifiedPreferences,
+      // Log initial error
+      let initialTotalError = 0;
+      userMealPreferences.forEach(meal => {
+        const mealError = calculateMealError(meal);
+        initialTotalError += mealError.error;
+      });
+      console.log('Initial total error across all meals:', initialTotalError.toFixed(6));
+      
+      // Run global optimization
+      const globalResult = await optimizationApi.optimizeQuantities({
+        foods,
+        preferences: optimizationPreferences,
         macroNames,
         dailyMaxValues,
-        maxIterations: 2000 // More iterations for the unified problem
+        maxIterations: 2000
       });
       
-      // Debug: Show calculated macros, preferences, and error for unified optimization
-      console.log(`=== Unified Optimization Debug ===`);
-      console.log('Macro Names:', macroNames);
-      console.log('Unified Preferences:', unifiedPreferences);
-      console.log('Final Macros:', result.finalMacros);
-      console.log('Optimization Error:', result.error);
-      console.log('Optimized Quantities:', result.optimizedQuantities);
+      console.log('Global optimization result:', {
+        error: globalResult.error,
+        finalMacros: globalResult.finalMacros,
+        optimizedQuantities: globalResult.optimizedQuantities
+      });
       
-      // Update all quantities with final optimized values
+      // Update quantities for all meals based on the global optimization
       setMealFoodQuantities(prev => {
         const newMap = new Map(prev);
-        selectedFoodList.forEach((food, idx) => {
-          const mealMap = new Map(newMap.get(food.mealId) || new Map());
+        allFoods.forEach((food, idx) => {
+          const mealId = food.mealId;
+          const mealMap = new Map(newMap.get(mealId) || new Map());
           const entry = mealMap.get(food.foodId);
           if (entry && !entry.locked) {
-            mealMap.set(food.foodId, { ...entry, quantity: result.optimizedQuantities[idx] });
-            newMap.set(food.mealId, mealMap);
+            const newQuantity = globalResult.optimizedQuantities[idx];
+            console.log(`${food.food.name} (${mealId}): ${entry.quantity} -> ${newQuantity}`);
+            mealMap.set(food.foodId, { ...entry, quantity: newQuantity });
+            newMap.set(mealId, mealMap);
           }
         });
         return newMap;
       });
       
-      // Calculate and display individual meal errors for verification
-      console.log('=== Individual Meal Error Analysis ===');
-      let totalMealError = 0;
+      // Calculate and display final individual meal errors
+      console.log('\n=== Final Individual Meal Error Analysis ===');
+      let finalTotalError = 0;
       userMealPreferences.forEach(meal => {
         const mealError = calculateMealError(meal);
         console.log(`${meal.name} error: ${mealError.error.toFixed(6)}`);
-        totalMealError += mealError.error;
+        finalTotalError += mealError.error;
       });
-      console.log(`Total meal errors: ${totalMealError.toFixed(6)}`);
-      console.log(`Unified optimization error: ${result.error.toFixed(6)}`);
+      console.log(`Final total meal errors: ${finalTotalError.toFixed(6)}`);
+      console.log(`Total error improvement: ${(initialTotalError - finalTotalError).toFixed(6)}`);
       
-      alert(`Unified optimization completed!\nFinal error: ${result.error.toFixed(4)}\nTotal meal errors: ${totalMealError.toFixed(4)}`);
+      alert(`Global optimization completed!\nTotal error improvement: ${(initialTotalError - finalTotalError).toFixed(4)}`);
     } catch (error) {
       console.error('Optimization error:', error);
       alert('Failed to optimize quantities. Please try again.');

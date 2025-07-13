@@ -1,6 +1,7 @@
 import { describe, it, beforeAll, afterAll, expect } from '@jest/globals';
 import prisma from '../../prisma_client';
 import { FoodMacroData, UserPreferenceData } from '../../routes/optimizationRoutes';
+import { optimizeQuantitiesQP, calculateTotalMacros, calculateWeightedSquaredError } from '../../routes/optimizationRoutes';
 
 // Import the optimization function (we'll need to export it from the routes file)
 // For now, we'll test the core logic
@@ -743,9 +744,6 @@ describe('Optimization Algorithm Tests', () => {
     it('should use actual QP optimization for egg whites scenario', async () => {
       console.log('\n=== Real QP Optimization Test: Egg Whites ===');
       
-      // Import the actual backend optimization function and helpers
-      const { optimizeQuantitiesQP, calculateTotalMacros, calculateWeightedSquaredError } = require('../../routes/optimizationRoutes');
-      
       // Define the meal's macro targets
       const mealTargets = {
         calories: { min: 255, max: 270 },
@@ -957,5 +955,146 @@ describe('Optimization Algorithm Tests', () => {
       console.log('Error for 3 egg whites:', errorThree);
       console.log('Difference (3 eggs - 0 eggs):', errorThree - errorZero);
     });
+  });
+
+  // Test sequential meal optimization
+  test('should optimize meals sequentially with realistic targets', async () => {
+    console.log('\n=== Sequential Meal Optimization Test ===');
+    
+    // Create test foods with different macro profiles
+    const foods = [
+      {
+        macroValues: [0.2, 0.1, 0.05], // Protein, Carbs, Fat per gram
+        unitGrams: 100,
+        quantity: 1,
+        minQuantity: 0,
+        maxQuantity: 5,
+        locked: false
+      },
+      {
+        macroValues: [0.15, 0.3, 0.1], // Different macro profile
+        unitGrams: 100,
+        quantity: 1,
+        minQuantity: 0,
+        maxQuantity: 5,
+        locked: false
+      }
+    ];
+    
+    // Daily targets: 100g protein, 200g carbs, 50g fat
+    const dailyPreferences = [
+      { min_value: 100, max_value: 120 }, // Protein
+      { min_value: 200, max_value: 250 }, // Carbs
+      { min_value: 50, max_value: 70 }    // Fat
+    ];
+    
+    const macroNames = ['protein', 'carbs', 'fat'];
+    const dailyMaxValues = [120, 250, 70];
+    
+    // Simulate sequential optimization for 3 meals
+    const meals = [
+      { id: 'breakfast', name: 'Breakfast', distribution_percentage: 0.3 },
+      { id: 'lunch', name: 'Lunch', distribution_percentage: 0.35 },
+      { id: 'dinner', name: 'Dinner', distribution_percentage: 0.35 }
+    ];
+    
+    let remainingTargets = dailyPreferences.map(pref => ({
+      min: pref.min_value,
+      max: pref.max_value
+    }));
+    
+    console.log('Initial daily targets:', remainingTargets);
+    
+    const results = [];
+    
+    // Optimize each meal sequentially
+    for (const meal of meals) {
+      console.log(`\n--- Optimizing ${meal.name} (${meal.distribution_percentage * 100}%) ---`);
+      console.log('Remaining targets before optimization:', remainingTargets);
+      
+      // Calculate meal-specific targets
+      const mealTargets = remainingTargets.map((target, index) => {
+        return {
+          min_value: target.min * meal.distribution_percentage,
+          max_value: target.max * meal.distribution_percentage
+        };
+      });
+      
+      console.log(`${meal.name} targets:`, mealTargets);
+      
+      // Optimize this meal
+      const result = await optimizeQuantitiesQP(
+        foods,
+        mealTargets,
+        macroNames,
+        dailyMaxValues,
+        foods.map(f => f.quantity)
+      );
+      
+      console.log(`${meal.name} optimization result:`, {
+        quantities: result.quantities,
+        error: result.error,
+        finalMacros: calculateTotalMacros(foods, result.quantities, macroNames)
+      });
+      
+      results.push({
+        meal: meal.name,
+        quantities: result.quantities,
+        error: result.error,
+        finalMacros: calculateTotalMacros(foods, result.quantities, macroNames)
+      });
+      
+      // Update remaining targets
+      const mealContribution = calculateTotalMacros(foods, result.quantities, macroNames);
+      remainingTargets = remainingTargets.map((target, index) => {
+        const macroName = macroNames[index];
+        const contribution = mealContribution[macroName] || 0;
+        return {
+          min: target.min - contribution,
+          max: target.max - contribution
+        };
+      });
+      
+      console.log('Remaining targets after optimization:', remainingTargets);
+    }
+    
+    // Verify results
+    console.log('\n=== Final Results ===');
+    results.forEach(result => {
+      console.log(`${result.meal}:`, {
+        quantities: result.quantities,
+        error: result.error.toFixed(6),
+        macros: result.finalMacros
+      });
+    });
+    
+    // Calculate total macros across all meals
+    const totalMacros = results.reduce((total, result) => {
+      Object.entries(result.finalMacros).forEach(([macro, value]) => {
+        total[macro] = (total[macro] || 0) + value;
+      });
+      return total;
+    }, {} as Record<string, number>);
+    
+    console.log('Total macros across all meals:', totalMacros);
+    
+    // Verify that each meal was optimized (error should be reasonable)
+    results.forEach(result => {
+      expect(result.error).toBeLessThan(100); // Error should be reasonable
+      expect(result.quantities.every((q: number) => q >= 0)).toBe(true); // Quantities should be non-negative
+    });
+    
+    // Verify that total macros are within daily targets
+    Object.entries(totalMacros).forEach(([macro, total]) => {
+      const targetIndex = macroNames.indexOf(macro);
+      if (targetIndex >= 0) {
+        const target = dailyPreferences[targetIndex];
+        // Sequential optimization may not reach 100% of targets, so we're more lenient
+        expect(total).toBeGreaterThanOrEqual(target.min_value * 0.6); // At least 60% of min
+        expect(total).toBeLessThanOrEqual(target.max_value * 1.5); // At most 150% of max
+      }
+    });
+    
+    console.log('✅ Sequential optimization test passed!');
   });
 }); 
