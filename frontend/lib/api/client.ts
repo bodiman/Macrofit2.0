@@ -19,6 +19,14 @@ export const useApi = () => {
             throw new Error('No authentication token available');
         }
 
+        // Log token expiry and current time
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log('[Clerk Token] exp:', new Date(payload.exp * 1000), 'Now:', new Date());
+        } catch (e) {
+            console.warn('Could not parse token payload for expiry logging:', e);
+        }
+
         const headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,

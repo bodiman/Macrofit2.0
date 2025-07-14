@@ -80,6 +80,8 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
         next();
     } catch (error: any) {
         console.error('Auth Middleware: Token verification failed or other error:', error.message);
+        // Log the server's current time for clock skew debugging
+        console.log('Server time:', new Date());
         // console.error(error.stack); // Optionally log full stack for more details
         if (error.message && (error.message.includes('Token has expired') || error.message.includes('exp'))) {
              return res.status(401).json({ error: 'Token expired. Please sign in again.', code: 'TOKEN_EXPIRED' });
