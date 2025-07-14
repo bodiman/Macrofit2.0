@@ -33,7 +33,12 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
     // Pre-populate shopping cart with clicked planned food
     useEffect(() => {
         if (clickedPlannedFood && shoppingCart.length === 0) {
-            setShoppingCart([clickedPlannedFood]);
+            // Ensure the quantity is preserved correctly
+            const plannedFoodWithQuantity = {
+                ...clickedPlannedFood,
+                quantity: Number(clickedPlannedFood.quantity) || 0
+            };
+            setShoppingCart([plannedFoodWithQuantity]);
         }
     }, [clickedPlannedFood, shoppingCart.length, setShoppingCart]);
 
@@ -101,7 +106,12 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
     if (activeMeal === null) return null;
 
     const handleAddFood = (foodServing: FoodServing) => {
-        setShoppingCart([...shoppingCart, foodServing]);
+        // Ensure the quantity is preserved correctly
+        const foodWithQuantity = {
+            ...foodServing,
+            quantity: Number(foodServing.quantity) || 0
+        };
+        setShoppingCart([...shoppingCart, foodWithQuantity]);
     };
 
     const handleRemoveFromCart = (foodId: string) => {
@@ -128,7 +138,14 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
             // Clear shopping cart macros immediately to prevent double counting
             clearShoppingCart();
             modalCloser();
-            addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
+            
+            // Ensure all quantities are preserved correctly
+            const foodsWithQuantities = shoppingCart.map(food => ({
+                ...food,
+                quantity: Number(food.quantity) || 0
+            }));
+            
+            addFoodsToMeal(activeMeal.id, foodsWithQuantities).then(()=> {
                 clearCart();
             });
         }
@@ -153,10 +170,25 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                         />
                     </View>
 
-                    <AddFood
-                        preferences={dailyMacroPreferences}
-                        onAddFood={handleAddFood}
-                    />
+                    {/* Only show AddFood when no planned food is clicked */}
+                    {!clickedPlannedFood && (
+                        <AddFood
+                            preferences={dailyMacroPreferences}
+                            onAddFood={handleAddFood}
+                        />
+                    )}
+
+                    {/* Show message when planned food is clicked */}
+                    {clickedPlannedFood && (
+                        <View style={styles.plannedFoodMessage}>
+                            <Text style={styles.plannedFoodText}>
+                                {clickedPlannedFood.food.name} added to cart
+                            </Text>
+                            <Text style={styles.plannedFoodSubtext}>
+                                You can adjust the quantity or add more foods below
+                            </Text>
+                        </View>
+                    )}
 
                     <View style={styles.shoppingCart}>
                         <FlatList 
@@ -268,5 +300,22 @@ const styles = StyleSheet.create({
         fontWeight: 600,
         color: Colors.white,
         margin: "auto"
+    },
+    plannedFoodMessage: {
+        padding: 15,
+        backgroundColor: Colors.lightgray,
+        borderRadius: 8,
+        margin: 10,
+        alignItems: 'center',
+    },
+    plannedFoodText: {
+        fontSize: 16,
+        fontWeight: 600,
+        color: Colors.darkgray,
+    },
+    plannedFoodSubtext: {
+        fontSize: 14,
+        color: Colors.gray,
+        marginTop: 5,
     },
 });

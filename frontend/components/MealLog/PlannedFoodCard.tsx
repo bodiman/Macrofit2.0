@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { FoodServing } from '@shared/types/foodTypes';
 import Colors from '@/styles/colors';
 import MaterialIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -17,28 +17,66 @@ export default function PlannedFoodCard({
   isBeingReduced, 
   onPress 
 }: PlannedFoodCardProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+
+  // Animate when quantity is being reduced
+  useEffect(() => {
+    if (isBeingReduced) {
+      // Subtle scale and opacity animation
+      Animated.parallel([
+        Animated.timing(scaleAnim, {
+          toValue: 0.98,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0.8,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // Return to normal
+      Animated.parallel([
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isBeingReduced, scaleAnim, opacityAnim]);
+
   return (
-    <Pressable 
-      style={[
-        styles.card, 
-        { backgroundColor: isBeingReduced ? Colors.orange : Colors.green }
-      ]} 
-      onPress={onPress}
-    >
-      <View style={styles.content}>
-        <View style={styles.textContainer}>
-          <Text style={styles.foodName} numberOfLines={1} ellipsizeMode="tail">
-            {foodServing.food.name}
-          </Text>
-          <Text style={styles.quantity}>
-            {remainingQuantity.toFixed(1)} {foodServing.unit.name}
-          </Text>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
+      <Pressable 
+        style={[
+          styles.card, 
+          { backgroundColor: isBeingReduced ? Colors.orange : Colors.green }
+        ]} 
+        onPress={onPress}
+      >
+        <View style={styles.content}>
+          <View style={styles.textContainer}>
+            <Text style={styles.foodName} numberOfLines={1} ellipsizeMode="tail">
+              {foodServing.food.name}
+            </Text>
+            <Text style={styles.quantity}>
+              {remainingQuantity.toFixed(1)} {foodServing.unit.name}
+            </Text>
+          </View>
+          {isBeingReduced && (
+            <MaterialIcons name="trending-down" size={16} color={Colors.white} />
+          )}
         </View>
-        {isBeingReduced && (
-          <MaterialIcons name="trending-down" size={16} color={Colors.white} />
-        )}
-      </View>
-    </Pressable>
+      </Pressable>
+    </Animated.View>
   );
 }
 

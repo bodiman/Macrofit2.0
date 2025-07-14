@@ -51,19 +51,25 @@ export default function Page() {
   const [activeMealPreferenceDetails, setActiveMealPreferenceDetails] = useState<UserMealPreference | null>(null);
   const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
   const [clickedPlannedFood, setClickedPlannedFood] = useState<FoodServing | null>(null);
-  const [mealsData, setMealsData] = useState<{
+  // Replace mealsData with two separate states
+  const [serverMealsData, setServerMealsData] = useState<{
     meals: Meal[];
     mealPlans: any[];
     macros: any;
   }>({ meals: [], mealPlans: [], macros: {} });
+  const [optimisticMealsData, setOptimisticMealsData] = useState(serverMealsData);
   const [mealsLoading, setMealsLoading] = useState(false);
 
-  const { mealPlans, updateMealPlansWithLoggedMeals, updateMealPlansAfterLogging } = useMealPlans(mealsData.mealPlans);
+  // Add dual-state for global macros
+  const [serverGlobalMacros, setServerGlobalMacros] = useState({});
+  const [optimisticGlobalMacros, setOptimisticGlobalMacros] = useState(serverGlobalMacros);
+
+  const { mealPlans, updateMealPlansWithLoggedMeals, updateMealPlansAfterLogging } = useMealPlans(optimisticMealsData.mealPlans);
 
   // Operation queue to prevent race conditions
   const operationQueueRef = useRef<PendingOperation[]>([]);
   const isProcessingQueueRef = useRef(false);
-  const originalMealsDataRef = useRef(mealsData); // Store original state for rollback
+  const originalMealsDataRef = useRef(serverMealsData); // Store original state for rollback
 
   // Process the operation queue with proper error handling and rollback
   const processOperationQueue = useCallback(async () => {
@@ -76,7 +82,7 @@ export default function Page() {
 
     try {
       // Store current state for potential rollback
-      originalMealsDataRef.current = { ...mealsData };
+      originalMealsDataRef.current = { ...serverMealsData };
       
       // Wait for all pending operations to complete
       operations = [...operationQueueRef.current];
@@ -87,13 +93,16 @@ export default function Page() {
       // Wait for all operations to complete
       await Promise.all(operations.map(op => op.promise));
 
-      // Only re-fetch after all operations are complete
-      if (appUser && selectedDate) {
-        console.log('All operations complete, re-fetching meals...');
-        const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
-        const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
-        setMealsData({ meals: fetchedMeals.meals, mealPlans: fetchedMeals.mealPlans, macros: totalMacros });
-        syncLoggedMealsMacros(totalMacros);
+      // Instead of re-fetching meals (which could overwrite optimistic updates),
+      // just recalculate macros from the current state to ensure consistency
+      if (serverMealsData.meals.length > 0) {
+        console.log('All operations complete, recalculating macros from current state...');
+        const totalMacros = calculateAllMacrosOptimized(serverMealsData.meals, rawPreferences);
+        setServerMealsData(prevData => ({ ...prevData, macros: totalMacros }));
+        // Do not set global macros here; only do so in fetch and optimisticUpdate
+      } else {
+        // Do NOT reset macros to zero if there are no meals
+        console.log('No meals in state after operation; skipping macro recalculation.');
       }
 
       // Resolve all operations
@@ -105,7 +114,8 @@ export default function Page() {
       
       // Rollback all optimistic updates
       console.log('🔄 Rolling back optimistic updates...');
-      setMealsData(originalMealsDataRef.current);
+      setServerMealsData(originalMealsDataRef.current);
+      setServerGlobalMacros(originalMealsDataRef.current.macros); // Rollback server global macros
       syncLoggedMealsMacros(originalMealsDataRef.current.macros);
       
       // Execute rollback functions for each operation
@@ -128,7 +138,7 @@ export default function Page() {
     } finally {
       isProcessingQueueRef.current = false;
     }
-  }, [mealsData, appUser, selectedDate, getMeals, rawPreferences, syncLoggedMealsMacros]);
+  }, [serverMealsData, rawPreferences, syncLoggedMealsMacros]);
 
   // Add operation to queue with rollback support
   const addToOperationQueue = useCallback((operation: Omit<PendingOperation, 'resolve' | 'reject'>) => {
@@ -148,15 +158,18 @@ export default function Page() {
     });
   }, [processOperationQueue]);
 
-  // Fetch meals and meal plans when selectedDate or appUser changes
+  // On fetch, update both states
   useEffect(() => {
     if (appUser && selectedDate) {
       setMealsLoading(true);
       getMeals(appUser.user_id, selectedDate)
         .then((fetched) => {
-          // fetched: { meals, mealPlans }
           const totalMacros = calculateAllMacrosOptimized(fetched.meals, rawPreferences);
-          setMealsData({ meals: fetched.meals, mealPlans: fetched.mealPlans, macros: totalMacros });
+          const newData = { meals: fetched.meals, mealPlans: fetched.mealPlans, macros: totalMacros };
+          setServerMealsData(newData);
+          setOptimisticMealsData(newData);
+          setServerGlobalMacros(totalMacros);
+          setOptimisticGlobalMacros(totalMacros);
           syncLoggedMealsMacros(totalMacros);
         })
         .catch(error => {
@@ -164,7 +177,10 @@ export default function Page() {
         })
         .finally(() => setMealsLoading(false));
     } else {
-      setMealsData({ meals: [], mealPlans: [], macros: {} });
+      setServerMealsData({ meals: [], mealPlans: [], macros: {} });
+      setOptimisticMealsData({ meals: [], mealPlans: [], macros: {} });
+      setServerGlobalMacros({});
+      setOptimisticGlobalMacros({});
       syncLoggedMealsMacros({});
       setMealsLoading(false);
     }
@@ -183,8 +199,8 @@ export default function Page() {
 
   // Update meal plans with logged meals data
   useEffect(() => {
-    updateMealPlansWithLoggedMeals(mealsData.meals);
-  }, [mealsData.meals]); // Removed updateMealPlansWithLoggedMeals from dependencies
+    updateMealPlansWithLoggedMeals(optimisticMealsData.meals);
+  }, [optimisticMealsData.meals]); // Removed updateMealPlansWithLoggedMeals from dependencies
 
   // Open the food search modal for a specific meal
   const openFoodSearch = (meal: Meal) => {
@@ -228,32 +244,44 @@ export default function Page() {
     
     const plannedFoods = mealPlan.servings
       .filter((serving: any) => (serving.remainingQuantity || 0) > 0)
-      .map((serving: any) => ({
-        foodServing: {
-          id: serving.id,
-          food: {
-            id: serving.food.id,
-            name: serving.food.name,
-            brand: serving.food.brand,
-            macros: serving.food.macros,
-            servingUnits: [{
+      .map((serving: any) => {
+        // Transform macros from database format to frontend format
+        const transformedMacros: Record<string, number> = {};
+        if (serving.food.macros && Array.isArray(serving.food.macros)) {
+          serving.food.macros.forEach((macro: any) => {
+            if (macro.metric && macro.metric.id) {
+              transformedMacros[macro.metric.id] = macro.value;
+            }
+          });
+        }
+        
+        return {
+          foodServing: {
+            id: serving.id,
+            food: {
+              id: serving.food.id,
+              name: serving.food.name,
+              brand: serving.food.brand,
+              macros: transformedMacros, // Use transformed macros
+              servingUnits: [{
+                id: serving.unit.id,
+                name: serving.unit.name,
+                grams: serving.unit.grams,
+                food_id: serving.food.id
+              }]
+            },
+            quantity: serving.remainingQuantity,
+            unit: {
               id: serving.unit.id,
               name: serving.unit.name,
               grams: serving.unit.grams,
               food_id: serving.food.id
-            }]
+            }
           },
-          quantity: serving.remainingQuantity,
-          unit: {
-            id: serving.unit.id,
-            name: serving.unit.name,
-            grams: serving.unit.grams,
-            food_id: serving.food.id
-          }
-        },
-        remainingQuantity: serving.remainingQuantity,
-        isBeingReduced: serving.remainingQuantity < serving.originalQuantity
-      }));
+          remainingQuantity: serving.remainingQuantity,
+          isBeingReduced: serving.remainingQuantity < serving.originalQuantity
+        };
+      });
     
     return plannedFoods;
   }, [mealPlans]);
@@ -261,7 +289,7 @@ export default function Page() {
   // Handle food deletion with optimistic update
   // const handleDeleteFood = async (mealId: string, foodServingId: string) => {
   //   // Find the food being deleted to calculate its macros
-  //   const meal = mealsData.meals.find(m => m.id === mealId);
+  //   const meal = serverMealsData.meals.find(m => m.id === mealId);
   //   const foodServing = meal?.servings.find(s => s.id === foodServingId);
     
   //   if (foodServing) {
@@ -274,7 +302,7 @@ export default function Page() {
   //   }
 
   //   // Optimistic update - remove the food from local state immediately
-  //   setMealsData(prevData => ({
+  //   setServerMealsData(prevData => ({
   //     meals: prevData.meals.map(meal => 
   //       meal.id === mealId 
   //         ? { ...meal, servings: meal.servings.filter(serving => serving.id !== foodServingId) }
@@ -290,75 +318,58 @@ export default function Page() {
   //   if (appUser && selectedDate) {
   //     const fetchedMeals = await getMeals(appUser.user_id, selectedDate);
   //     const totalMacros = calculateAllMacrosOptimized(fetchedMeals, rawPreferences);
-  //     setMealsData({ meals: fetchedMeals, macros: totalMacros });
+  //     setServerMealsData({ meals: fetchedMeals, macros: totalMacros });
   //     // Update global macros with the final result
   //     syncLoggedMealsMacros(totalMacros);
   //   }
   // };
 
-  // Handle adding foods with optimistic update
-  const handleAddFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
-    // Convert preferences to Set for the optimized function
-    const preferenceSet = new Set(rawPreferences.map(pref => pref.metric_id));
-    // Calculate the macros being added
-    const addedMacros = foodsToAdd.reduce((total, foodServing) => {
-      const foodMacros = calculateAdjustedMacrosOptimized(foodServing, preferenceSet);
-      Object.entries(foodMacros).forEach(([key, value]) => {
-        if (value) {
-          total[key] = (total[key] || 0) + value;
-        }
-      });
-      return total;
-    }, {} as any);
-    
-    // Ultra-fast update - add the macros immediately
-    addToLoggedMeals(addedMacros);
-
-    // Optimistic update - add foods to local state immediately
-    setMealsData(prevData => ({
-      meals: prevData.meals.map(meal => 
-        meal.id === mealId 
-          ? { ...meal, servings: [...meal.servings, ...foodsToAdd] }
-          : meal
-      ),
-      mealPlans: prevData.mealPlans,
-      macros: prevData.macros // Keep existing macros for now
-    }));
-
-    // Queue the API operations
-    await addToOperationQueue({
-      id: `add-${mealId}-${Date.now()}`,
-      type: 'add',
-      promise: (async () => {
-        // Make the API call
-        await addFoodsToMeal(mealId, foodsToAdd);
-        
-        // Update meal plans to subtract logged quantities
-        await updateMealPlansAfterLogging(mealId, foodsToAdd, selectedDate);
-      })(),
-      rollback: () => {
-        // If add fails, revert the local state
-        setMealsData(prevData => ({
-          meals: prevData.meals.map(meal => 
-            meal.id === mealId 
-              ? { ...meal, servings: meal.servings.filter(serving => !foodsToAdd.some(food => food.id === serving.id)) }
-              : meal
-          ),
-          mealPlans: prevData.mealPlans,
-          macros: prevData.macros // Keep existing macros for now
-        }));
-        
-        // Revert macro updates
-        subtractFromLoggedMeals(addedMacros);
-      },
-      description: `Add ${foodsToAdd.length} foods to meal ${mealId}`
+  // Optimistic update helpers
+  const optimisticUpdate = async (updateFn: (prev: typeof optimisticMealsData) => typeof optimisticMealsData, apiCall: Promise<any>) => {
+    // Update UI immediately and recalculate macros from the next state
+    setOptimisticMealsData(prev => {
+      const next = updateFn(prev);
+      const totalMacros = calculateAllMacrosOptimized(next.meals, rawPreferences);
+      return { ...next, macros: totalMacros };
     });
+    try {
+      await apiCall;
+      // Optionally, refetch or merge server data here
+    } catch (err) {
+      // On failure, revert UI
+      setOptimisticMealsData(serverMealsData);
+      setOptimisticGlobalMacros(serverGlobalMacros);
+      syncLoggedMealsMacros(serverGlobalMacros);
+      alert('Failed to save changes. Changes reverted.');
+    }
+  };
+
+  // Side effect: keep global macros in sync with optimisticMealsData.macros
+  useEffect(() => {
+    setOptimisticGlobalMacros(optimisticMealsData.macros);
+    syncLoggedMealsMacros(optimisticMealsData.macros);
+  }, [optimisticMealsData.macros]);
+
+  // Example: handleAddFoodsToMeal with optimistic update
+  const handleAddFoodsToMeal = async (mealId: string, foodsToAdd: FoodServing[]) => {
+    await optimisticUpdate(
+      prev => ({
+        ...prev,
+        meals: prev.meals.map(meal =>
+          meal.id === mealId
+            ? { ...meal, servings: [...meal.servings, ...foodsToAdd.map(food => ({ ...food, quantity: Number(food.quantity) || 0 }))] }
+            : meal
+        ),
+        // mealPlans and macros will be recalculated below
+      }),
+      addFoodsToMeal(mealId, foodsToAdd)
+    );
   };
 
   // Handle updating food portion with optimistic update
   const handleUpdateFoodPortion = async (servingId: string, quantity: number, unit: SharedServingUnit) => {
     // Find the food being updated to calculate the macro difference
-    const oldServing = mealsData.meals.flatMap(m => m.servings).find(s => s.id === servingId);
+    const oldServing = optimisticMealsData.meals.flatMap(m => m.servings).find(s => s.id === servingId);
     const newServing = oldServing ? { ...oldServing, quantity, unit } : null;
     
     if (oldServing && newServing) {
@@ -385,8 +396,8 @@ export default function Page() {
     }
 
     // Optimistic update - update the serving in local state immediately
-    setMealsData(prevData => ({
-      meals: prevData.meals.map(meal => ({
+    setOptimisticMealsData(prev => ({
+      meals: prev.meals.map(meal => ({
         ...meal,
         servings: meal.servings.map(serving => 
           serving.id === servingId 
@@ -394,8 +405,8 @@ export default function Page() {
             : serving
         )
       })),
-      mealPlans: prevData.mealPlans,
-      macros: prevData.macros // Keep existing macros for now
+      mealPlans: prev.mealPlans,
+      macros: prev.macros // Keep existing macros for now
     }));
 
     // Queue the API operation
@@ -405,8 +416,8 @@ export default function Page() {
       promise: updateFoodPortion(servingId, quantity, unit),
       rollback: () => {
         // If update fails, revert the local state
-        setMealsData(prevData => ({
-          meals: prevData.meals.map(meal => ({
+        setOptimisticMealsData(prev => ({
+          meals: prev.meals.map(meal => ({
             ...meal,
             servings: meal.servings.map(serving => 
               serving.id === servingId 
@@ -414,8 +425,8 @@ export default function Page() {
                 : serving
             ).filter((serving): serving is FoodServing => serving !== undefined)
           })),
-          mealPlans: prevData.mealPlans,
-          macros: prevData.macros // Keep existing macros for now
+          mealPlans: prev.mealPlans,
+          macros: prev.macros // Keep existing macros for now
         }));
         
         // Revert macro updates
@@ -461,7 +472,7 @@ export default function Page() {
 
   const memoizedHandleDeleteFood = useCallback(async (mealId: string, foodServingId: string) => {
     // Find the food being deleted to calculate its macros
-    const meal = mealsData.meals.find(m => m.id === mealId);
+    const meal = optimisticMealsData.meals.find(m => m.id === mealId);
     const foodServing = meal?.servings.find(s => s.id === foodServingId);
     
     if (foodServing) {
@@ -474,14 +485,14 @@ export default function Page() {
     }
 
     // Optimistic update - remove the food from local state immediately
-    setMealsData(prevData => ({
-      meals: prevData.meals.map(meal => 
+    setOptimisticMealsData(prev => ({
+      meals: prev.meals.map(meal => 
         meal.id === mealId 
           ? { ...meal, servings: meal.servings.filter(serving => serving.id !== foodServingId) }
           : meal
       ),
-      mealPlans: prevData.mealPlans,
-      macros: prevData.macros // Keep existing macros for now
+      mealPlans: prev.mealPlans,
+      macros: prev.macros // Keep existing macros for now
     }));
 
     // Queue the API operation
@@ -492,14 +503,14 @@ export default function Page() {
       rollback: () => {
         // If delete fails, revert the local state
         if (foodServing) {
-          setMealsData(prevData => ({
-            meals: prevData.meals.map(meal => 
+          setOptimisticMealsData(prev => ({
+            meals: prev.meals.map(meal => 
               meal.id === mealId 
                 ? { ...meal, servings: [...meal.servings, foodServing] } // Revert by adding back
                 : meal
             ),
-            mealPlans: prevData.mealPlans,
-            macros: prevData.macros // Keep existing macros for now
+            mealPlans: prev.mealPlans,
+            macros: prev.macros // Keep existing macros for now
           }));
           
           // Revert macro updates
@@ -510,7 +521,7 @@ export default function Page() {
       },
       description: `Delete food serving ${foodServingId} from meal ${mealId}`
     });
-  }, [mealsData.meals, rawPreferences, subtractFromLoggedMeals, deleteFoodFromMeal, addToOperationQueue]);
+  }, [optimisticMealsData.meals, rawPreferences, subtractFromLoggedMeals, deleteFoodFromMeal, addToOperationQueue]);
 
   const memoizedHandlePlannedFoodPress = useCallback((foodServing: FoodServing, meal: Meal) => {
     setActiveMeal(meal);
@@ -538,8 +549,8 @@ export default function Page() {
   ), [memoizedOpenFoodSearch, memoizedOnFoodPress, memoizedHandleDeleteFood, memoizedHandlePlannedFoodPress, getPlannedFoodsForMeal]);
 
   useEffect(() => {
-    // console.log("mealsHome", mealsData.meals);
-  }, [mealsData.meals]);
+    // console.log("mealsHome", serverMealsData.meals);
+  }, [optimisticMealsData.meals]);
 
   return (
       <View style={styles.parentReference}>
@@ -550,7 +561,7 @@ export default function Page() {
           ) : (
             <FlatList
               style={styles.mealContent}
-              data={mealsData.meals}
+              data={optimisticMealsData.meals}
               keyExtractor={keyExtractor}
               renderItem={renderMealItem}
               ItemSeparatorComponent={() => <View style={{ height: 40 }} />}
@@ -581,7 +592,7 @@ export default function Page() {
           {/* Debug: Show JSON of meals */}
           {/* <View style={{padding: 10}}>
             <Text style={{fontSize: 10, color: 'gray'}} selectable>
-              {JSON.stringify(mealsData.meals, null, 2)}
+              {JSON.stringify(serverMealsData.meals, null, 2)}
             </Text>
             <Text>{selectedDate.toISOString()}</Text>
           </View> */}

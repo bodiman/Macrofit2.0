@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Meal, FoodServing } from '@shared/types/foodTypes';
+import { useMealPlanApi } from '../lib/api/mealPlan';
 
 interface MealPlanServing {
   id: string;
@@ -25,6 +26,7 @@ export const useMealPlans = (mealPlansFromMeals: MealPlan[] = []) => {
   // Use the meal plans from the meals fetch
   const [mealPlans, setMealPlans] = useState<Map<string, MealPlan>>(new Map());
   const [loading, setLoading] = useState(false);
+  const mealPlanApi = useMealPlanApi();
 
   // Update mealPlans state whenever mealPlansFromMeals changes
   useEffect(() => {
@@ -72,11 +74,82 @@ export const useMealPlans = (mealPlansFromMeals: MealPlan[] = []) => {
     });
   }, []);
 
-  // updateMealPlansAfterLogging can remain as is, but should not refetch
+  // updateMealPlansAfterLogging with optimistic updates
   const updateMealPlansAfterLogging = useCallback(async (mealId: string, loggedServings: FoodServing[], date?: Date) => {
-    // This function can be a no-op or just update state, since refetching is handled by meals fetch
-    // Optionally, update the local state as above
-  }, []);
+    // Optimistically update meal plans immediately
+    setMealPlans(prevPlans => {
+      const newPlans = new Map(prevPlans);
+      const mealPlan = newPlans.get(mealId);
+      
+      if (mealPlan) {
+        // Create a copy of the meal plan to modify
+        const updatedMealPlan = { ...mealPlan };
+        
+        loggedServings.forEach(loggedServing => {
+          const plannedServing = updatedMealPlan.servings.find(
+            planned => planned.food_id === loggedServing.food.id
+          );
+          
+          if (plannedServing && plannedServing.originalQuantity !== undefined) {
+            const loggedGrams = loggedServing.quantity * loggedServing.unit.grams;
+            const plannedGrams = plannedServing.originalQuantity * plannedServing.unit.grams;
+            const remainingGrams = plannedGrams - loggedGrams;
+            
+            if (remainingGrams <= 0) {
+              // Remove the serving if no quantity remains
+              updatedMealPlan.servings = updatedMealPlan.servings.filter(
+                s => s.id !== plannedServing.id
+              );
+            } else {
+              // Update the remaining quantity
+              plannedServing.remainingQuantity = remainingGrams / plannedServing.unit.grams;
+            }
+          }
+        });
+        
+        newPlans.set(mealId, updatedMealPlan);
+      }
+      
+      return newPlans;
+    });
+    
+    // Make API calls in background to update the database
+    try {
+      const mealPlan = mealPlans.get(mealId);
+      if (mealPlan) {
+        // Update each planned serving quantity in the database
+        const updatePromises = loggedServings.map(async (loggedServing) => {
+          const plannedServing = mealPlan.servings.find(
+            planned => planned.food_id === loggedServing.food.id
+          );
+          
+          if (plannedServing && plannedServing.originalQuantity !== undefined) {
+            const loggedGrams = loggedServing.quantity * loggedServing.unit.grams;
+            const plannedGrams = plannedServing.originalQuantity * plannedServing.unit.grams;
+            const remainingGrams = plannedGrams - loggedGrams;
+            
+            if (remainingGrams <= 0) {
+              // The serving will be deleted by the backend when quantity is 0
+              return;
+            } else {
+              const remainingQuantity = remainingGrams / plannedServing.unit.grams;
+              
+              // Update the serving quantity in the database
+              await mealPlanApi.updateServingQuantity(mealPlan.id, plannedServing.id, remainingQuantity);
+            }
+          }
+        });
+        
+        // Wait for all updates to complete
+        await Promise.all(updatePromises);
+      }
+    } catch (error) {
+      console.error('Failed to update meal plan quantities in background:', error);
+      // Note: We don't rollback the optimistic update here because the user has already
+      // seen the change and it would be confusing to revert it. The next meal fetch
+      // will correct any inconsistencies.
+    }
+  }, [mealPlans, mealPlanApi]);
 
   return { 
     mealPlans, 
