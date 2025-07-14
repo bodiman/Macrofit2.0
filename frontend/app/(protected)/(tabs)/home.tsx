@@ -21,6 +21,7 @@ import MacrosDisplay from '@/components/MacroDisplay/MacrosDisplay';
 import { calculateAllMacrosOptimized, calculateAdjustedMacrosOptimized } from '@/utils/optimizedMacroCalculation';
 import { useGlobalMacrosSync } from '@/hooks/useGlobalMacrosSync';
 import { useMealPlans } from '../../../hooks/useMealPlans';
+import useShoppingCart from '@/app/hooks/useShoppingCart';
 
 // Operation queue types
 interface PendingOperation {
@@ -47,10 +48,10 @@ export default function Page() {
 
   const { selectedDate } = useSelectedDate();
   const { syncLoggedMealsMacros, addToLoggedMeals, subtractFromLoggedMeals } = useGlobalMacrosSync();
+  const { setShoppingCart } = useShoppingCart();
   const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
   const [activeMealPreferenceDetails, setActiveMealPreferenceDetails] = useState<UserMealPreference | null>(null);
   const [editingFood, setEditingFood] = useState<FoodServing | null>(null);
-  const [clickedPlannedFood, setClickedPlannedFood] = useState<FoodServing | null>(null);
   // Replace mealsData with two separate states
   const [serverMealsData, setServerMealsData] = useState<{
     meals: Meal[];
@@ -220,13 +221,21 @@ export default function Page() {
       eventBus.emit('foodSearchModalClose');
       setActiveMeal(null);
       setActiveMealPreferenceDetails(null); // Clear preference details on close
-      setClickedPlannedFood(null); // Clear clicked planned food
   }
 
-  // Handle planned food press - open shopping cart with the food
+  // Handle planned food press - add to shopping cart and open modal
   const handlePlannedFoodPress = (foodServing: FoodServing, meal: Meal) => {
+    // Add the planned food to the shopping cart
+    const plannedFoodWithQuantity = {
+      ...foodServing,
+      quantity: Number(foodServing.quantity) || 0
+    };
+    
+    // Use the shopping cart hook to add the food
+    setShoppingCart([plannedFoodWithQuantity]);
+    
+    // Open the modal for the meal
     setActiveMeal(meal);
-    setClickedPlannedFood(foodServing);
     // Find the corresponding UserMealPreference
     const matchingUmp = userMealPreferences.find(ump => ump.name === meal.name);
     if (matchingUmp) {
@@ -524,14 +533,23 @@ export default function Page() {
   }, [optimisticMealsData.meals, rawPreferences, subtractFromLoggedMeals, deleteFoodFromMeal, addToOperationQueue]);
 
   const memoizedHandlePlannedFoodPress = useCallback((foodServing: FoodServing, meal: Meal) => {
+    // Add the planned food to the shopping cart
+    const plannedFoodWithQuantity = {
+      ...foodServing,
+      quantity: Number(foodServing.quantity) || 0
+    };
+    
+    // Use the shopping cart hook to add the food
+    setShoppingCart([plannedFoodWithQuantity]);
+    
+    // Open the modal for the meal
     setActiveMeal(meal);
-    setClickedPlannedFood(foodServing);
     // Find the corresponding UserMealPreference
     const matchingUmp = userMealPreferences.find(ump => ump.name === meal.name);
     if (matchingUmp) {
       setActiveMealPreferenceDetails(matchingUmp);
     }
-  }, [userMealPreferences]);
+  }, [userMealPreferences, setShoppingCart]);
 
   // Memoized key extractor
   const keyExtractor = useCallback((item: Meal) => item.id, []);
@@ -576,7 +594,6 @@ export default function Page() {
             onClose={closeFoodSearch}
             addFoodsToMeal={handleAddFoodsToMeal}
             dailyMacroPreferences={preferences}
-            clickedPlannedFood={clickedPlannedFood}
           />
           {editingFood && (
             <EditFoodModal

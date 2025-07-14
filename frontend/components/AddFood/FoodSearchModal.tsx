@@ -22,25 +22,12 @@ interface Props {
     modalCloser: () => void;
     addFoodsToMeal: (mealId: string, foodsToAdd: FoodServing[]) => Promise<void>;
     dailyMacroPreferences: MacroPreferences;
-    clickedPlannedFood?: FoodServing | null;
 }
 
-export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences, clickedPlannedFood }: Props) {
+export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
     const { rawPreferences } = useUser();
-    const { syncShoppingCartMacros, clearShoppingCart } = useGlobalMacrosSync();
-
-    // Pre-populate shopping cart with clicked planned food
-    useEffect(() => {
-        if (clickedPlannedFood && shoppingCart.length === 0) {
-            // Ensure the quantity is preserved correctly
-            const plannedFoodWithQuantity = {
-                ...clickedPlannedFood,
-                quantity: Number(clickedPlannedFood.quantity) || 0
-            };
-            setShoppingCart([plannedFoodWithQuantity]);
-        }
-    }, [clickedPlannedFood, shoppingCart.length, setShoppingCart]);
+    const { syncShoppingCartMacros, clearShoppingCart, openShoppingCart, closeShoppingCart } = useGlobalMacrosSync();
 
     // Calculate cart macros using optimized function
     const cartMacros = useMemo(() => {
@@ -53,7 +40,9 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
             servings: shoppingCart
         };
         
-        return calculateAllMacrosOptimized([cartMeal], rawPreferences);
+        const macros = calculateAllMacrosOptimized([cartMeal], rawPreferences);
+        console.log(`🛒 Cart macros calculated:`, { cartItems: shoppingCart.length, macros });
+        return macros;
     }, [shoppingCart, rawPreferences]);
 
     // Calculate display macros (cart + logged foods) for user experience
@@ -76,16 +65,6 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
         return totalMacros;
     }, [cartMacros, activeMeal, rawPreferences]);
 
-    // Sync cart macros with global display (only cart foods, not logged foods)
-    useEffect(() => {
-        syncShoppingCartMacros(cartMacros);
-        
-        // Clear cart macros when component unmounts
-        return () => {
-            clearShoppingCart();
-        };
-    }, [cartMacros, syncShoppingCartMacros, clearShoppingCart]);
-
     const adjustedPreferences = useMemo(() => {
         const distributionPercentage = activeMealPreference?.distribution_percentage;
         if (!distributionPercentage) return dailyMacroPreferences;
@@ -102,6 +81,21 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
             eventBus.emit('foodSearchModalOpen');
         }
     }, [activeMeal]);
+
+    // Open shopping cart when modal opens
+    useEffect(() => {
+        if (activeMeal === null) return;
+        
+        console.log(`🛒 FoodSearchModal: Opening shopping cart, syncing macros:`, cartMacros);
+        openShoppingCart();
+        // Sync current shopping cart macros when modal opens
+        syncShoppingCartMacros(cartMacros);
+        return () => {
+            console.log(`🛒 FoodSearchModal: Closing shopping cart, clearing macros`);
+            closeShoppingCart();
+            clearShoppingCart(); // Clear shopping cart macros only
+        };
+    }, [activeMeal, openShoppingCart, closeShoppingCart, clearShoppingCart, syncShoppingCartMacros, cartMacros]);
 
     if (activeMeal === null) return null;
 
@@ -170,25 +164,10 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
                         />
                     </View>
 
-                    {/* Only show AddFood when no planned food is clicked */}
-                    {!clickedPlannedFood && (
-                        <AddFood
-                            preferences={dailyMacroPreferences}
-                            onAddFood={handleAddFood}
-                        />
-                    )}
-
-                    {/* Show message when planned food is clicked */}
-                    {clickedPlannedFood && (
-                        <View style={styles.plannedFoodMessage}>
-                            <Text style={styles.plannedFoodText}>
-                                {clickedPlannedFood.food.name} added to cart
-                            </Text>
-                            <Text style={styles.plannedFoodSubtext}>
-                                You can adjust the quantity or add more foods below
-                            </Text>
-                        </View>
-                    )}
+                    <AddFood
+                        preferences={dailyMacroPreferences}
+                        onAddFood={handleAddFood}
+                    />
 
                     <View style={styles.shoppingCart}>
                         <FlatList 

@@ -8,11 +8,17 @@ interface GlobalMacrosContextType {
   shoppingCartMacros: any;
   otherMacros: any;
   
+  // Shopping cart modal state
+  isShoppingCartOpen: boolean;
+  
   // Incremental update functions (FAST - just add/subtract differences)
   updateLoggedMealsMacros: (macros: any) => void;
   updateMealPlanMacros: (macros: any) => void;
   updateShoppingCartMacros: (macros: any) => void;
   updateOtherMacros: (macros: any) => void;
+  
+  // Shopping cart modal state functions
+  setShoppingCartOpen: (isOpen: boolean) => void;
   
   // Incremental add/subtract functions (ULTRA FAST)
   addToLoggedMealsMacros: (macros: any) => void;
@@ -41,6 +47,7 @@ export function GlobalMacrosProvider({ children }: { children: React.ReactNode }
   const [mealPlanMacros, setMealPlanMacros] = useState<any>({});
   const [shoppingCartMacros, setShoppingCartMacros] = useState<any>({});
   const [otherMacros, setOtherMacros] = useState<any>({});
+  const [isShoppingCartOpen, setIsShoppingCartOpen] = useState(false);
 
   // Helper function for incremental updates
   const addMacros = useCallback((currentMacros: any, newMacros: any) => {
@@ -74,6 +81,12 @@ export function GlobalMacrosProvider({ children }: { children: React.ReactNode }
 
   const updateOtherMacros = useCallback((macros: any) => {
     setOtherMacros(macros);
+  }, []);
+
+  // Shopping cart modal state functions
+  const setShoppingCartOpen = useCallback((isOpen: boolean) => {
+    console.log(`🛒 Shopping cart ${isOpen ? 'OPENED' : 'CLOSED'}`);
+    setIsShoppingCartOpen(isOpen);
   }, []);
 
   // Incremental add functions (ULTRA FAST)
@@ -144,9 +157,14 @@ export function GlobalMacrosProvider({ children }: { children: React.ReactNode }
       combined[key] = (combined[key] || 0) + (value as number);
     }
 
-    // Add shopping cart macros
-    for (const [key, value] of Object.entries(shoppingCartMacros)) {
-      combined[key] = (combined[key] || 0) + (value as number);
+    // Add shopping cart macros only if the modal is open
+    if (isShoppingCartOpen) {
+      console.log(`🛒 Including shopping cart macros in total:`, shoppingCartMacros);
+      for (const [key, value] of Object.entries(shoppingCartMacros)) {
+        combined[key] = (combined[key] || 0) + (value as number);
+      }
+    } else {
+      console.log(`🛒 Shopping cart closed - NOT including cart macros:`, shoppingCartMacros);
     }
 
     // Add other macros
@@ -154,18 +172,28 @@ export function GlobalMacrosProvider({ children }: { children: React.ReactNode }
       combined[key] = (combined[key] || 0) + (value as number);
     }
 
+    console.log(`📊 Total macros breakdown:`, {
+      loggedMeals: loggedMealsMacros,
+      mealPlan: mealPlanMacros,
+      shoppingCart: isShoppingCartOpen ? shoppingCartMacros : 'EXCLUDED',
+      other: otherMacros,
+      total: combined
+    });
+
     return combined;
-  }, [loggedMealsMacros, mealPlanMacros, shoppingCartMacros, otherMacros]);
+  }, [loggedMealsMacros, mealPlanMacros, shoppingCartMacros, otherMacros, isShoppingCartOpen]);
 
   const value: GlobalMacrosContextType = {
     loggedMealsMacros,
     mealPlanMacros,
     shoppingCartMacros,
     otherMacros,
+    isShoppingCartOpen,
     updateLoggedMealsMacros,
     updateMealPlanMacros,
     updateShoppingCartMacros,
     updateOtherMacros,
+    setShoppingCartOpen,
     addToLoggedMealsMacros,
     subtractFromLoggedMealsMacros,
     addToMealPlanMacros,
