@@ -1,50 +1,105 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import Colors from '@/styles/colors'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { useUser } from '@/app/hooks/useUser'
+import { useSelectedDate } from './_layout'
+import { useState } from 'react'
+import { useMealPlanApi } from '@/lib/api/mealPlan'
 
 export default function MealPlanPage() {
-  const { userMealPreferences } = useUser()
+  const { appUser } = useUser()
+  const { selectedDate } = useSelectedDate()
+  const [isLoadingMealPlans, setIsLoadingMealPlans] = useState(false)
+  const mealPlanApi = useMealPlanApi()
 
-  const handleCreateNewPlan = () => {
-    // TODO: Create a new meal plan and navigate to it
-    router.push('./plan-new')
+  const handleProceedToPlanDetail = async () => {
+    if (!appUser) {
+      alert('User not found');
+      return;
+    }
+
+    setIsLoadingMealPlans(true);
+    
+    try {
+      // Load existing meal plans for the selected date
+      const mealPlansData = await mealPlanApi.getMealPlans(appUser.user_id, selectedDate);
+      console.log('Loaded meal plans for plan-detail:', mealPlansData);
+      
+      // Navigate to plan-detail page with the loaded meal plans
+      router.push({
+        pathname: './plan-detail',
+        params: {
+          initialMealPlans: JSON.stringify(mealPlansData)
+        }
+      });
+    } catch (error) {
+      console.error('Failed to load meal plans:', error);
+      // Navigate anyway with empty meal plans
+      router.push({
+        pathname: './plan-detail',
+        params: {
+          initialMealPlans: JSON.stringify([])
+        }
+      });
+    } finally {
+      setIsLoadingMealPlans(false);
+    }
   }
 
-  const handleLoadPlan = () => {
-    // TODO: Show list of existing meal plans
-    router.push('./plan-list')
+  const handleConfigurePreferences = () => {
+    // Placeholder for future macro preferences configuration
+    alert('Macro preferences configuration will be available soon!')
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Meal Planning</Text>
-      <Text style={styles.subtitle}>Create a new meal plan or load an existing one</Text>
+      <Text style={styles.subtitle}>Choose what you'd like to do</Text>
 
-      <View style={styles.optionsContainer}>
-        <Pressable 
-          style={styles.optionCard}
-          onPress={handleCreateNewPlan}
-        >
-          <MaterialIcons name="add-circle-outline" size={32} color={Colors.blue} />
-          <Text style={styles.optionTitle}>Create New Plan</Text>
-          <Text style={styles.optionDescription}>
-            Start fresh with a new meal plan based on your preferences
-          </Text>
-        </Pressable>
+      <ScrollView style={styles.content}>
+        {/* Main Action Options */}
+        <View style={styles.optionsContainer}>
+          <Pressable 
+            style={styles.optionCard}
+            onPress={handleProceedToPlanDetail}
+            disabled={isLoadingMealPlans}
+          >
+            {isLoadingMealPlans ? (
+              <ActivityIndicator size="small" color={Colors.blue} />
+            ) : (
+              <MaterialIcons name="restaurant-menu" size={32} color={Colors.blue} />
+            )}
+            <Text style={styles.optionTitle}>
+              {isLoadingMealPlans ? 'Loading...' : 'Plan Meals'}
+            </Text>
+            <Text style={styles.optionDescription}>
+              Create or edit meal plans for {selectedDate.toLocaleDateString()}
+            </Text>
+          </Pressable>
 
-        <Pressable 
-          style={styles.optionCard}
-          onPress={handleLoadPlan}
-        >
-          <MaterialIcons name="folder-open" size={32} color={Colors.blue} />
-          <Text style={styles.optionTitle}>Load Plan</Text>
-          <Text style={styles.optionDescription}>
-            Continue working on a previously saved meal plan
+          <Pressable 
+            style={styles.optionCard}
+            onPress={handleConfigurePreferences}
+          >
+            <MaterialIcons name="settings" size={32} color={Colors.gray} />
+            <Text style={styles.optionTitle}>Configure Preferences</Text>
+            <Text style={styles.optionDescription}>
+              Set up your macro preferences and meal planning settings
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Info Section */}
+        <View style={styles.infoSection}>
+          <Text style={styles.infoTitle}>About Meal Planning</Text>
+          <Text style={styles.infoText}>
+            Use the meal planning feature to create optimized meal plans based on your nutritional goals. 
+            You can select foods, set quantities, and use our optimization algorithm to find the best 
+            combination for your macro targets.
           </Text>
-        </Pressable>
-      </View>
+        </View>
+      </ScrollView>
     </View>
   )
 }
@@ -65,6 +120,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.gray,
     marginBottom: 20,
+  },
+  content: {
+    flex: 1,
   },
   optionsContainer: {
     gap: 16,
@@ -88,5 +146,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.gray,
     textAlign: 'center',
+  },
+  infoSection: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: Colors.lightgray,
+    borderRadius: 12,
+  },
+  infoTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.black,
+    marginBottom: 10,
+  },
+  infoText: {
+    fontSize: 16,
+    color: Colors.gray,
+    lineHeight: 24,
   },
 })

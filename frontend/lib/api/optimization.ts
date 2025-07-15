@@ -18,6 +18,7 @@ export interface OptimizationRequest {
   foods: FoodMacroData[];
   preferences: UserPreferenceData[];
   macroNames: string[]; // Array of macro names in the same order as macroValues
+  dailyMaxValues: number[]; // Array of daily maximum values for each macro (for weighting)
   maxIterations?: number; // Optional parameter for number of optimization iterations
 }
 

@@ -62,16 +62,26 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
             const fullUser = await clerkClient.users.getUser(req.auth.userId);
             req.user = fullUser;
             // console.log('Auth Middleware: req.user populated.'); // Simplified log for brevity
-        } catch (userError) {
+        } catch (userError: any) {
             console.error(`Auth Middleware: Failed to fetch full user object for userId ${req.auth.userId}:`, userError);
-            // Depending on your getUserIdFromRequest logic, this might be acceptable or a hard error.
-            // If getUserIdFromRequest can work without req.user (e.g., by having a clerk_id on your User table),
-            // then not having req.user might be okay. For now, proceeding.
+            
+            // Handle rate limiting specifically
+            if (userError.status === 429) {
+                console.warn('Auth Middleware: Rate limited by Clerk API, proceeding without full user object');
+                // Don't fail the request, just proceed without req.user
+                // The getUserIdFromRequest function can fall back to query parameters
+            } else {
+                console.error('Auth Middleware: Unexpected error fetching user object:', userError);
+                // For other errors, still proceed but log the error
+            }
+            // Continue with the request - getUserIdFromRequest can handle missing req.user
         }
 
         next();
     } catch (error: any) {
         console.error('Auth Middleware: Token verification failed or other error:', error.message);
+        // Log the server's current time for clock skew debugging
+        console.log('Server time:', new Date());
         // console.error(error.stack); // Optionally log full stack for more details
         if (error.message && (error.message.includes('Token has expired') || error.message.includes('exp'))) {
              return res.status(401).json({ error: 'Token expired. Please sign in again.', code: 'TOKEN_EXPIRED' });

@@ -100,12 +100,15 @@ model Meal {
 }
 
 model MealPlan {
-  id          String        @id
+  id          String        @id @default(cuid())
+  user_id     Int
   meal_id     String
+  date        DateTime      @db.Date
   servings    FoodServing[]
   meal        Meal          @relation(fields: [meal_id], references: [id])
-  User        User?         @relation(fields: [userUser_id], references: [user_id])
-  userUser_id Int?
+  user        User          @relation(fields: [user_id], references: [user_id])
+  
+  @@unique([user_id, meal_id, date])
 }
 
 model ServingUnit {

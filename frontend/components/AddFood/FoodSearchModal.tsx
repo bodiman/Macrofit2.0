@@ -27,7 +27,7 @@ interface Props {
 export default function FoodSearchModal({ onClose, activeMeal, activeMealPreference, modalCloser, addFoodsToMeal, dailyMacroPreferences }: Props) {
     const { shoppingCart, setShoppingCart, clearCart } = useShoppingCart();
     const { rawPreferences } = useUser();
-    const { syncShoppingCartMacros, clearShoppingCart } = useGlobalMacrosSync();
+    const { syncShoppingCartMacros, clearShoppingCart, openShoppingCart, closeShoppingCart } = useGlobalMacrosSync();
 
     // Calculate cart macros using optimized function
     const cartMacros = useMemo(() => {
@@ -40,7 +40,9 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
             servings: shoppingCart
         };
         
-        return calculateAllMacrosOptimized([cartMeal], rawPreferences);
+        const macros = calculateAllMacrosOptimized([cartMeal], rawPreferences);
+        console.log(`🛒 Cart macros calculated:`, { cartItems: shoppingCart.length, macros });
+        return macros;
     }, [shoppingCart, rawPreferences]);
 
     // Calculate display macros (cart + logged foods) for user experience
@@ -63,16 +65,6 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
         return totalMacros;
     }, [cartMacros, activeMeal, rawPreferences]);
 
-    // Sync cart macros with global display (only cart foods, not logged foods)
-    useEffect(() => {
-        syncShoppingCartMacros(cartMacros);
-        
-        // Clear cart macros when component unmounts
-        return () => {
-            clearShoppingCart();
-        };
-    }, [cartMacros, syncShoppingCartMacros, clearShoppingCart]);
-
     const adjustedPreferences = useMemo(() => {
         const distributionPercentage = activeMealPreference?.distribution_percentage;
         if (!distributionPercentage) return dailyMacroPreferences;
@@ -90,10 +82,30 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
         }
     }, [activeMeal]);
 
+    // Open shopping cart when modal opens
+    useEffect(() => {
+        if (activeMeal === null) return;
+        
+        console.log(`🛒 FoodSearchModal: Opening shopping cart, syncing macros:`, cartMacros);
+        openShoppingCart();
+        // Sync current shopping cart macros when modal opens
+        syncShoppingCartMacros(cartMacros);
+        return () => {
+            console.log(`🛒 FoodSearchModal: Closing shopping cart, clearing macros`);
+            closeShoppingCart();
+            clearShoppingCart(); // Clear shopping cart macros only
+        };
+    }, [activeMeal, openShoppingCart, closeShoppingCart, clearShoppingCart, syncShoppingCartMacros, cartMacros]);
+
     if (activeMeal === null) return null;
 
     const handleAddFood = (foodServing: FoodServing) => {
-        setShoppingCart([...shoppingCart, foodServing]);
+        // Ensure the quantity is preserved correctly
+        const foodWithQuantity = {
+            ...foodServing,
+            quantity: Number(foodServing.quantity) || 0
+        };
+        setShoppingCart([...shoppingCart, foodWithQuantity]);
     };
 
     const handleRemoveFromCart = (foodId: string) => {
@@ -120,7 +132,14 @@ export default function FoodSearchModal({ onClose, activeMeal, activeMealPrefere
             // Clear shopping cart macros immediately to prevent double counting
             clearShoppingCart();
             modalCloser();
-            addFoodsToMeal(activeMeal.id, shoppingCart).then(()=> {
+            
+            // Ensure all quantities are preserved correctly
+            const foodsWithQuantities = shoppingCart.map(food => ({
+                ...food,
+                quantity: Number(food.quantity) || 0
+            }));
+            
+            addFoodsToMeal(activeMeal.id, foodsWithQuantities).then(()=> {
                 clearCart();
             });
         }
@@ -260,5 +279,22 @@ const styles = StyleSheet.create({
         fontWeight: 600,
         color: Colors.white,
         margin: "auto"
+    },
+    plannedFoodMessage: {
+        padding: 15,
+        backgroundColor: Colors.lightgray,
+        borderRadius: 8,
+        margin: 10,
+        alignItems: 'center',
+    },
+    plannedFoodText: {
+        fontSize: 16,
+        fontWeight: 600,
+        color: Colors.darkgray,
+    },
+    plannedFoodSubtext: {
+        fontSize: 14,
+        color: Colors.gray,
+        marginTop: 5,
     },
 });

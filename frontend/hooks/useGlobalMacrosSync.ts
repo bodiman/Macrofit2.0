@@ -11,6 +11,7 @@ export function useGlobalMacrosSync() {
     updateMealPlanMacros,
     updateShoppingCartMacros,
     updateOtherMacros,
+    setShoppingCartOpen,
     addToLoggedMealsMacros,
     subtractFromLoggedMealsMacros,
     addToMealPlanMacros,
@@ -41,6 +42,15 @@ export function useGlobalMacrosSync() {
   const syncOtherMacros = useCallback((macros: any) => {
     updateOtherMacros(macros);
   }, [updateOtherMacros]);
+
+  // Shopping cart modal state functions
+  const openShoppingCart = useCallback(() => {
+    setShoppingCartOpen(true);
+  }, [setShoppingCartOpen]);
+
+  const closeShoppingCart = useCallback(() => {
+    setShoppingCartOpen(false);
+  }, [setShoppingCartOpen]);
 
   // Ultra-fast incremental add functions
   const addToLoggedMeals = useCallback((macros: any) => {
@@ -95,6 +105,10 @@ export function useGlobalMacrosSync() {
     syncMealPlanMacros,
     syncShoppingCartMacros,
     syncOtherMacros,
+    
+    // Shopping cart modal state functions
+    openShoppingCart,
+    closeShoppingCart,
     
     // Ultra-fast incremental add functions
     addToLoggedMeals,

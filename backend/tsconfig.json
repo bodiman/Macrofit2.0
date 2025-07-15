@@ -12,6 +12,11 @@
         "paths": {
             "@utils/*": ["./utils/*"],
             "@shared/*": ["./../shared/*"]
-        }
-    }
+        },
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": [
+        "**/*.ts",
+        "types/**/*.d.ts"
+    ]
 }

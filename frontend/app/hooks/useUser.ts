@@ -260,12 +260,13 @@ export function useUser() {
     try {
       const dateString = date.toISOString().split('T')[0];
       const res = await api.get(`/api/user/meals?user_id=${userId}&date=${dateString}`);
-      const data: FoodTypeMeal[] = await res.json();
+      const data = await res.json();
+      // data: { meals, mealPlans }
       return data;
     } catch (err) {
       console.error('Failed to fetch meals:', err);
       setError('Failed to fetch meals');
-      return [];
+      return { meals: [], mealPlans: [] };
     }
   };
 
@@ -289,6 +290,7 @@ export function useUser() {
         const params = new URLSearchParams({
             email: clerkUser.primaryEmailAddress?.emailAddress ?? '',
         });
+        
         const res = await api.get(`/api/user?${params.toString()}`);
         const user = await res.json();
         setAppUser(user);
