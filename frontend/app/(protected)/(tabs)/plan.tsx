@@ -4,106 +4,102 @@ import Colors from '@/styles/colors'
 import MaterialIcons from '@expo/vector-icons/MaterialIcons'
 import { useUser } from '@/app/hooks/useUser'
 import { useSelectedDate } from './_layout'
-import { useMealPlans } from '../../../hooks/useMealPlans'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useMealPlanApi } from '@/lib/api/mealPlan'
 
 export default function MealPlanPage() {
-  const { appUser, getMeals } = useUser()
+  const { appUser } = useUser()
   const { selectedDate } = useSelectedDate()
-  const [mealsData, setMealsData] = useState<{
-    meals: any[];
-    mealPlans: any[];
-  }>({ meals: [], mealPlans: [] });
-  const [loading, setLoading] = useState(false);
-  const { mealPlans } = useMealPlans(mealsData.mealPlans);
+  const [isLoadingMealPlans, setIsLoadingMealPlans] = useState(false)
+  const mealPlanApi = useMealPlanApi()
 
-  useEffect(() => {
-    if (appUser && selectedDate) {
-      setLoading(true);
-      getMeals(appUser.user_id, selectedDate)
-        .then((fetched) => {
-          setMealsData({ meals: fetched.meals, mealPlans: fetched.mealPlans });
-        })
-        .catch(error => {
-          console.error('Failed to fetch meals:', error);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setMealsData({ meals: [], mealPlans: [] });
-      setLoading(false);
+  const handleProceedToPlanDetail = async () => {
+    if (!appUser) {
+      alert('User not found');
+      return;
     }
-  }, [appUser, selectedDate]);
 
-  const handleCreateNewPlan = () => {
-    router.push('./plan-detail')
+    setIsLoadingMealPlans(true);
+    
+    try {
+      // Load existing meal plans for the selected date
+      const mealPlansData = await mealPlanApi.getMealPlans(appUser.user_id, selectedDate);
+      console.log('Loaded meal plans for plan-detail:', mealPlansData);
+      
+      // Navigate to plan-detail page with the loaded meal plans
+      router.push({
+        pathname: './plan-detail',
+        params: {
+          initialMealPlans: JSON.stringify(mealPlansData)
+        }
+      });
+    } catch (error) {
+      console.error('Failed to load meal plans:', error);
+      // Navigate anyway with empty meal plans
+      router.push({
+        pathname: './plan-detail',
+        params: {
+          initialMealPlans: JSON.stringify([])
+        }
+      });
+    } finally {
+      setIsLoadingMealPlans(false);
+    }
   }
 
-  const handleLoadPlan = (mealPlanId: string) => {
-    router.push(`./plan-detail?planId=${mealPlanId}`)
+  const handleConfigurePreferences = () => {
+    // Placeholder for future macro preferences configuration
+    alert('Macro preferences configuration will be available soon!')
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Meal Plans</Text>
-      <Text style={styles.subtitle}>Create a new meal plan or load an existing one</Text>
+      <Text style={styles.title}>Meal Planning</Text>
+      <Text style={styles.subtitle}>Choose what you'd like to do</Text>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.blue} />
-          <Text style={styles.loadingText}>Loading meal plans...</Text>
-        </View>
-      ) : (
-        <ScrollView style={styles.content}>
-          {/* Saved Meal Plans */}
-          {Array.from(mealPlans.values()).length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Saved Plans for {selectedDate.toLocaleDateString()}</Text>
-              {Array.from(mealPlans.values()).map(plan => (
-                <Pressable 
-                  key={plan.id}
-                  style={styles.mealPlanCard}
-                  onPress={() => handleLoadPlan(plan.id)}
-                >
-                  <View style={styles.mealPlanHeader}>
-                    <MaterialIcons name="restaurant" size={24} color={Colors.blue} />
-                    <View style={styles.mealPlanInfo}>
-                      <Text style={styles.mealPlanName}>{plan.meal.name}</Text>
-                      <Text style={styles.mealPlanDetails}>
-                        {plan.servings.length} foods planned
-                      </Text>
-                    </View>
-                    <MaterialIcons name="chevron-right" size={24} color={Colors.gray} />
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          )}
-
-          {/* Action Buttons */}
-          <View style={styles.optionsContainer}>
-            <Pressable 
-              style={styles.optionCard}
-              onPress={handleCreateNewPlan}
-            >
-              <MaterialIcons name="add-circle-outline" size={32} color={Colors.blue} />
-              <Text style={styles.optionTitle}>Create New Plan</Text>
-              <Text style={styles.optionDescription}>
-                Start fresh with a new meal plan based on your preferences
-              </Text>
-            </Pressable>
-
-            {Array.from(mealPlans.values()).length === 0 && (
-              <View style={styles.emptyState}>
-                <MaterialIcons name="folder-open" size={48} color={Colors.gray} />
-                <Text style={styles.emptyStateTitle}>No meal plans yet</Text>
-                <Text style={styles.emptyStateText}>
-                  Create your first meal plan to get started with meal planning
-                </Text>
-              </View>
+      <ScrollView style={styles.content}>
+        {/* Main Action Options */}
+        <View style={styles.optionsContainer}>
+          <Pressable 
+            style={styles.optionCard}
+            onPress={handleProceedToPlanDetail}
+            disabled={isLoadingMealPlans}
+          >
+            {isLoadingMealPlans ? (
+              <ActivityIndicator size="small" color={Colors.blue} />
+            ) : (
+              <MaterialIcons name="restaurant-menu" size={32} color={Colors.blue} />
             )}
-          </View>
-        </ScrollView>
-      )}
+            <Text style={styles.optionTitle}>
+              {isLoadingMealPlans ? 'Loading...' : 'Plan Meals'}
+            </Text>
+            <Text style={styles.optionDescription}>
+              Create or edit meal plans for {selectedDate.toLocaleDateString()}
+            </Text>
+          </Pressable>
+
+          <Pressable 
+            style={styles.optionCard}
+            onPress={handleConfigurePreferences}
+          >
+            <MaterialIcons name="settings" size={32} color={Colors.gray} />
+            <Text style={styles.optionTitle}>Configure Preferences</Text>
+            <Text style={styles.optionDescription}>
+              Set up your macro preferences and meal planning settings
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Info Section */}
+        <View style={styles.infoSection}>
+          <Text style={styles.infoTitle}>About Meal Planning</Text>
+          <Text style={styles.infoText}>
+            Use the meal planning feature to create optimized meal plans based on your nutritional goals. 
+            You can select foods, set quantities, and use our optimization algorithm to find the best 
+            combination for your macro targets.
+          </Text>
+        </View>
+      </ScrollView>
     </View>
   )
 }
@@ -124,6 +120,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.gray,
     marginBottom: 20,
+  },
+  content: {
+    flex: 1,
   },
   optionsContainer: {
     gap: 16,
@@ -148,70 +147,21 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     textAlign: 'center',
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: Colors.gray,
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.black,
-    marginBottom: 10,
-  },
-  mealPlanCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: Colors.coolgray,
-    marginBottom: 10,
-  },
-  mealPlanHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  mealPlanInfo: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  mealPlanName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.black,
-  },
-  mealPlanDetails: {
-    fontSize: 14,
-    color: Colors.gray,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 30,
+  infoSection: {
     marginTop: 20,
+    padding: 20,
+    backgroundColor: Colors.lightgray,
+    borderRadius: 12,
   },
-  emptyStateTitle: {
+  infoTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: Colors.black,
-    marginTop: 15,
+    marginBottom: 10,
   },
-  emptyStateText: {
+  infoText: {
     fontSize: 16,
     color: Colors.gray,
-    textAlign: 'center',
-    marginTop: 5,
+    lineHeight: 24,
   },
 })

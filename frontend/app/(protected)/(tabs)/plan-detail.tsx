@@ -50,7 +50,7 @@ interface Filter {
 type FlowStep = 'filters' | 'quantities'
 
 export default function PlanDetailPage() {
-  const { planId } = useLocalSearchParams()
+  const { planId, initialMealPlans } = useLocalSearchParams()
   const { userMealPreferences, preferences, rawPreferences, appUser, getMeals } = useUser()
   const { selectedDate } = useSelectedDate()
   const { updateMealPlanMacros } = useGlobalMacros()
@@ -71,6 +71,9 @@ export default function PlanDetailPage() {
   // Track existing meal plans to optimize save operations
   const [existingMealPlans, setExistingMealPlans] = useState<Set<string>>(new Set())
   
+  // Track meal preference to meal plan ID mapping
+  const [mealPlanIdMapping, setMealPlanIdMapping] = useState<Map<string, string>>(new Map())
+  
   // Food selection modal state
   const [showSelectionModal, setShowSelectionModal] = useState(false)
   const [currentModalMealId, setCurrentModalMealId] = useState<string | null>(null)
@@ -86,6 +89,7 @@ export default function PlanDetailPage() {
   const maxInputRef = useRef<TextInput>(null)
   const nextFocusedInputRef = useRef<{ foodId: string, type: 'min' | 'max' } | null>(null)
   const foodSearchApi = useFoodSearchApi()
+  const hasInitializedFromPropsRef = useRef(false)
 
   const [mealFoodQuantities, setMealFoodQuantities] = useState<
     Map<string, Map<string, { quantity: number; minQuantity: number; maxQuantity: number; selectedUnit: string; locked: boolean }>>
@@ -98,6 +102,136 @@ export default function PlanDetailPage() {
     }
     return new Set(rawPreferences.map(pref => pref.metric_id));
   }, [rawPreferences]);
+
+  // Initialize meal plans from props (only once)
+  const initializeFromProps = useCallback(() => {
+    if (hasInitializedFromPropsRef.current || !initialMealPlans || kitchens.length === 0) {
+      return;
+    }
+
+    try {
+      const mealPlansData = JSON.parse(initialMealPlans as string);
+      console.log('Initializing from props with meal plans:', mealPlansData);
+      
+      // Extract existing meal plan IDs and create mapping
+      const newMealPlanIdMapping = new Map<string, string>();
+      const newExistingMealPlans = new Set<string>();
+      
+      mealPlansData.forEach((mealPlan: any) => {
+        const mealPlanId = mealPlan.id; // This is the actual meal plan ID
+        const mealName = mealPlan.meal?.name;
+        console.log(`Processing meal plan: ${mealName} (Plan ID: ${mealPlanId})`);
+        
+        // Find the corresponding meal preference
+        const mealPreference = userMealPreferences.find(meal => meal.name === mealName);
+        if (!mealPreference) {
+          console.warn(`No meal preference found for meal plan: ${mealName}`);
+          return;
+        }
+        
+        // Map meal preference ID to meal plan ID
+        newMealPlanIdMapping.set(mealPreference.id, mealPlanId);
+        newExistingMealPlans.add(mealPlanId);
+        
+        console.log(`  Mapped meal preference ${mealPreference.id} (${mealName}) to meal plan ${mealPlanId}`);
+      });
+      
+      setMealPlanIdMapping(newMealPlanIdMapping);
+      setExistingMealPlans(newExistingMealPlans);
+      
+      // Populate selected foods and quantities from existing meal plans
+      const newSelectedFoods = new Map<string, Set<string>>();
+      const newMealFoodQuantities = new Map<string, Map<string, any>>();
+      
+      // Initialize with empty sets for all meals
+      userMealPreferences.forEach(meal => {
+        newSelectedFoods.set(meal.id, new Set<string>());
+        newMealFoodQuantities.set(meal.id, new Map());
+      });
+      
+      // Process each meal plan
+      mealPlansData.forEach((mealPlan: any) => {
+        const mealPlanId = mealPlan.id;
+        const mealName = mealPlan.meal?.name;
+        console.log(`Processing meal plan for ${mealName} (Plan ID: ${mealPlanId})`);
+        
+        // Find the corresponding meal preference
+        const mealPreference = userMealPreferences.find(meal => meal.name === mealName);
+        if (!mealPreference) {
+          console.warn(`No meal preference found for meal plan: ${mealName}`);
+          return;
+        }
+        
+        const mealQuantities = new Map<string, any>();
+        
+        // Process each serving in the meal plan
+        mealPlan.servings.forEach((serving: any) => {
+          const foodId = serving.food_id;
+          console.log(`  Adding food ${foodId} with quantity ${serving.quantity} ${serving.unit?.name || 'g'}`);
+          
+          // Add to selected foods
+          const selectedFoodsForMeal = newSelectedFoods.get(mealPreference.id) || new Set<string>();
+          selectedFoodsForMeal.add(foodId);
+          newSelectedFoods.set(mealPreference.id, selectedFoodsForMeal);
+          
+          // Add to quantities
+          mealQuantities.set(foodId, {
+            quantity: serving.quantity,
+            minQuantity: 0, // Default min
+            maxQuantity: 3, // Default max
+            selectedUnit: serving.unit?.name || 'g',
+            locked: false, // Default unlocked
+          });
+        });
+        
+        newMealFoodQuantities.set(mealPreference.id, mealQuantities);
+      });
+      
+      // Update state
+      setSelectedFoods(newSelectedFoods);
+      setMealFoodQuantities(newMealFoodQuantities);
+      
+      // Mark as initialized to prevent future overwrites
+      hasInitializedFromPropsRef.current = true;
+      
+      console.log('Initialized from props:', {
+        mealPlansCount: mealPlansData.length,
+        mealPlanIdMapping: Object.fromEntries(newMealPlanIdMapping),
+        existingMealPlans: Array.from(newExistingMealPlans),
+        selectedFoods: Object.fromEntries(
+          Array.from(newSelectedFoods.entries()).map(([mealId, foods]) => [
+            mealId, 
+            Array.from(foods)
+          ])
+        )
+      });
+      
+    } catch (error) {
+      console.error('Failed to parse initial meal plans:', error);
+      // If parsing fails, start with empty state
+      const initialSelectedFoods = new Map<string, Set<string>>();
+      userMealPreferences.forEach(meal => {
+        initialSelectedFoods.set(meal.id, new Set<string>());
+      });
+      setSelectedFoods(initialSelectedFoods);
+      setExistingMealPlans(new Set());
+      setMealPlanIdMapping(new Map());
+      // Still mark as initialized to prevent retries
+      hasInitializedFromPropsRef.current = true;
+    }
+  }, [initialMealPlans, kitchens.length, userMealPreferences]);
+
+  // Initialize from props after kitchens are loaded
+  useEffect(() => {
+    if (kitchens.length > 0 && !loading) {
+      initializeFromProps();
+    }
+  }, [kitchens, loading, initializeFromProps]);
+
+  // Reset the initialized flag when selected date changes (for new navigation)
+  useEffect(() => {
+    hasInitializedFromPropsRef.current = false;
+  }, [selectedDate]);
 
   // Save meal plan function - ultra-optimized for speed
   // Optimization strategy:
@@ -112,6 +246,12 @@ export default function PlanDetailPage() {
       return;
     }
 
+    console.log('=== SAVE MEAL PLAN START ===');
+    console.log('User ID:', appUser.user_id);
+    console.log('Selected Date:', selectedDate.toISOString());
+    console.log('Existing meal plans:', Array.from(existingMealPlans));
+    console.log('Meal plan ID mapping:', Object.fromEntries(mealPlanIdMapping));
+
     // Set saving state immediately
     setIsSaving(true);
 
@@ -125,6 +265,9 @@ export default function PlanDetailPage() {
         const selectedFoodIds = selectedFoods.get(meal.id) || new Set();
         const mealFoodServings: any[] = [];
         
+        console.log(`Processing meal: ${meal.name} (${meal.id})`);
+        console.log(`  Selected foods: ${Array.from(selectedFoodIds)}`);
+        
         selectedFoodIds.forEach(foodId => {
           for (const kitchen of kitchens) {
             const food = kitchen.foods.find(f => f.id === foodId);
@@ -137,11 +280,14 @@ export default function PlanDetailPage() {
                 locked: false,
               };
               
-              mealFoodServings.push({
+              const serving = {
                 food_id: food.id,
                 quantity: q.quantity,
                 unit_name: q.selectedUnit
-              });
+              };
+              
+              mealFoodServings.push(serving);
+              console.log(`    Adding serving: ${food.name} - ${q.quantity} ${q.selectedUnit}`);
               
               // Calculate macros for this food serving
               const unit = food.servingUnits.find(u => u.name === q.selectedUnit);
@@ -170,13 +316,18 @@ export default function PlanDetailPage() {
           }
         });
         
-        if (mealFoodServings.length > 0) {
-          allFoodServings.push({
-            mealId: meal.id,
-            foodServings: mealFoodServings
-          });
-        }
+        // Always include the meal plan, even if it has no foods
+        // This ensures that meals with deleted foods are properly updated in the database
+        allFoodServings.push({
+          mealId: meal.id,
+          foodServings: mealFoodServings
+        });
+        
+        console.log(`  Final servings for ${meal.name}: ${mealFoodServings.length} foods`);
       });
+
+      console.log('All food servings to save:', allFoodServings);
+      console.log('Saved meal plan macros:', savedMealPlanMacros);
 
       // Update global macros immediately for better UX
       subtractFromMealPlan(savedMealPlanMacros);
@@ -187,31 +338,96 @@ export default function PlanDetailPage() {
 
       // Save all meal plans in parallel with smart create/update logic
       const savePromises = allFoodServings.map(async ({ mealId, foodServings }) => {
+        console.log(`Saving meal plan for ${mealId}:`);
+        
+        // Get the actual meal plan ID from the mapping
+        const actualMealPlanId = mealPlanIdMapping.get(mealId);
+        const hasExistingMealPlan = actualMealPlanId && existingMealPlans.has(actualMealPlanId);
+        
+        console.log(`  Meal preference ID: ${mealId}`);
+        console.log(`  Actual meal plan ID: ${actualMealPlanId || 'None'}`);
+        console.log(`  Existing meal plan: ${hasExistingMealPlan ? 'YES' : 'NO'}`);
+        console.log(`  Food servings: ${foodServings.length}`);
+        
         // Use existing meal plans knowledge to make smart decisions
-        if (existingMealPlans.has(mealId)) {
-          // Update existing meal plan
-          return await mealPlanApi.updateMealPlan(mealId, foodServings);
-        } else {
-          // Try to create new meal plan
+        if (hasExistingMealPlan && actualMealPlanId) {
+          console.log(`  🔄 Updating existing meal plan: ${actualMealPlanId}`);
+          // Update existing meal plan (even if foodServings is empty)
           try {
-            const result = await mealPlanApi.createMealPlan(
-              appUser.user_id,
-              mealId,
-              selectedDate,
-              foodServings
-            );
-            // Mark as existing for future operations
-            setExistingMealPlans(prev => new Set(prev).add(mealId));
+            const result = await mealPlanApi.updateMealPlan(actualMealPlanId, foodServings);
+            console.log(`  ✅ Updated meal plan: ${actualMealPlanId}`);
+            
+            // If the meal plan was deleted (empty servings), remove it from tracking
+            if (foodServings.length === 0) {
+              console.log(`  🗑️  Meal plan ${actualMealPlanId} is now empty, removing from tracking`);
+              setExistingMealPlans(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(actualMealPlanId);
+                return newSet;
+              });
+              setMealPlanIdMapping(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(mealId);
+                return newMap;
+              });
+            }
+            
             return result;
           } catch (error: any) {
-            // If creation fails due to existing meal plan, update instead
-            if (error.message?.includes('already exists') || error.status === 409) {
-              // Mark as existing for future operations
-              setExistingMealPlans(prev => new Set(prev).add(mealId));
-              return await mealPlanApi.updateMealPlan(mealId, foodServings);
-            }
-            // For other errors, re-throw
+            console.log(`  ❌ Update failed for ${actualMealPlanId}:`, error.message);
+            // If update fails (e.g., meal plan was deleted), remove from tracking
+            setExistingMealPlans(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(actualMealPlanId);
+              return newSet;
+            });
+            setMealPlanIdMapping(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(mealId);
+              return newMap;
+            });
             throw error;
+          }
+        } else {
+          console.log(`  ➕ Creating new meal plan for: ${mealId}`);
+          // Only create new meal plan if it has foods
+          if (foodServings.length > 0) {
+            try {
+              const result = await mealPlanApi.createMealPlan(
+                appUser.user_id,
+                mealId,
+                selectedDate,
+                foodServings
+              );
+              
+              // Extract the created meal plan ID and add to tracking
+              const createdMealPlanId = result.id;
+              console.log(`  ✅ Created meal plan: ${createdMealPlanId}`);
+              
+              // Mark as existing for future operations
+              setExistingMealPlans(prev => new Set(prev).add(createdMealPlanId));
+              setMealPlanIdMapping(prev => {
+                const newMap = new Map(prev);
+                newMap.set(mealId, createdMealPlanId);
+                return newMap;
+              });
+              
+              return result;
+            } catch (error: any) {
+              console.log(`  ⚠️  Creation failed for ${mealId}, trying update:`, error.message);
+              // If creation fails due to existing meal plan, update instead
+              if (error.message?.includes('already exists') || error.status === 409) {
+                // This shouldn't happen with our new logic, but handle it just in case
+                console.log(`  🔄 Creation failed, but this shouldn't happen with new logic`);
+                throw error;
+              }
+              // For other errors, re-throw
+              throw error;
+            }
+          } else {
+            // No foods and no existing meal plan - nothing to do
+            console.log(`  ⏭️  No foods for meal ${mealId} and no existing meal plan - skipping`);
+            return null;
           }
         }
       });
@@ -219,48 +435,28 @@ export default function PlanDetailPage() {
       // Wait for all saves to complete in background
       Promise.all(savePromises)
         .then((savedMealPlans) => {
-          console.log(`Successfully saved ${savedMealPlans.length} meal plans!`);
+          const successfulSaves = savedMealPlans.filter(plan => plan !== null);
+          console.log(`✅ Successfully saved ${successfulSaves.length} meal plans!`);
           console.log('Saved meal plan macros (now logged):', savedMealPlanMacros);
           // Show success message in console for debugging
           console.log('✅ Meal plan saved successfully!');
+          console.log('=== SAVE MEAL PLAN END ===\n');
         })
         .catch((error) => {
-          console.error('Background save failed:', error);
+          console.error('❌ Background save failed:', error);
           // Show error message in console for debugging
           console.error('❌ Meal plan save failed:', error.message);
+          console.log('=== SAVE MEAL PLAN END (ERROR) ===\n');
         });
 
     } catch (error) {
-      console.error('Failed to save meal plan:', error);
+      console.error('❌ Failed to save meal plan:', error);
       alert('Failed to save meal plan. Please try again.');
+      console.log('=== SAVE MEAL PLAN END (ERROR) ===\n');
     } finally {
       setIsSaving(false);
     }
   };
-
-  // Pre-fetch existing meal plans to optimize save operations
-  const fetchExistingMealPlans = useCallback(async () => {
-    if (!appUser || !selectedDate) return;
-    
-    try {
-      // Fetch all meal plans for this date
-      const mealPlansData = await mealPlanApi.getMealPlans(appUser.user_id, selectedDate);
-      
-      // Extract existing meal plan IDs
-      const existingIds = mealPlansData.map((plan: any) => plan.meal_id);
-      setExistingMealPlans(new Set(existingIds));
-      console.log('Pre-fetched existing meal plans:', existingIds);
-    } catch (error) {
-      console.error('Failed to pre-fetch existing meal plans:', error);
-      // If fetch fails, assume no existing meal plans
-      setExistingMealPlans(new Set());
-    }
-  }, [appUser, selectedDate, mealPlanApi]);
-
-  // Fetch existing meal plans when component loads
-  useEffect(() => {
-    fetchExistingMealPlans();
-  }, [fetchExistingMealPlans]);
 
   // Fetch meals when selectedDate or appUser changes
   useEffect(() => {
@@ -581,6 +777,21 @@ export default function PlanDetailPage() {
       setLoading(false)
     }
   }
+
+  // Load existing meal plans and populate selected foods and quantities
+  // DISABLED: This function was causing user changes to be overwritten
+  // Now using initializeFromProps instead
+  const loadExistingMealPlans = useCallback(async () => {
+    // Function disabled to prevent overwriting user changes
+    console.log('loadExistingMealPlans: Function disabled - using initializeFromProps instead');
+    return;
+  }, []);
+
+  // Load existing meal plans after kitchens are loaded
+  useEffect(() => {
+    // Effect disabled to prevent overwriting user changes
+    console.log('loadExistingMealPlans useEffect: Effect disabled - using initializeFromProps instead');
+  }, []);
 
   const handleQuantityChange = (mealId: string, foodId: string, value: number) => {
     setMealFoodQuantities(prev => {
@@ -1433,12 +1644,28 @@ export default function PlanDetailPage() {
   }
 
   const handleDeleteFood = (mealId: string, foodId: string) => {
+    console.log(`Deleting food ${foodId} from meal ${mealId}`);
+    console.log('Before deletion - selectedFoods:', Array.from(selectedFoods.entries()));
+    
     setSelectedFoods(prev => {
       const newMap = new Map<string, Set<string>>(prev)
       const mealSelectedFoods = newMap.get(mealId) || new Set<string>()
       const newSelectedFoods = new Set<string>(mealSelectedFoods)
       newSelectedFoods.delete(foodId)
       newMap.set(mealId, newSelectedFoods)
+      
+      console.log('After deletion - new selectedFoods:', Array.from(newMap.entries()));
+      return newMap
+    })
+    
+    // Also remove from mealFoodQuantities to keep state consistent
+    setMealFoodQuantities(prev => {
+      const newMap = new Map(prev)
+      const mealMap = new Map(newMap.get(mealId) || new Map())
+      mealMap.delete(foodId)
+      newMap.set(mealId, mealMap)
+      
+      console.log('After deletion - new mealFoodQuantities:', Array.from(newMap.entries()));
       return newMap
     })
   }
