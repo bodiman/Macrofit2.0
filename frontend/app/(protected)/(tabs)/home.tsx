@@ -96,10 +96,15 @@ export default function Page() {
 
       // Instead of re-fetching meals (which could overwrite optimistic updates),
       // just recalculate macros from the current state to ensure consistency
-      if (serverMealsData.meals.length > 0) {
+      if (serverMealsData.meals && Array.isArray(serverMealsData.meals) && serverMealsData.meals.length > 0) {
         console.log('All operations complete, recalculating macros from current state...');
-        const totalMacros = calculateAllMacrosOptimized(serverMealsData.meals, rawPreferences);
-        setServerMealsData(prevData => ({ ...prevData, macros: totalMacros }));
+        try {
+          const totalMacros = calculateAllMacrosOptimized(serverMealsData.meals, rawPreferences);
+          setServerMealsData(prevData => ({ ...prevData, macros: totalMacros }));
+        } catch (error) {
+          console.error('Error recalculating macros after operations:', error);
+          // Don't update macros if calculation fails
+        }
         // Do not set global macros here; only do so in fetch and optimisticUpdate
       } else {
         // Do NOT reset macros to zero if there are no meals
@@ -165,13 +170,36 @@ export default function Page() {
       setMealsLoading(true);
       getMeals(appUser.user_id, selectedDate)
         .then((fetched) => {
-          const totalMacros = calculateAllMacrosOptimized(fetched.meals, rawPreferences);
-          const newData = { meals: fetched.meals, mealPlans: fetched.mealPlans, macros: totalMacros };
-          setServerMealsData(newData);
-          setOptimisticMealsData(newData);
-          setServerGlobalMacros(totalMacros);
-          setOptimisticGlobalMacros(totalMacros);
-          syncLoggedMealsMacros(totalMacros);
+          console.log('Fetched meals data:', {
+            mealsType: typeof fetched.meals,
+            mealsIsArray: Array.isArray(fetched.meals),
+            mealsLength: fetched.meals?.length,
+            fetchedKeys: Object.keys(fetched || {})
+          });
+          
+          if (!fetched.meals || !Array.isArray(fetched.meals)) {
+            console.error('Invalid meals data received:', fetched);
+            throw new Error('Invalid meals data received from server');
+          }
+          
+          try {
+            const totalMacros = calculateAllMacrosOptimized(fetched.meals, rawPreferences);
+            const newData = { meals: fetched.meals, mealPlans: fetched.mealPlans, macros: totalMacros };
+            setServerMealsData(newData);
+            setOptimisticMealsData(newData);
+            setServerGlobalMacros(totalMacros);
+            setOptimisticGlobalMacros(totalMacros);
+            syncLoggedMealsMacros(totalMacros);
+          } catch (error) {
+            console.error('Error calculating macros for fetched meals:', error);
+            // Set empty macros if calculation fails
+            const newData = { meals: fetched.meals, mealPlans: fetched.mealPlans, macros: {} };
+            setServerMealsData(newData);
+            setOptimisticMealsData(newData);
+            setServerGlobalMacros({});
+            setOptimisticGlobalMacros({});
+            syncLoggedMealsMacros({});
+          }
         })
         .catch(error => {
           console.error('Failed to fetch meals:', error);

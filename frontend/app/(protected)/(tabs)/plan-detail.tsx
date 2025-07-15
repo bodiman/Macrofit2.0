@@ -471,13 +471,25 @@ export default function PlanDetailPage() {
       getMeals(appUser.user_id, selectedDate)
         .then((fetchedMeals) => {
           console.log('PlanDetailPage: Meals fetched successfully', {
-            mealsCount: fetchedMeals.meals.length,
-            mealNames: fetchedMeals.meals.map((m: any) => m.name)
+            mealsCount: fetchedMeals.meals?.length || 0,
+            mealNames: fetchedMeals.meals?.map((m: any) => m.name) || []
           });
-          // Use optimized batch calculation
-          const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
-          // Update both meals and macros in single state change
-          setMealsData({ meals: fetchedMeals.meals, macros: totalMacros });
+          
+          if (!fetchedMeals.meals || !Array.isArray(fetchedMeals.meals)) {
+            console.error('PlanDetailPage: Invalid meals data received:', fetchedMeals);
+            setMealsData({ meals: [], macros: {} });
+            return;
+          }
+          
+          try {
+            // Use optimized batch calculation
+            const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
+            // Update both meals and macros in single state change
+            setMealsData({ meals: fetchedMeals.meals, macros: totalMacros });
+          } catch (error) {
+            console.error('PlanDetailPage: Error calculating macros:', error);
+            setMealsData({ meals: fetchedMeals.meals, macros: {} });
+          }
         })
         .finally(() => setMealsLoading(false));
     } else {
@@ -493,8 +505,19 @@ export default function PlanDetailPage() {
       if (appUser && selectedDate) {
         getMeals(appUser.user_id, selectedDate)
           .then((fetchedMeals) => {
-            const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
-            setMealsData({ meals: fetchedMeals.meals, macros: totalMacros });
+            if (!fetchedMeals.meals || !Array.isArray(fetchedMeals.meals)) {
+              console.error('PlanDetailPage: Invalid meals data in handleMealsUpdated:', fetchedMeals);
+              setMealsData({ meals: [], macros: {} });
+              return;
+            }
+            
+            try {
+              const totalMacros = calculateAllMacrosOptimized(fetchedMeals.meals, rawPreferences);
+              setMealsData({ meals: fetchedMeals.meals, macros: totalMacros });
+            } catch (error) {
+              console.error('PlanDetailPage: Error calculating macros in handleMealsUpdated:', error);
+              setMealsData({ meals: fetchedMeals.meals, macros: {} });
+            }
           });
       }
     };
