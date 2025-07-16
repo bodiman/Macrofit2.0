@@ -174,13 +174,13 @@ export default function PlanDetailPage() {
           selectedFoodsForMeal.add(foodId);
           newSelectedFoods.set(mealPreference.id, selectedFoodsForMeal);
           
-          // Add to quantities
+          // Add to quantities with data from database
           mealQuantities.set(foodId, {
             quantity: serving.quantity,
-            minQuantity: 0, // Default min
-            maxQuantity: 3, // Default max
+            minQuantity: serving.minQuantity || 0, // Load from database
+            maxQuantity: serving.maxQuantity || 3, // Load from database
             selectedUnit: serving.unit?.name || 'g',
-            locked: false, // Default unlocked
+            locked: serving.locked || false, // Load from database
           });
         });
         
@@ -283,7 +283,10 @@ export default function PlanDetailPage() {
               const serving = {
                 food_id: food.id,
                 quantity: q.quantity,
-                unit_name: q.selectedUnit
+                unit_name: q.selectedUnit,
+                locked: q.locked,
+                minQuantity: q.minQuantity,
+                maxQuantity: q.maxQuantity
               };
               
               mealFoodServings.push(serving);

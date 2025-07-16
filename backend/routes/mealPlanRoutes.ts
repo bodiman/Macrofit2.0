@@ -237,7 +237,11 @@ router.post('/', async (req: express.Request, res: express.Response) => {
             quantity: serving.quantity,
             unit: {
               connect: { id: serving.unit_id }
-            }
+            },
+            // New fields for meal planning optimization
+            locked: serving.locked || false,
+            minQuantity: serving.minQuantity || 0,
+            maxQuantity: serving.maxQuantity || 3
             // mealPlanId will be automatically set by Prisma due to the relation
           }))
         }
@@ -450,7 +454,11 @@ router.put('/:id', async (req: express.Request, res: express.Response) => {
               quantity: serving.quantity,
               unit: {
                 connect: { id: serving.unit_id }
-              }
+              },
+              // New fields for meal planning optimization
+              locked: serving.locked || false,
+              minQuantity: serving.minQuantity || 0,
+              maxQuantity: serving.maxQuantity || 3
             }))
           }
         },

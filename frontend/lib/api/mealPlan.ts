@@ -11,11 +11,21 @@ export const useMealPlanApi = () => {
     console.log('  Date:', date.toISOString().split('T')[0]);
     console.log('  Servings:', servings);
     
+    // Transform servings to include the new fields
+    const transformedServings = servings.map(serving => ({
+      food_id: serving.food_id,
+      quantity: serving.quantity,
+      unit_name: serving.unit_name,
+      locked: serving.locked || false,
+      minQuantity: serving.minQuantity || 0,
+      maxQuantity: serving.maxQuantity || 3
+    }));
+    
     const res = await api.post('/api/meal-plans', {
       user_id: userId,
       meal_id: mealId,
       date: date.toISOString().split('T')[0],
-      servings
+      servings: transformedServings
     });
     return res.json();
   }, [api]);
@@ -35,8 +45,18 @@ export const useMealPlanApi = () => {
     console.log('  Meal Plan ID:', mealPlanId);
     console.log('  Servings:', servings);
     
+    // Transform servings to include the new fields
+    const transformedServings = servings.map(serving => ({
+      food_id: serving.food_id,
+      quantity: serving.quantity,
+      unit_name: serving.unit_name,
+      locked: serving.locked || false,
+      minQuantity: serving.minQuantity || 0,
+      maxQuantity: serving.maxQuantity || 3
+    }));
+    
     const res = await api.put(`/api/meal-plans/${mealPlanId}`, {
-      servings
+      servings: transformedServings
     });
     return res.json();
   }, [api]);

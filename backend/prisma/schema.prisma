@@ -83,6 +83,11 @@ model FoodServing {
   unit           ServingUnit @relation(fields: [unit_id], references: [id])
   MealPlan       MealPlan?   @relation(fields: [mealPlanId], references: [id])
   mealPlanId     String?
+  
+  // New fields for meal planning optimization
+  locked         Boolean     @default(false)
+  minQuantity    Float       @default(0)
+  maxQuantity    Float       @default(3)
 }
 
 model Meal {
